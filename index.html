@@ -1,0 +1,1472 @@
+<!doctype html>
+<html lang="ko">
+<title>연습허브</title>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans+KR:wght@400;500;700&display=swap">
+<style>
+/* Layout: 왼쪽 업무 요청 레일 + 오른쪽 가짜 브라우저 창 안의 코드 호스팅 사이트 */
+:root {
+  --bg: #eceee9;
+  --surface: #ffffff;
+  --sunk: #f5f6f3;
+  --ink: #1c2320;
+  --muted: #5d6862;
+  --line: #d5dad3;
+  --accent: #245f8f;
+  --accent-soft: #e2edf6;
+  --go: #23794f;
+  --go-ink: #ffffff;
+  --open: #23794f;
+  --closed: #b23b33;
+  --merged: #7247a8;
+  --warn: #9a6200;
+  --warn-soft: #fbf1dc;
+  --err-soft: #fae6e3;
+  --add: #e3f4e8; --add-ink: #1d5c36;
+  --del: #fbe5e3; --del-ink: #8a2a22;
+  --chrome: #d9ddd6;
+  --rail: #233029;
+  --rail-ink: #e6eee9;
+  --f-body: "IBM Plex Sans KR", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
+  --f-mono: "IBM Plex Mono", ui-monospace, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #101513; --surface: #171d1a; --sunk: #1d2421; --ink: #e2e9e5; --muted: #98a69e; --line: #2c3631;
+    --accent: #7db3e0; --accent-soft: #1b2c3a; --go: #2f9a66; --go-ink: #ffffff;
+    --open: #5cc48f; --closed: #ef7f75; --merged: #b28ae6; --warn: #e2b04f; --warn-soft: #33290f; --err-soft: #3a1d1a;
+    --add: #17321f; --add-ink: #8fdcaa; --del: #3a1c1a; --del-ink: #f2a39b;
+    --chrome: #222a26; --rail: #1a2420; --rail-ink: #e2e9e5;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #101513; --surface: #171d1a; --sunk: #1d2421; --ink: #e2e9e5; --muted: #98a69e; --line: #2c3631;
+  --accent: #7db3e0; --accent-soft: #1b2c3a; --go: #2f9a66; --go-ink: #ffffff;
+  --open: #5cc48f; --closed: #ef7f75; --merged: #b28ae6; --warn: #e2b04f; --warn-soft: #33290f; --err-soft: #3a1d1a;
+  --add: #17321f; --add-ink: #8fdcaa; --del: #3a1c1a; --del-ink: #f2a39b;
+  --chrome: #222a26; --rail: #1a2420; --rail-ink: #e2e9e5;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--ink); font-family: var(--f-body); font-size: 14px; line-height: 1.55; }
+button, input, select, textarea { font: inherit; color: inherit; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.wrap { max-width: 1360px; margin: 0 auto; padding-inline: 16px; padding-block: 20px 40px; }
+.top { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: 8px 16px; margin-bottom: 14px; }
+.top h1 { margin: 0; font-size: 1.45rem; letter-spacing: -0.01em; }
+.top p { margin: 0; color: var(--muted); }
+.grid { display: grid; grid-template-columns: 330px minmax(0, 1fr); gap: 18px; align-items: start; }
+@media (max-width: 960px) { .grid { grid-template-columns: minmax(0, 1fr); } }
+
+.btn { border: 1px solid var(--line); background: var(--sunk); padding: 5px 12px; border-radius: 6px; cursor: pointer; font-size: 0.85rem; line-height: 1.4; white-space: nowrap; }
+.btn:hover { border-color: var(--muted); }
+.btn.go { background: var(--go); border-color: var(--go); color: var(--go-ink); font-weight: 600; }
+.btn.danger { color: var(--closed); }
+.btn.sm { padding: 2px 8px; font-size: 0.78rem; }
+.btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+
+/* 요청 레일 */
+.rail { background: var(--rail); color: var(--rail-ink); border-radius: 12px; padding: 16px; display: flex; flex-direction: column; gap: 12px; min-width: 0; }
+.rail .prog { display: flex; gap: 10px; align-items: center; font-size: 0.8rem; opacity: 0.85; }
+.rail .bar { flex: 1; height: 5px; background: rgba(255,255,255,0.15); border-radius: 3px; overflow: hidden; }
+.rail .bar i { display: block; height: 100%; background: #7fd0a6; transition: width .3s; }
+.msg { background: rgba(255,255,255,0.07); border-radius: 10px; padding: 12px; display: flex; flex-direction: column; gap: 8px; }
+.msg .eyebrow { font-size: 0.7rem; letter-spacing: 0.08em; font-weight: 700; color: #9fd9bb; }
+.msg .who { font-size: 0.78rem; font-weight: 700; color: #f0c977; }
+.msg p { margin: 0; font-size: 0.95rem; }
+.msg .hint { font-size: 0.85rem; color: #c7d4cc; }
+.msg ol { margin: 0; padding-left: 20px; font-size: 0.85rem; color: #e6eee9; display: flex; flex-direction: column; gap: 3px; }
+.rail .btn { background: rgba(255,255,255,0.08); border-color: rgba(255,255,255,0.18); color: var(--rail-ink); }
+.rail .btn.go { background: #2f9a66; border-color: #2f9a66; }
+.done-tag { color: #7fd0a6; font-weight: 700; font-size: 0.85rem; }
+.qlist { list-style: none; margin: 0; padding: 0; font-size: 0.84rem; }
+.qlist li { display: grid; grid-template-columns: 22px 1fr; gap: 8px; padding: 5px 0; border-bottom: 1px solid rgba(255,255,255,0.08); opacity: 0.7; }
+.qlist li.done { opacity: 1; }
+.qlist li.cur { opacity: 1; font-weight: 700; }
+.qlist .mk { width: 18px; height: 18px; border-radius: 50%; border: 1.5px solid rgba(255,255,255,0.35); display: grid; place-items: center; font-size: 0.66rem; margin-top: 2px; font-family: var(--f-mono); }
+.qlist li.done .mk { background: #2f9a66; border-color: #2f9a66; }
+.qlist li.cur .mk { border-color: #f0c977; color: #f0c977; }
+.qlist button { all: unset; cursor: pointer; }
+.feed { font-size: 0.8rem; display: flex; flex-direction: column; gap: 4px; color: #c7d4cc; }
+.feed b { color: #f0c977; font-weight: 600; }
+.rail h3 { margin: 4px 0 0; font-size: 0.78rem; letter-spacing: 0.06em; opacity: 0.7; }
+
+/* 브라우저 창 */
+.window { border: 1px solid var(--line); border-radius: 12px; overflow: hidden; background: var(--surface); min-width: 0; }
+.chrome { background: var(--chrome); padding: 8px 12px; display: flex; gap: 10px; align-items: center; }
+.dots { display: flex; gap: 6px; } .dots i { width: 10px; height: 10px; border-radius: 50%; background: var(--line); display: block; }
+.urlbar { flex: 1; min-width: 0; background: var(--surface); border-radius: 6px; padding: 3px 10px; font-family: var(--f-mono); font-size: 0.78rem; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.hub-top { display: flex; align-items: center; gap: 12px; padding: 10px 16px; border-bottom: 1px solid var(--line); background: var(--sunk); flex-wrap: wrap; }
+.logo { font-weight: 700; display: flex; gap: 6px; align-items: center; cursor: pointer; background: none; border: 0; padding: 0; }
+.logo svg { width: 22px; height: 22px; }
+.hub-top .search { flex: 1; min-width: 120px; max-width: 320px; border: 1px solid var(--line); border-radius: 6px; padding: 3px 10px; background: var(--surface); color: var(--muted); font-size: 0.8rem; }
+.avatar { width: 26px; height: 26px; border-radius: 50%; display: inline-grid; place-items: center; font-size: 0.68rem; font-weight: 700; color: #fff; flex: none; }
+.av-나 { background: #245f8f; } .av-김주무관 { background: #a35a1f; } .av-이주무관 { background: #7247a8; }
+.page { padding: 18px 20px 28px; min-height: 560px; }
+@media (max-width: 600px) { .page { padding: 14px 12px 24px; } }
+.flash { padding: 8px 12px; border-radius: 6px; margin-bottom: 14px; font-size: 0.88rem; }
+.flash.err { background: var(--err-soft); color: var(--closed); }
+.flash.ok { background: var(--add); color: var(--add-ink); }
+
+.repo-head { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; }
+.repo-name { font-size: 1.15rem; display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+.repo-name a, .link { color: var(--accent); cursor: pointer; background: none; border: 0; padding: 0; text-decoration: none; }
+.link:hover { text-decoration: underline; }
+.badge { border: 1px solid var(--line); border-radius: 999px; padding: 0 8px; font-size: 0.72rem; color: var(--muted); }
+.tabs { display: flex; gap: 2px; border-bottom: 1px solid var(--line); margin: 12px 0 16px; overflow-x: auto; }
+.tab { background: none; border: 0; border-bottom: 2px solid transparent; padding: 8px 12px; cursor: pointer; white-space: nowrap; color: var(--ink); }
+.tab.on { border-bottom-color: #e07b39; font-weight: 600; }
+.count { background: var(--sunk); border-radius: 999px; padding: 0 7px; font-size: 0.72rem; margin-left: 4px; }
+
+.box { border: 1px solid var(--line); border-radius: 8px; overflow: hidden; }
+.box-head { background: var(--sunk); padding: 10px 14px; display: flex; justify-content: space-between; align-items: center; gap: 8px; flex-wrap: wrap; border-bottom: 1px solid var(--line); font-size: 0.85rem; }
+.item { display: flex; gap: 10px; padding: 10px 14px; border-bottom: 1px solid var(--line); align-items: flex-start; }
+.item:last-child { border-bottom: 0; }
+.item .t { font-weight: 600; }
+.item .sub { color: var(--muted); font-size: 0.78rem; }
+.mono { font-family: var(--f-mono); font-size: 0.82rem; }
+.ico { flex: none; width: 16px; height: 16px; margin-top: 3px; }
+.st-open { color: var(--open); } .st-closed { color: var(--closed); } .st-merged { color: var(--merged); } .st-np { color: var(--muted); }
+.label { display: inline-block; border-radius: 999px; padding: 0 8px; font-size: 0.72rem; font-weight: 600; margin-left: 4px; }
+.lb-bug { background: #f6d5d2; color: #8a2a22; } .lb-enhancement { background: #d5ecf6; color: #1c5675; } .lb-documentation { background: #dde2f8; color: #33428d; } .lb-question { background: #f4e8c8; color: #6b4e05; } .lb-good { background: #d6f0dd; color: #1d5c36; }
+.state { display: inline-flex; align-items: center; gap: 4px; border-radius: 999px; padding: 3px 12px; color: #fff; font-weight: 600; font-size: 0.85rem; }
+.state.open { background: var(--open); } .state.closed { background: var(--closed); } .state.merged { background: var(--merged); } .state.np { background: var(--muted); }
+
+.two { display: grid; grid-template-columns: minmax(0, 1fr) 230px; gap: 20px; align-items: start; }
+@media (max-width: 760px) { .two { grid-template-columns: minmax(0, 1fr); } }
+.side { display: flex; flex-direction: column; gap: 14px; font-size: 0.85rem; }
+.side h4 { margin: 0 0 6px; font-size: 0.78rem; color: var(--muted); display: flex; justify-content: space-between; }
+.side .opt { display: flex; gap: 6px; align-items: center; padding: 2px 0; }
+.side section { border-bottom: 1px solid var(--line); padding-bottom: 12px; }
+
+.field { display: flex; flex-direction: column; gap: 4px; margin-bottom: 12px; }
+.field label, .lbl { font-weight: 600; font-size: 0.85rem; }
+.field small { color: var(--muted); }
+.inp { border: 1px solid var(--line); background: var(--sunk); border-radius: 6px; padding: 6px 10px; width: 100%; }
+textarea.inp { min-height: 110px; resize: vertical; font-family: var(--f-mono); font-size: 0.82rem; }
+.radio { display: flex; gap: 8px; align-items: flex-start; padding: 6px 0; }
+.radio input { margin-top: 4px; }
+
+.comment { border: 1px solid var(--line); border-radius: 8px; overflow: hidden; }
+.comment .ch { background: var(--sunk); padding: 6px 12px; font-size: 0.82rem; border-bottom: 1px solid var(--line); display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.comment .cb { padding: 10px 12px; white-space: pre-wrap; overflow-wrap: anywhere; }
+.timeline { display: flex; flex-direction: column; gap: 12px; }
+.tl { display: flex; gap: 10px; align-items: flex-start; }
+.tl > .comment { flex: 1; min-width: 0; }
+.ev { font-size: 0.82rem; color: var(--muted); padding-left: 36px; }
+.ev b { color: var(--ink); }
+.rv-APPROVED { color: var(--open); font-weight: 700; } .rv-CHANGES_REQUESTED { color: var(--closed); font-weight: 700; } .rv-COMMENTED { color: var(--muted); font-weight: 700; }
+
+.mergebox { border: 1px solid var(--line); border-radius: 8px; padding: 12px; display: flex; flex-direction: column; gap: 8px; }
+.check { display: flex; gap: 8px; align-items: center; font-size: 0.86rem; }
+.check .ok { color: var(--open); font-weight: 700; } .check .no { color: var(--closed); font-weight: 700; }
+
+.files-table .item { align-items: center; }
+.file-view { padding: 12px 14px; white-space: pre-wrap; font-family: var(--f-mono); font-size: 0.82rem; overflow-x: auto; }
+.readme { padding: 14px 18px; white-space: pre-wrap; overflow-wrap: anywhere; }
+.diff { font-family: var(--f-mono); font-size: 0.8rem; overflow-x: auto; }
+.diff div { padding: 1px 12px; white-space: pre; }
+.diff .a { background: var(--add); color: var(--add-ink); } .diff .d { background: var(--del); color: var(--del-ink); }
+.banner { background: var(--warn-soft); border: 1px solid var(--line); border-radius: 8px; padding: 10px 14px; display: flex; justify-content: space-between; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 12px; font-size: 0.88rem; }
+.dd { position: relative; }
+.dd summary { list-style: none; } .dd summary::-webkit-details-marker { display: none; }
+.dd .menu { position: absolute; z-index: 5; top: calc(100% + 4px); left: 0; width: 280px; max-width: 80vw; background: var(--surface); border: 1px solid var(--line); border-radius: 8px; box-shadow: 0 8px 24px rgba(0,0,0,0.15); padding: 8px; display: flex; flex-direction: column; gap: 4px; }
+.dd .menu .mi { text-align: left; background: none; border: 0; padding: 5px 8px; border-radius: 4px; cursor: pointer; font-family: var(--f-mono); font-size: 0.82rem; }
+.dd .menu .mi:hover { background: var(--accent-soft); }
+.set-grid { display: grid; grid-template-columns: 180px minmax(0, 1fr); gap: 20px; }
+@media (max-width: 700px) { .set-grid { grid-template-columns: minmax(0, 1fr); } }
+.set-nav { display: flex; flex-direction: column; gap: 2px; }
+.set-nav button { text-align: left; background: none; border: 0; padding: 6px 10px; border-radius: 6px; cursor: pointer; }
+.set-nav button.on { background: var(--accent-soft); font-weight: 600; }
+.empty { padding: 26px; text-align: center; color: var(--muted); }
+.subtabs { display: flex; gap: 4px; border-bottom: 1px solid var(--line); margin: 12px 0; }
+h2.pt { font-size: 1.35rem; font-weight: 500; margin: 0 0 6px; overflow-wrap: anywhere; }
+h2.pt span { color: var(--muted); }
+.kv { color: var(--muted); font-size: 0.85rem; }
+.modes { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 4px; background: rgba(255,255,255,0.06); padding: 4px; border-radius: 8px; }
+.modes button { background: none; border: 0; color: var(--rail-ink); padding: 7px 4px; border-radius: 6px; cursor: pointer; font-size: 0.82rem; }
+.modes button.on { background: #2f9a66; font-weight: 700; }
+
+/* VS Code 모드: 의도적으로 어두운 단일 테마 */
+:root { --vs-bg: #1e1f22; --vs-side: #25262a; --vs-act: #2c2d31; --vs-fg: #d4d6da; --vs-dim: #8b9098; --vs-line: #36383d; --vs-inp: #2f3135; --vs-accent: #3b82c4; --vs-status: #2f6aa3; --vs-hover: #2f3238; --g-M: #d7a14a; --g-U: #6cbf7d; --g-D: #e06c6c; }
+.vsc { display: grid; grid-template-columns: 46px 250px minmax(0, 1fr); grid-template-rows: minmax(540px, auto) auto; background: var(--vs-bg); color: var(--vs-fg); font-size: 13px; color-scheme: dark; }
+@media (max-width: 760px) { .vsc { grid-template-columns: 46px minmax(0, 1fr); grid-template-rows: auto minmax(360px, auto) auto; } .vs-act { grid-row: 1 / 3; } .vs-main { grid-column: 2; } }
+.vs-act { background: var(--vs-act); display: flex; flex-direction: column; align-items: center; padding-top: 6px; gap: 2px; }
+.vs-act button { width: 46px; height: 46px; background: none; border: 0; border-left: 2px solid transparent; color: var(--vs-dim); position: relative; cursor: pointer; display: grid; place-items: center; }
+.vs-act button.on { color: var(--vs-fg); border-left-color: var(--vs-accent); }
+.vs-act i { position: absolute; right: 6px; bottom: 7px; background: var(--vs-accent); color: #fff; font-style: normal; font-size: 10px; border-radius: 8px; padding: 0 5px; line-height: 15px; }
+.vs-side { background: var(--vs-side); min-width: 0; overflow: auto; border-right: 1px solid var(--vs-line); }
+.vs-h { display: flex; justify-content: space-between; align-items: center; padding: 8px 12px; font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--vs-dim); }
+.vs-sub { display: flex; justify-content: space-between; align-items: center; padding: 4px 12px; font-size: 11px; font-weight: 700; color: var(--vs-fg); }
+.vs-pad { padding: 6px 12px; }
+.vs-pad p { margin: 0 0 8px; }
+.vs-col { display: flex; flex-direction: column; gap: 6px; }
+.vs-dim { color: var(--vs-dim); }
+.vs-inp { width: 100%; background: var(--vs-inp); border: 1px solid var(--vs-line); color: var(--vs-fg); border-radius: 3px; padding: 5px 8px; font-size: 13px; resize: vertical; }
+.vs-btn { background: var(--vs-accent); color: #fff; border: 0; border-radius: 3px; padding: 6px 10px; cursor: pointer; font-size: 13px; }
+.vs-btn:disabled { opacity: 0.45; cursor: not-allowed; }
+.vs-btn.sm { padding: 2px 8px; font-size: 12px; }
+.vs-link { background: none; border: 0; color: #6ea8e0; cursor: pointer; padding: 0; text-decoration: underline; }
+.vs-mini { background: none; border: 0; color: var(--vs-fg); cursor: pointer; padding: 0 6px; font-size: 14px; border-radius: 3px; }
+.vs-mini:hover, .vs-file:hover, .vs-pi:hover { background: var(--vs-hover); }
+.vs-file { display: flex; align-items: center; gap: 4px; width: 100%; background: none; border: 0; color: var(--vs-fg); text-align: left; padding: 3px 12px 3px 20px; cursor: pointer; font-family: var(--f-mono); font-size: 12.5px; }
+.vs-file > span, .vs-fn { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.vs-fn { background: none; border: 0; color: inherit; text-align: left; cursor: pointer; font: inherit; padding: 0; }
+.vs-file.on { background: #37435a; }
+.vs-file b { font-size: 11px; width: 14px; text-align: center; }
+.g-M { color: var(--g-M); } .g-U { color: var(--g-U); } .g-D { color: var(--g-D); }
+.vs-more summary { list-style: none; cursor: pointer; padding: 0 6px; font-size: 16px; color: var(--vs-fg); }
+.vs-more summary::-webkit-details-marker { display: none; }
+.vs-more .menu { left: auto; right: 0; background: var(--vs-act); border-color: var(--vs-line); }
+.vs-more .menu .mi { color: var(--vs-fg); font-family: var(--f-body); }
+.vs-more .menu .mi:hover { background: var(--vs-hover); }
+.vs-main { position: relative; display: flex; flex-direction: column; min-width: 0; }
+.vs-tabs { display: flex; align-items: center; background: var(--vs-side); border-bottom: 1px solid var(--vs-line); padding-right: 8px; }
+.vs-tab { background: var(--vs-bg); padding: 7px 14px; border-top: 2px solid var(--vs-accent); font-family: var(--f-mono); font-size: 12.5px; }
+.vs-ed { flex: 1; min-height: 320px; width: 100%; background: var(--vs-bg); color: var(--vs-fg); border: 0; padding: 12px 16px; font-family: var(--f-mono); font-size: 13px; line-height: 1.6; resize: none; outline: none; }
+.vs-welcome { margin: auto; text-align: center; padding: 40px 20px; color: var(--vs-dim); }
+.vs-welcome b { font-size: 1.3rem; color: var(--vs-fg); font-weight: 500; }
+.vs-pick { position: absolute; z-index: 6; top: 8px; left: 50%; transform: translateX(-50%); width: min(460px, 92%); background: var(--vs-act); border: 1px solid var(--vs-line); border-radius: 6px; box-shadow: 0 10px 30px rgba(0,0,0,0.45); padding: 6px; display: flex; flex-direction: column; }
+.vs-pi { background: none; border: 0; color: var(--vs-fg); text-align: left; padding: 5px 8px; cursor: pointer; font-family: var(--f-mono); font-size: 12.5px; border-radius: 3px; }
+.vs-pi-h { padding: 4px 8px; font-size: 12px; }
+.vs-toast { position: absolute; right: 12px; bottom: 12px; max-width: min(420px, 90%); background: var(--vs-act); border: 1px solid var(--vs-line); border-left: 3px solid var(--vs-accent); padding: 10px 12px; border-radius: 4px; font-size: 12.5px; box-shadow: 0 6px 20px rgba(0,0,0,0.4); }
+.vs-toast.err { border-left-color: var(--g-D); }
+.vs-status { grid-column: 1 / -1; background: var(--vs-status); color: #fff; display: flex; align-items: center; gap: 2px; font-size: 12px; padding: 0 6px; min-height: 24px; flex-wrap: wrap; }
+.vs-status button { background: none; border: 0; color: #fff; cursor: pointer; padding: 3px 8px; font-size: 12px; }
+.vs-status button:hover { background: rgba(255,255,255,0.16); }
+
+/* 데스크톱 앱 모드 */
+.dk { display: flex; flex-direction: column; min-height: 580px; background: var(--surface); }
+.dk-menu { display: flex; gap: 2px; padding: 2px 8px; background: var(--sunk); border-bottom: 1px solid var(--line); font-size: 0.82rem; }
+.dk-menu summary { padding: 3px 10px; cursor: pointer; border-radius: 4px; list-style: none; }
+.dk-menu summary::-webkit-details-marker { display: none; }
+.dk-menu summary:hover { background: var(--accent-soft); }
+.dk-menu .menu .mi { font-family: var(--f-body); }
+.dk-menu .menu .mi:disabled { opacity: 0.4; cursor: not-allowed; }
+.dk-bar { display: flex; flex-wrap: wrap; background: var(--rail); color: var(--rail-ink); }
+.dk-bar .dd summary { list-style: none; } .dk-bar .dd summary::-webkit-details-marker { display: none; }
+.dk-seg { display: flex; flex-direction: column; align-items: flex-start; padding: 8px 16px; border: 0; border-right: 1px solid rgba(255,255,255,0.12); background: none; color: inherit; cursor: pointer; min-width: 190px; text-align: left; font: inherit; }
+.dk-seg:hover { background: rgba(255,255,255,0.06); }
+.dk-seg small { opacity: 0.7; font-size: 0.72rem; }
+.dk-seg b { font-size: 0.92rem; }
+.dk-bar .menu { color: var(--ink); }
+.dk-body { display: grid; grid-template-columns: 280px minmax(0, 1fr); flex: 1; min-height: 480px; }
+@media (max-width: 760px) { .dk-body { grid-template-columns: minmax(0, 1fr); } .dk-seg { min-width: 0; flex: 1; } }
+.dk-left { border-right: 1px solid var(--line); display: flex; flex-direction: column; min-width: 0; }
+.dk-tabs { display: grid; grid-template-columns: 1fr 1fr; border-bottom: 1px solid var(--line); }
+.dk-tabs button { background: none; border: 0; border-bottom: 2px solid transparent; padding: 8px; cursor: pointer; }
+.dk-tabs button.on { border-bottom-color: var(--accent); font-weight: 600; }
+.dk-list { flex: 1; overflow: auto; min-height: 160px; }
+.dk-row { display: flex; gap: 8px; align-items: center; padding: 5px 10px; font-family: var(--f-mono); font-size: 0.8rem; }
+.dk-row.on { background: var(--accent-soft); }
+.dk-fn { flex: 1; min-width: 0; text-align: left; background: none; border: 0; cursor: pointer; padding: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.dk-hist { display: flex; flex-direction: column; padding: 8px 12px; border-bottom: 1px solid var(--line); font-size: 0.85rem; }
+.dk-commit { border-top: 1px solid var(--line); padding: 10px; display: flex; flex-direction: column; gap: 6px; }
+.dk-right { padding: 16px; min-width: 0; }
+.dk-card { border: 1px solid var(--line); border-radius: 8px; padding: 12px 14px; display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 10px; }
+.dk-empty { padding: 30px 16px; }
+.dk-dialog { max-width: 460px; margin: 0 auto; border: 1px solid var(--line); border-radius: 10px; padding: 16px; background: var(--surface); display: flex; flex-direction: column; gap: 10px; }
+.dk-dialog.wide { max-width: none; }
+.dk-dialog h3 { margin: 0; font-size: 1rem; }
+@media (prefers-reduced-motion: reduce) { .rail .bar i { transition: none; } }
+</style>
+
+<div class="wrap">
+  <div class="top">
+    <div>
+      <h1>연습허브</h1>
+      <p>팀장·동료 요청을 웹 사이트, VS Code, 데스크톱 앱 방식으로 직접 처리해 보는 모의 연습장임. 세 모드는 같은 저장소를 공유하며 실제 GitHub와 연결되지 않음.</p>
+    </div>
+    <button class="btn" id="reset" type="button">처음부터 다시</button>
+  </div>
+  <div class="grid">
+    <aside class="rail" aria-label="업무 요청">
+      <div class="modes" role="group" aria-label="연습 도구"><button type="button" data-mode="web">웹 사이트</button><button type="button" data-mode="vscode">VS Code</button><button type="button" data-mode="desktop">데스크톱 앱</button></div>
+      <div class="prog"><span id="prog-t"></span><div class="bar"><i id="prog-b"></i></div></div>
+      <div class="msg" id="req"></div>
+      <h3>요청 목록</h3>
+      <ul class="qlist" id="qlist"></ul>
+      <h3>알림</h3>
+      <div class="feed" id="feed"></div>
+    </aside>
+    <div class="window">
+      <div class="chrome"><div class="dots"><i></i><i></i><i></i></div><div class="urlbar" id="url"></div></div>
+      <div id="site"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function () {
+  "use strict";
+  var KEY = "practicehub-v1", ME = "나", OWNER = "jeonnam-dev", REPO = "jeonnam-automation";
+  var LABELS = ["bug", "enhancement", "documentation", "question", "good first issue"];
+  var $ = function (id) { return document.getElementById(id); };
+  var clone = function (o) { return JSON.parse(JSON.stringify(o)); };
+  function esc(s) { return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]; }); }
+  function sha() { var s = ""; for (var i = 0; i < 7; i++) s += "0123456789abcdef"[Math.floor(Math.random() * 16)]; return s; }
+
+  function fresh() {
+    return { repo: null, commits: {}, feed: [], quest: null, questDone: 0, flags: {}, mode: "web", track: "web", local: null, lq: null, lqDone: 0,
+      v: { page: "home", tab: "code", branch: "main", sub: null } };
+  }
+  var S = load() || fresh();
+  (function () { var f = fresh(); for (var k in f) if (!(k in S)) S[k] = f[k]; })();
+  function load() { try { var r = localStorage.getItem(KEY); return r ? JSON.parse(r) : null; } catch (e) { return null; } }
+  function save() { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) {} }
+  var flash = null;
+  function err(m) { flash = { t: "err", m: m }; }
+  function ok(m) { flash = { t: "ok", m: m }; }
+  function feed(who, text) { S.feed.unshift({ who: who, text: text }); S.feed = S.feed.slice(0, 8); }
+
+  /* ---------- 저장소 모델 ---------- */
+  var R = function () { return S.repo; };
+  function br(n) { return S.repo.branches[n]; }
+  function aheadOf(head, base) { if (!br(head) || !br(base)) return []; var b = {}; br(base).commits.forEach(function (c) { b[c] = 1; }); return br(head).commits.filter(function (c) { return !b[c]; }); }
+  function addCommit(branch, msg, files, author) {
+    var id = sha(); S.commits[id] = { id: id, msg: msg, author: author || ME, tree: clone(files) };
+    var b = br(branch); b.commits.push(id); b.files = clone(files);
+    S.repo.prs.forEach(function (p) { if (p.state === "open" && p.head === branch) p.timeline.push({ k: "commit", id: id, msg: msg, who: author || ME }); });
+    return id;
+  }
+  function newBranch(name, from) { S.repo.branches[name] = { files: clone(br(from).files), commits: br(from).commits.slice() }; }
+  function collaborators() { return S.repo ? S.repo.collabs.filter(function (c) { return c.ok; }).map(function (c) { return c.who; }) : []; }
+  function people() { return [ME].concat(collaborators()); }
+  function nextNum() { return ++S.repo.num; }
+  function issue(n) { return S.repo.issues.filter(function (i) { return i.num === n; })[0]; }
+  function pr(n) { return S.repo.prs.filter(function (p) { return p.num === n; })[0]; }
+  function latestReviews(p) { var m = {}; p.reviews.forEach(function (r) { if (r.state !== "COMMENTED") m[r.who] = r.state; }); return m; }
+  function approvals(p) { var m = latestReviews(p), n = 0; for (var k in m) if (m[k] === "APPROVED" && k !== p.author) n++; return n; }
+  function changesReq(p) { var m = latestReviews(p); for (var k in m) if (m[k] === "CHANGES_REQUESTED") return k; return null; }
+  function mergeBlock(p) {
+    var out = [], rule = S.repo.rules[p.base];
+    if (!br(p.head)) out.push("head 브랜치가 삭제됨");
+    else if (!aheadOf(p.head, p.base).length) out.push("합칠 새 커밋이 없음");
+    if (rule && rule.requirePR) {
+      if (approvals(p) < rule.approvals) out.push("승인 리뷰 " + rule.approvals + "개 필요 (현재 " + approvals(p) + "개)");
+      if (changesReq(p)) out.push(changesReq(p) + "님이 변경을 요청함 (Changes requested)");
+    }
+    return out;
+  }
+  function closingRefs(text) { var out = [], re = /\b(close[sd]?|fix(?:e[sd])?|resolve[sd]?)\s+#(\d+)/gi, m; while ((m = re.exec(text || ""))) out.push(+m[2]); return out; }
+  function doMerge(p, method) {
+    var base = br(p.base), head = br(p.head), ah = aheadOf(p.head, p.base);
+    var files = Object.assign({}, base.files, head.files);
+    if (method === "merge") { ah.forEach(function (c) { base.commits.push(c); }); addCommit(p.base, "Merge pull request #" + p.num + " from " + OWNER + "/" + p.head, files); }
+    else if (method === "squash") addCommit(p.base, p.title + " (#" + p.num + ")", files);
+    else { ah.forEach(function (c) { var id = sha(); S.commits[id] = clone(S.commits[c]); S.commits[id].id = id; base.commits.push(id); }); base.files = files; }
+    p.state = "merged"; p.method = method; p.mergedBy = ME;
+    p.timeline.push({ k: "ev", who: ME, text: "merged " + ah.length + "개 커밋을 " + p.base + " 에 머지함 (" + { merge: "Merge commit", squash: "Squash and merge", rebase: "Rebase and merge" }[method] + ")" });
+    closingRefs(p.body).forEach(function (n) { var i = issue(n); if (i && i.state === "open") { i.state = "closed"; i.reason = "completed"; i.timeline.push({ k: "ev", who: ME, text: "PR #" + p.num + " 머지로 자동으로 닫힘" }); } });
+  }
+  function makePR(o) {
+    var p = { num: nextNum(), title: o.title, body: o.body || "", base: o.base, head: o.head, author: o.author || ME, state: "open",
+      reviewers: o.reviewers || [], reviews: [], timeline: [], wantChanges: !!o.wantChanges };
+    aheadOf(p.head, p.base).forEach(function (c) { p.timeline.push({ k: "commit", id: c, msg: S.commits[c].msg, who: S.commits[c].author }); });
+    S.repo.prs.push(p); return p;
+  }
+  function makeIssue(o) {
+    var i = { num: nextNum(), title: o.title, body: o.body || "", labels: o.labels || [], assignees: o.assignees || [], author: o.author || ME, state: "open", reason: null, timeline: [] };
+    S.repo.issues.push(i); return i;
+  }
+
+  /* 동료 자동 반응 (리뷰·초대 수락) */
+  var botTimer = null;
+  function scheduleBots() {
+    if (botTimer || !needBots()) return;
+    botTimer = setTimeout(function () { botTimer = null; runBots(); afterChange(true); }, 1100);
+  }
+  function needBots() { return !!S.repo && (S.repo.collabs.some(function (c) { return !c.ok; }) || botPRs().length > 0); }
+  function botPRs() {
+    var out = [];
+    S.repo.prs.forEach(function (p) {
+      if (p.state !== "open" || p.author !== ME) return;
+      p.reviewers.forEach(function (r) {
+        if (r === ME) return;
+        var last = latestReviews(p)[r];
+        if (!last || (last === "CHANGES_REQUESTED" && aheadOf(p.head, p.base).length > p.askedAt)) out.push([p, r]);
+      });
+    });
+    return out;
+  }
+  function runBots() {
+    S.repo.collabs.forEach(function (c) { if (!c.ok) { c.ok = true; feed(c.who, "저장소 초대를 수락함"); } });
+    botPRs().forEach(function (pair) {
+      var p = pair[0], r = pair[1], last = latestReviews(p)[r];
+      if (!last && p.wantChanges && !p.askedAt) {
+        p.askedAt = aheadOf(p.head, p.base).length;
+        var file = Object.keys(br(p.head).files).filter(function (f) { return /\.py$/.test(f); })[0] || "README.md";
+        p.reviews.push({ who: r, state: "CHANGES_REQUESTED", text: file + " 맨 위에 무슨 기능인지 주석 한 줄 추가해 주세요." });
+        p.timeline.push({ k: "review", who: r, state: "CHANGES_REQUESTED", text: file + " 맨 위에 무슨 기능인지 주석 한 줄 추가해 주세요." });
+        feed(r, "PR #" + p.num + " 에 변경 요청(Request changes)을 남김");
+      } else {
+        var t = last ? "반영 확인했습니다. 승인합니다." : "코드 확인했습니다. LGTM, 승인합니다.";
+        p.reviews.push({ who: r, state: "APPROVED", text: t }); p.timeline.push({ k: "review", who: r, state: "APPROVED", text: t });
+        feed(r, "PR #" + p.num + " 를 승인(Approve)함");
+      }
+    });
+  }
+  function teamPR(o) {
+    var who = o.who || "김주무관";
+    newBranch(o.head, "main");
+    var f = clone(br(o.head).files); f[o.file] = o.content;
+    addCommit(o.head, o.msg, f, who);
+    var p = makePR({ title: o.title, body: o.body, base: "main", head: o.head, author: who, reviewers: [ME] });
+    feed(who, "PR #" + p.num + " 를 열고 나를 리뷰어로 지정함");
+    return p;
+  }
+
+  /* ---------- 업무 요청 ---------- */
+  function bugIssue() { return R() && R().issues.filter(function (i) { return /출장비/.test(i.title) && i.labels.indexOf("bug") >= 0 && i.assignees.indexOf(ME) >= 0; })[0]; }
+  function mainPR() { return R() && R().prs.filter(function (p) { return p.head === "fix/travel-expense" && p.base === "main" && p.author === ME; })[0]; }
+  var M = [
+    { t: "레포 만들기", from: "팀장", r: function () { return "근태 자동화 프로젝트 시작합니다. " + REPO + " 이름으로 레포 하나 파 주세요. Private로, README 포함해서요."; },
+      w: "레포(Repository) = 프로젝트 저장소. Private은 초대받은 사람만 볼 수 있음.",
+      s: ["오른쪽 사이트 상단 [+ 새 저장소] 클릭", "Repository name 에 " + REPO + " 입력", "Private 선택, Add a README file 체크", "[Create repository] 클릭"],
+      ok: function () { return !!R() && R().name === REPO && R().private && br("main") && "README.md" in br("main").files; } },
+    { t: "협업자 초대", from: "팀장", r: function () { return "김주무관도 같이 개발할 거라 레포에 Collaborator로 초대해 주세요."; },
+      w: "Private 레포는 Collaborator(협업자)로 초대해야 다른 사람이 접근·리뷰할 수 있음.",
+      s: ["레포의 Settings 탭", "왼쪽 Collaborators 메뉴", "김주무관 선택 후 [Add people]", "잠시 뒤 초대 수락 알림 확인"],
+      ok: function () { return collaborators().indexOf("김주무관") >= 0; } },
+    { t: "main에 직접 커밋", from: "팀장", r: function () { return "README에 '출퇴근 기록 자동 집계 도구' 설명 한 줄 추가해서 main에 바로 커밋해 주세요."; },
+      w: "웹에서도 파일을 고치고 커밋할 수 있음. 지금은 보호 규칙이 없어 main에 직접 커밋 가능함.",
+      s: ["Code 탭에서 README.md 클릭", "[✎ 편집] 클릭 후 내용 한 줄 추가", "Commit changes 영역에서 'main에 바로 커밋' 선택", "[Commit changes] 클릭"],
+      ok: function () { return !!R() && /출퇴근/.test(br("main").files["README.md"] || ""); } },
+    { t: "이슈 등록", from: "팀장", r: function () { return "출장비 계산이 1원씩 틀린다는 제보가 왔어요. '출장비 계산 오류' 이슈 등록하고 라벨 bug, Assignee는 본인으로 지정하세요."; },
+      w: "이슈(Issue) = 할 일·버그·건의 게시판. 라벨로 분류하고 Assignee로 담당자를 정함.",
+      s: ["Issues 탭 → [New issue]", "제목: 출장비 계산 오류", "오른쪽 Assignees 에서 나, Labels 에서 bug 체크", "[Submit new issue]"],
+      ok: function () { return !!bugIssue(); } },
+    { t: "브랜치 따서 작업", from: "팀장", r: function () { return "수정은 main 말고 fix/travel-expense 브랜치 따서 하세요. 그 브랜치에 calc.py 만들어서 커밋까지요."; },
+      w: "브랜치 = main을 건드리지 않는 별도 작업 공간. 웹에선 브랜치 선택 메뉴에서 바로 만들 수 있음.",
+      s: ["Code 탭의 [⎇ main ▾] 클릭", "fix/travel-expense 입력 → [브랜치 만들기]", "그 브랜치에서 [Add file] → 파일명 calc.py, 내용 입력", "'현재 브랜치에 바로 커밋' 으로 [Commit changes]"],
+      ok: function () { return !!R() && (!!br("fix/travel-expense") && "calc.py" in br("fix/travel-expense").files || !!mainPR()); } },
+    { t: "PR 올리기", from: "팀장", r: function () { var b = bugIssue(); return "작업 끝났으면 PR 올려 주세요. base는 main, compare는 fix/travel-expense. 본문에 'Closes #" + (b ? b.num : "이슈번호") + "' 넣어서 이슈랑 연결하고요."; },
+      w: "PR(Pull Request) = '내 브랜치를 main에 합쳐 달라'는 요청서. 본문에 Closes #번호를 쓰면 머지될 때 그 이슈가 자동으로 닫힘.",
+      s: ["Pull requests 탭 → [New pull request] (또는 Code 탭 노란 배너의 [Compare & pull request])", "base: main ← compare: fix/travel-expense", "제목 입력, 본문에 Closes #이슈번호", "[Create pull request]"],
+      ok: function () { var p = mainPR(), b = bugIssue(); return !!p && !!b && closingRefs(p.body).indexOf(b.num) >= 0; } },
+    { t: "리뷰어 지정", from: "팀장", r: function () { return "PR 리뷰어로 김주무관 지정해 주세요."; },
+      w: "리뷰어(Reviewer)는 코드를 보고 승인하거나 수정을 요청하는 사람임. 지정하면 잠시 뒤 김주무관이 리뷰를 남김.",
+      s: ["PR 화면 오른쪽 Reviewers 에서 김주무관 체크", "잠시 기다리면 김주무관 리뷰가 타임라인에 올라옴"],
+      ok: function () { var p = mainPR(); return !!p && p.reviewers.indexOf("김주무관") >= 0 && p.reviews.length > 0; } },
+    { t: "리뷰 반영", from: "김주무관", r: function () { return "리뷰 남겼어요. Request changes 내용대로 고쳐서 같은 브랜치에 커밋 올려 주세요. 그럼 다시 볼게요."; },
+      w: "PR이 열려 있는 동안 head 브랜치에 커밋을 더 올리면 그 PR에 자동으로 반영됨. 새 PR을 만들 필요 없음.",
+      s: ["Code 탭에서 브랜치를 fix/travel-expense 로 전환", "calc.py 클릭 → [✎ 편집] → 맨 위에 # 주석 한 줄 추가", "'현재 브랜치에 바로 커밋' → [Commit changes]", "PR 화면에서 김주무관 승인(Approved) 확인"],
+      ok: function () { var p = mainPR(); return !!p && latestReviews(p)["김주무관"] === "APPROVED"; } },
+    { t: "Squash 머지", from: "팀장", r: function () { return "승인 났네요. Squash and merge로 머지하고, 다 쓴 브랜치는 삭제해 주세요."; },
+      w: "Squash and merge = 브랜치의 여러 커밋을 하나로 합쳐 main에 넣음. 이력이 깔끔해짐. 머지 후 브랜치 삭제는 관례임.",
+      s: ["PR 화면 아래 머지 상자에서 방식 'Squash and merge' 선택", "[Confirm merge]", "[Delete branch] 클릭", "이슈가 자동으로 닫혔는지 확인"],
+      ok: function () { var p = mainPR(); return !!p && p.state === "merged" && !br("fix/travel-expense"); } },
+    { t: "브랜치 보호", from: "팀장", r: function () { return "앞으로 main엔 직접 푸시 금지입니다. main 브랜치 보호 규칙 걸어 주세요. PR 필수, 승인 1명 이상."; },
+      w: "Branch protection rule = 중요 브랜치를 실수로부터 지키는 규칙. 걸면 main 직접 커밋이 막히고 승인 없는 머지도 막힘.",
+      s: ["Settings → Branches", "Branch name pattern: main", "Require a pull request before merging 체크, 승인 수 1", "[Create]"],
+      ok: function () { var r = R() && R().rules.main; return !!r && r.requirePR && r.approvals >= 1; } },
+    { t: "동료 PR 리뷰", from: "김주무관", r: function () { var p = S.flags.teamPr && pr(S.flags.teamPr); return "엑셀 내보내기 PR #" + (p ? p.num : "") + " 올렸어요. Files changed 확인하고 코멘트 달아서 Approve 해 주세요."; },
+      w: "리뷰는 Files changed 탭에서 함. 코멘트·Approve·Request changes 중 하나를 골라 Submit review.",
+      s: ["Pull requests 탭 → 김주무관 PR 클릭", "Files changed 탭에서 변경 내용 확인", "리뷰 칸에 의견 입력, Approve 선택", "[Submit review]"],
+      ok: function () { var p = S.flags.teamPr && pr(S.flags.teamPr); return !!p && p.reviews.some(function (r) { return r.who === ME && r.state === "APPROVED" && r.text.trim(); }); } },
+    { t: "릴리즈 발행", from: "팀장", r: function () { return "1차 버전 배포합니다. main 기준으로 v1.0.0 태그 달아서 릴리즈 발행해 주세요."; },
+      w: "Release = 특정 시점 코드에 버전 태그를 붙여 배포본으로 공개하는 기능.",
+      s: ["Releases 탭 → [Draft a new release]", "Tag: v1.0.0, Target: main", "제목·설명 입력", "[Publish release]"],
+      ok: function () { return !!R() && R().releases.some(function (r) { return r.tag === "v1.0.0"; }); } }
+  ];
+  function current(list) { list = list || M; for (var i = 0; i < list.length; i++) if (!list[i].ok()) return i; return list.length; }
+  function prepare() {
+    if (current() === 10 && !S.flags.teamPr && R() && collaborators().indexOf("김주무관") >= 0) {
+      var p = teamPR({ head: "feature/excel-export", file: "excel.py", content: "# 근태 기록을 엑셀로 내보내기\ndef export(rows):\n    return to_excel(rows)", msg: "엑셀 내보내기 추가", title: "근태 기록 엑셀 내보내기", body: "월말 보고용 엑셀 내보내기 기능입니다. 리뷰 부탁드립니다." });
+      S.flags.teamPr = p.num;
+    }
+  }
+
+  /* 실전 요청 (무작위·무제한) */
+  var FEATS = [["search", "민원 검색"], ["notice", "공지 알림"], ["report", "월간 보고서"], ["budget", "예산 집계"], ["survey", "만족도 조사"], ["calendar", "일정 연동"], ["upload", "첨부 업로드"], ["sms", "문자 발송"]];
+  var ISSUES = [["로그인 후 화면이 하얗게 나옴", "bug"], ["부서별 통계 그래프 추가 건의", "enhancement"], ["사용 설명서에 설치 방법 보완", "documentation"], ["엑셀 파일명 한글 깨짐", "bug"], ["다크 모드 지원 문의", "question"]];
+  function pick(a) { return a[Math.floor(Math.random() * a.length)]; }
+  function freeFeat() { var c = FEATS.filter(function (f) { return !br("feature/" + f[0]) && !R().prs.some(function (p) { return p.head === "feature/" + f[0]; }); }); return c.length ? pick(c) : [pick(FEATS)[0] + R().num, "추가 기능"]; }
+  function newQuest() {
+    var pool = ["issue", "flow", "review", "triage", "release"];
+    if (collaborators().indexOf("이주무관") < 0) pool.push("invite");
+    var last = S.quest && S.quest.type, c = pool.filter(function (x) { return x !== last; });
+    var type = pick(c), q = { type: type, n: S.questDone + 1, startNum: R().num, from: "팀장" };
+    if (type === "issue") {
+      var is = pick(ISSUES), who = pick(people()); q.kw = is[0]; q.label = is[1]; q.who = who;
+      q.r = "'" + is[0] + "' 건 이슈로 등록해 주세요. 라벨 " + is[1] + ", 담당자는 " + who + (who === ME ? "(본인)" : "") + "으로요.";
+      q.w = "이슈 등록 시 라벨·담당자를 바로 지정하면 누가 무엇을 하는지 한눈에 보임.";
+      q.s = ["Issues → [New issue]", "제목: " + is[0], "Assignees: " + who + ", Labels: " + is[1], "[Submit new issue]"];
+    } else if (type === "flow") {
+      var f = freeFeat(); q.br = "feature/" + f[0]; q.file = f[0] + ".py";
+      var rv = collaborators().filter(function (x) { return x !== ME; }); q.rv = rv.indexOf("이주무관") >= 0 ? pick(rv) : "김주무관";
+      q.method = pick(["merge", "squash", "rebase"]);
+      var mn = { merge: "Create a merge commit", squash: "Squash and merge", rebase: "Rebase and merge" }[q.method];
+      q.r = f[1] + " 기능 개발 건입니다. " + q.br + " 브랜치 따서 " + q.file + " 추가하고 PR 올려 주세요. 리뷰어는 " + q.rv + ", 승인 나면 " + mn + "로 머지하고 브랜치 정리까지요.";
+      q.w = "실무의 기본 흐름: 브랜치 → 커밋 → PR → 리뷰 승인 → 머지 → 브랜치 삭제. main이 보호돼 있어 이 순서를 지켜야 함.";
+      q.s = ["Code 탭 [⎇ ▾] 에서 " + q.br + " 생성", "[Add file] → " + q.file + " 작성 → 현재 브랜치에 커밋", "Pull requests → [New pull request] → compare: " + q.br, "Reviewers: " + q.rv + " 지정 → 승인 기다림", "머지 방식 " + mn + " → [Confirm merge] → [Delete branch]"];
+    } else if (type === "review") {
+      var g = freeFeat(), who2 = collaborators().indexOf("이주무관") >= 0 ? pick(["김주무관", "이주무관"]) : "김주무관";
+      var p = teamPR({ who: who2, head: "feature/" + g[0], file: g[0] + ".py", content: "def " + g[0] + "():\n    pass  # TODO", msg: g[1] + " 초안", title: g[1] + " 기능 초안", body: g[1] + " 기능 초안입니다." });
+      q.pr = p.num; q.from = who2; q.mode = pick(["changes", "approve"]);
+      q.r = q.mode === "changes" ? "PR #" + p.num + " 봐 주세요. 아직 TODO만 있는데… 보시고 구현이 비어 있으면 Request changes로 돌려주세요." : "PR #" + p.num + " 리뷰 부탁드려요. 괜찮으면 Approve하고 머지까지 해 주셔도 됩니다.";
+      q.w = q.mode === "changes" ? "Request changes 는 '이대로는 머지 불가, 고쳐 오라'는 리뷰임. 보호 규칙이 있으면 머지가 막힘." : "남의 PR도 승인 후 머지할 수 있음. 머지 방식은 아무거나 가능함.";
+      q.s = q.mode === "changes" ? ["Pull requests → #" + p.num, "Files changed 탭", "의견 입력 후 Request changes 선택 → [Submit review]"] : ["Pull requests → #" + p.num, "Files changed 탭 → Approve 선택 → [Submit review]", "Conversation 탭 머지 상자 → [Confirm merge]"];
+    } else if (type === "triage") {
+      var dup = makeIssue({ title: "로그인 버튼이 안 눌려요", body: "어제부터 안 눌립니다.", author: collaborators()[0] || "김주무관" });
+      var orig = makeIssue({ title: "로그인 버튼 클릭 오류", body: "로그인 버튼이 동작하지 않음", labels: ["bug"], author: ME });
+      q.dup = dup.num; q.orig = orig.num;
+      q.r = "이슈 #" + dup.num + " 은 #" + orig.num + " 이랑 같은 건이네요. 중복이라고 코멘트 남기고 Close as not planned로 닫아 주세요.";
+      q.w = "닫는 이유가 두 가지임: completed(해결함) / not planned(안 하기로 함·중복). 중복은 not planned 로 닫음.";
+      q.s = ["Issues → #" + dup.num, "코멘트 칸에 'Duplicate of #" + orig.num + "' 입력 → [Comment]", "[Close as not planned]"];
+    } else if (type === "release") {
+      var ver = "v1." + R().releases.length + ".0"; q.tag = ver;
+      q.r = "정기 배포입니다. main 기준 " + ver + " 릴리즈 발행해 주세요. 제목은 '" + ver + " 정기 배포'로요.";
+      q.w = "버전은 보통 v주.부.수 형식(Semantic Versioning)으로 붙임. 기능 추가는 가운데 숫자를 올림.";
+      q.s = ["Releases → [Draft a new release]", "Tag: " + ver + ", Target: main", "제목 입력 → [Publish release]"];
+    } else {
+      q.r = "다음 달부터 이주무관도 합류합니다. 레포에 Collaborator로 초대해 주세요.";
+      q.w = "초대한 사람이 수락해야 협업자가 됨. 연습허브에선 잠시 뒤 자동 수락됨.";
+      q.s = ["Settings → Collaborators", "이주무관 선택 → [Add people]"];
+    }
+    S.quest = q;
+  }
+  function questOk(q) {
+    switch (q.type) {
+      case "issue": return R().issues.some(function (i) { return i.num > q.startNum && i.title.indexOf(q.kw) >= 0 && i.labels.indexOf(q.label) >= 0 && i.assignees.indexOf(q.who) >= 0; });
+      case "flow": return R().prs.some(function (p) { return p.head === q.br && p.state === "merged" && p.method === q.method && p.reviews.some(function (r) { return r.who === q.rv && r.state === "APPROVED"; }); }) && !br(q.br);
+      case "review": var p = pr(q.pr); return q.mode === "changes" ? p.reviews.some(function (r) { return r.who === ME && r.state === "CHANGES_REQUESTED"; }) : p.state === "merged" && p.reviews.some(function (r) { return r.who === ME && r.state === "APPROVED"; });
+      case "triage": var i = issue(q.dup); return i.state === "closed" && i.reason === "not_planned" && i.timeline.some(function (t) { return t.k === "comment" && t.who === ME; });
+      case "release": return R().releases.some(function (r) { return r.tag === q.tag; });
+      case "invite": return collaborators().indexOf("이주무관") >= 0;
+    }
+    return false;
+  }
+
+  /* ---------- 요청 레일 렌더 ---------- */
+  var ui = { hint: false, steps: false, key: null, view: null };
+  var TRACK_NAME = { web: "웹 사이트", vscode: "VS Code", desktop: "데스크톱 앱" };
+  function trackList(t) { t = t || S.track; return t === "vscode" ? MV : t === "desktop" ? MD : M; }
+  function isLocalTrack() { return S.track !== "web"; }
+  function renderRail() {
+    Array.prototype.forEach.call(document.querySelectorAll("[data-mode]"), function (b) { var on = b.dataset.mode === S.mode; b.classList.toggle("on", on); b.setAttribute("aria-pressed", on ? "true" : "false"); });
+    var list = trackList(), cur = current(list), done = list.filter(function (m) { return m.ok(); }).length;
+    var extra = isLocalTrack() ? S.lqDone : S.questDone;
+    $("prog-t").textContent = TRACK_NAME[S.track] + " 기본 " + done + "/" + list.length + (extra ? " · 실전 " + extra + "건" : "");
+    $("prog-b").style.width = (done / list.length * 100) + "%";
+    var show = ui.view !== null ? ui.view : cur, item, eyebrow, isDone, key, q;
+    if (show >= list.length) {
+      if (isLocalTrack()) { if (!S.lq) newLocalQuest(); q = S.lq; item = { from: q.from, r: q.r, w: q.w, s: localSteps(q) }; isDone = localQuestOk(q); key = S.track + "lq" + q.n; }
+      else { if (!S.quest) newQuest(); q = S.quest; item = { from: q.from, r: q.r, w: q.w, s: q.s }; isDone = questOk(q); key = "q" + q.n; }
+      eyebrow = TRACK_NAME[S.track] + " · 실전 요청 #" + q.n;
+    } else {
+      var m = list[show]; item = { from: m.from || "팀장", r: m.r(), w: m.w, s: m.s }; eyebrow = TRACK_NAME[S.track] + " · 기본 " + (show + 1) + " · " + m.t; isDone = m.ok(); key = S.track + "m" + show;
+    }
+    if (key !== ui.key) { ui.hint = ui.steps = false; ui.key = key; }
+    var h = '<span class="eyebrow">' + esc(eyebrow) + '</span><span class="who">' + esc(item.from) + '</span><p>' + esc(item.r) + '</p>';
+    h += '<div class="row"><button type="button" class="btn sm" data-rail="hint">' + (ui.hint ? "힌트 닫기" : "힌트 보기") + '</button><button type="button" class="btn sm" data-rail="steps">' + (ui.steps ? "클릭 경로 닫기" : "클릭 경로 보기") + '</button></div>';
+    if (ui.hint) h += '<p class="hint">' + esc(item.w) + '</p>';
+    if (ui.steps) h += '<ol>' + item.s.map(function (s) { return "<li>" + esc(s) + "</li>"; }).join("") + '</ol>';
+    if (show >= list.length) h += '<div class="row">' + (isDone ? '<span class="done-tag">처리 완료</span><button type="button" class="btn go sm" data-rail="next">다음 요청 받기</button>' : '<button type="button" class="btn sm" data-rail="skip">다른 요청으로 바꾸기</button>') + '</div>';
+    else if (isDone) h += '<span class="done-tag">처리 완료</span>';
+    if (S.mode !== S.track) h += '<p class="hint">지금 오른쪽 화면은 ' + TRACK_NAME[S.mode] + ' 모드임. 요청은 ' + TRACK_NAME[S.track] + ' 기준이며, 위 버튼으로 돌아갈 수 있음.</p>';
+    $("req").innerHTML = h;
+    var rows = list.map(function (m, i) { return { t: m.t, ok: m.ok(), i: i }; }).concat([{ t: "실전 요청 (무작위·무제한)", ok: false, i: list.length }]);
+    $("qlist").innerHTML = rows.map(function (x) {
+      return '<li class="' + (x.ok ? "done" : x.i === cur ? "cur" : "") + '"><span class="mk">' + (x.ok ? "✓" : x.i < list.length ? x.i + 1 : "∞") + '</span><button type="button" data-rail="view" data-i="' + x.i + '"' + (x.i === list.length && cur < list.length ? " disabled" : "") + '>' + esc(x.t) + '</button></li>';
+    }).join("");
+    $("feed").innerHTML = S.feed.length ? S.feed.map(function (f) { return "<div><b>" + esc(f.who) + "</b> " + esc(f.text) + "</div>"; }).join("") : "<div>아직 알림 없음</div>";
+  }
+  document.querySelector(".rail").addEventListener("click", function (e) {
+    var md = e.target.closest("[data-mode]");
+    if (md) { S.mode = S.track = md.dataset.mode; ui.view = null; flash = null; return afterChange(); }
+    var b = e.target.closest("[data-rail]"); if (!b) return;
+    var a = b.dataset.rail, loc = isLocalTrack();
+    if (a === "hint") ui.hint = !ui.hint;
+    else if (a === "steps") ui.steps = !ui.steps;
+    else if (a === "next") { if (loc) { S.lqDone++; newLocalQuest(); } else { S.questDone++; newQuest(); } }
+    else if (a === "skip") { if (loc) { var ln = S.lq.n; newLocalQuest(); S.lq.n = ln; } else { var n = S.quest.n; newQuest(); S.quest.n = n; } }
+    else if (a === "view") { var i = +b.dataset.i, L = trackList().length; ui.view = (i === current(trackList()) || i === L) ? null : i; }
+    afterChange();
+  });
+
+  /* ---------- 사이트 렌더 ---------- */
+  var V = function () { return S.v; };
+  function go(o) { Object.assign(S.v, o); flash = null; }
+  var ICON = {
+    issue: '<svg class="ico" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M8 1.5a6.5 6.5 0 1 1 0 13 6.5 6.5 0 0 1 0-13Zm0 1.5a5 5 0 1 0 0 10A5 5 0 0 0 8 3Zm0 3.5a1.5 1.5 0 1 1 0 3 1.5 1.5 0 0 1 0-3Z"/></svg>',
+    pr: '<svg class="ico" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M4 1.5a2 2 0 0 1 .75 3.85v5.3a2 2 0 1 1-1.5 0v-5.3A2 2 0 0 1 4 1.5Zm8 9.15V6a1 1 0 0 0-1-1H9.5v1.8L6.8 4.25 9.5 1.7v1.8H11A2.5 2.5 0 0 1 13.5 6v4.65a2 2 0 1 1-1.5 0Z"/></svg>',
+    file: '<svg class="ico" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M3.5 1h6l3 3v10.5a.5.5 0 0 1-.5.5h-8.5a.5.5 0 0 1-.5-.5v-13a.5.5 0 0 1 .5-.5Zm1 1.5v11h6.5V5H8.5V2.5Z"/></svg>',
+    tag: '<svg class="ico" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M1.5 2.5v5l7 7 6-6-7-7h-5Zm3 1.5a1 1 0 1 1 0 2 1 1 0 0 1 0-2Z"/></svg>'
+  };
+  function av(who) { return '<span class="avatar av-' + esc(who) + '" title="' + esc(who) + '">' + esc(who.slice(0, 1)) + '</span>'; }
+  function labels(ls) { return ls.map(function (l) { return '<span class="label lb-' + (l === "good first issue" ? "good" : l) + '">' + esc(l) + '</span>'; }).join(""); }
+  function url() {
+    var v = V(), u = "practicehub.local/";
+    if (v.page === "new") return u + "new";
+    if (!R() || v.page === "home") return u;
+    u += OWNER + "/" + R().name;
+    var s = v.sub || {};
+    if (v.tab === "code") { if (s.type === "file") u += "/blob/" + v.branch + "/" + s.path; else if (s.type === "edit") u += (s.path ? "/edit/" : "/new/") + v.branch + (s.path ? "/" + s.path : ""); else if (v.branch !== "main") u += "/tree/" + v.branch; }
+    if (v.tab === "issues") u += "/issues" + (s.type === "issue" ? "/" + s.num : s.type === "new" ? "/new" : "");
+    if (v.tab === "pulls") u += s.type === "pr" ? "/pull/" + s.num + (s.files ? "/files" : "") : s.type === "compare" ? "/compare/" + (s.base || "main") + "..." + (s.head || "") : "/pulls";
+    if (v.tab === "releases") u += "/releases" + (s.type === "new" ? "/new" : "");
+    if (v.tab === "settings") u += "/settings" + (s.sec && s.sec !== "general" ? "/" + s.sec : "");
+    return u;
+  }
+  function renderSite() {
+    if (S.mode === "vscode") { $("site").innerHTML = renderVS(); $("url").textContent = (vsState().file ? vsState().file + " — " : "") + (S.local ? R().name : "시작") + " — 연습용 코드 편집기 (VS Code 방식)"; return; }
+    if (S.mode === "desktop") { $("site").innerHTML = renderDesk(); $("url").textContent = "데스크톱 앱 (연습용)" + (S.local ? " — " + R().name : ""); return; }
+    var h = '<div class="hub-top"><button type="button" class="logo" data-act="home"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="11" fill="var(--accent)"/><path d="M8 7v10M8 12h8M16 7v10" stroke="#fff" stroke-width="2.2" fill="none" stroke-linecap="round"/></svg>연습허브</button>' +
+      '<span class="search">검색 (연습판에선 동작 안 함)</span><span style="flex:1"></span><button type="button" class="btn sm" data-act="new-repo">+ 새 저장소</button>' + av(ME) + '</div><div class="page">';
+    if (flash) h += '<div class="flash ' + flash.t + '" role="status">' + esc(flash.m) + '</div>';
+    var v = V();
+    if (v.page === "new") h += pageNew();
+    else if (!R() || v.page === "home") h += pageHome();
+    else h += pageRepo();
+    h += '</div>';
+    $("site").innerHTML = h;
+    $("url").textContent = "https://" + url();
+  }
+
+  function pageHome() {
+    var h = '<div class="two"><div><h2 class="pt">대시보드</h2>';
+    h += '<div class="box"><div class="box-head"><b>내 저장소</b><button type="button" class="btn go sm" data-act="new-repo">New</button></div>';
+    if (R()) h += '<div class="item">' + ICON.file + '<div><button type="button" class="link t" data-act="open-repo">' + OWNER + "/" + esc(R().name) + '</button> <span class="badge">' + (R().private ? "Private" : "Public") + '</span><div class="sub">' + esc(R().desc || "설명 없음") + '</div></div></div>';
+    else h += '<div class="empty">저장소가 없음. [New]로 첫 저장소를 만들어 보기.</div>';
+    h += '</div></div><div class="side"><section><h4>최근 활동</h4>' + (S.feed.length ? S.feed.slice(0, 5).map(function (f) { return "<div>" + esc(f.who) + " " + esc(f.text) + "</div>"; }).join("") : "<div class='kv'>활동 없음</div>") + '</section></div></div>';
+    return h;
+  }
+  function pageNew() {
+    if (R()) return '<h2 class="pt">새 저장소</h2><p class="kv">연습허브는 저장소 1개만 지원함. 이미 ' + esc(R().name) + ' 가 있음. 이름·공개 범위는 Settings에서 바꿀 수 있음.</p><button type="button" class="btn" data-act="open-repo">저장소로 이동</button>';
+    return '<h2 class="pt">Create a new repository</h2><p class="kv">저장소에는 프로젝트의 모든 파일과 변경 이력이 담김.</p>' +
+      '<form data-form="create-repo" style="max-width:560px">' +
+      '<div class="field"><label for="nr-name">Repository name *</label><div class="row"><span class="mono">' + OWNER + ' /</span><input class="inp" id="nr-name" style="flex:1;width:auto" placeholder="예: my-project" required></div><small>영문 소문자·숫자·하이픈 권장</small></div>' +
+      '<div class="field"><label for="nr-desc">Description (선택)</label><input class="inp" id="nr-desc"></div>' +
+      '<div class="lbl">공개 범위</div><label class="radio"><input type="radio" name="nr-vis" id="nr-pub" value="public" checked><span><b>Public</b><br><span class="kv">누구나 볼 수 있음. 커밋 권한은 따로 줌</span></span></label>' +
+      '<label class="radio"><input type="radio" name="nr-vis" id="nr-pri" value="private"><span><b>Private</b><br><span class="kv">나와 초대한 사람만 볼 수 있음</span></span></label>' +
+      '<label class="radio"><input type="checkbox" id="nr-readme"><span><b>Add a README file</b><br><span class="kv">프로젝트 소개 문서. 처음 보는 사람이 가장 먼저 읽음</span></span></label>' +
+      '<div class="row" style="margin-top:12px"><button class="btn go" type="submit">Create repository</button></div></form>';
+  }
+
+  function pageRepo() {
+    var r = R(), v = V();
+    var openI = r.issues.filter(function (i) { return i.state === "open"; }).length, openP = r.prs.filter(function (p) { return p.state === "open"; }).length;
+    var h = '<div class="repo-head"><div class="repo-name">' + ICON.file + '<a data-act="home">' + OWNER + '</a> / <a data-act="tab" data-arg="code"><b>' + esc(r.name) + '</b></a><span class="badge">' + (r.private ? "Private" : "Public") + '</span></div>' +
+      '<div class="row"><button type="button" class="btn sm" data-act="star">' + (r.starred ? "★ Starred" : "☆ Star") + ' <span class="count">' + (r.starred ? 1 : 0) + '</span></button></div></div>';
+    var tabs = [["code", "Code", ""], ["issues", "Issues", openI], ["pulls", "Pull requests", openP], ["releases", "Releases", r.releases.length || ""], ["settings", "Settings", ""]];
+    h += '<nav class="tabs">' + tabs.map(function (t) { return '<button type="button" class="tab' + (v.tab === t[0] ? " on" : "") + '" data-act="tab" data-arg="' + t[0] + '">' + t[1] + (t[2] !== "" ? '<span class="count">' + t[2] + '</span>' : "") + '</button>'; }).join("") + '</nav>';
+    if (!br(v.branch)) v.branch = "main";
+    if (v.tab === "code") h += tabCode();
+    else if (v.tab === "issues") h += tabIssues();
+    else if (v.tab === "pulls") h += tabPulls();
+    else if (v.tab === "releases") h += tabReleases();
+    else h += tabSettings();
+    return h;
+  }
+
+  function branchMenu() {
+    var v = V(), names = Object.keys(R().branches);
+    return '<details class="dd" id="brdd"><summary class="btn">⎇ ' + esc(v.branch) + ' ▾</summary><div class="menu"><b style="font-size:.8rem">브랜치 전환 / 새로 만들기</b>' +
+      '<form data-form="create-branch" class="row"><input class="inp" id="br-new" placeholder="새 브랜치 이름 (예: fix/abc)" style="flex:1;width:auto"><button class="btn sm go" type="submit">브랜치 만들기</button></form>' +
+      '<span class="kv" style="font-size:.75rem">새 브랜치는 현재 브랜치(' + esc(v.branch) + ')에서 따짐</span>' +
+      names.map(function (n) { return '<button type="button" class="mi" data-act="switch-branch" data-arg="' + esc(n) + '">' + (n === v.branch ? "✓ " : "  ") + esc(n) + (n === "main" ? "  (default)" : "") + '</button>'; }).join("") + '</div></details>';
+  }
+  function tabCode() {
+    var v = V(), s = v.sub || {}, b = br(v.branch), h = "";
+    if (s.type === "edit") return editView(s.path);
+    if (s.type === "file") {
+      var c = b.files[s.path];
+      if (c === undefined) { v.sub = null; return tabCode(); }
+      return '<div class="row" style="margin-bottom:10px">' + branchMenu() + '<span class="mono"><button type="button" class="link" data-act="code-root">' + esc(R().name) + '</button> / ' + esc(s.path) + '</span></div>' +
+        '<div class="box"><div class="box-head"><span class="mono">' + esc(s.path) + '</span><div class="row"><button type="button" class="btn sm" data-act="edit-file" data-arg="' + esc(s.path) + '">✎ 편집</button><button type="button" class="btn sm danger" data-act="delete-file" data-arg="' + esc(s.path) + '">삭제</button></div></div><div class="file-view">' + (esc(c) || '<span class="kv">(빈 파일)</span>') + '</div></div>';
+    }
+    Object.keys(R().branches).forEach(function (n) {
+      if (n === "main" || n !== v.branch && !R().recent[n]) return;
+      if (aheadOf(n, "main").length && !R().prs.some(function (p) { return p.head === n && p.state === "open"; }))
+        h += '<div class="banner"><span><b class="mono">' + esc(n) + '</b> 브랜치에 최근 푸시된 커밋이 있음</span><button type="button" class="btn go sm" data-act="compare" data-arg="' + esc(n) + '">Compare &amp; pull request</button></div>';
+    });
+    var names = Object.keys(R().branches), lastId = b.commits[b.commits.length - 1], last = S.commits[lastId];
+    h += '<div class="row" style="justify-content:space-between;margin-bottom:10px"><div class="row">' + branchMenu() + '<span class="kv">' + names.length + ' branches · ' + R().releases.length + ' tags</span></div><button type="button" class="btn sm" data-act="add-file">+ Add file</button></div>';
+    h += '<div class="box files-table"><div class="box-head"><span class="row">' + (last ? av(last.author) + " <b>" + esc(last.author) + "</b> " + esc(last.msg) : "커밋 없음") + '</span><span class="mono kv">' + (last ? last.id + " · " : "") + b.commits.length + ' commits</span></div>';
+    var files = Object.keys(b.files).sort();
+    h += files.length ? files.map(function (f) { return '<div class="item">' + ICON.file + '<button type="button" class="link mono" data-act="open-file" data-arg="' + esc(f) + '">' + esc(f) + '</button></div>'; }).join("") : '<div class="empty">파일이 없음. [+ Add file]로 첫 파일을 만들어 보기.</div>';
+    h += '</div>';
+    if ("README.md" in b.files) h += '<div class="box" style="margin-top:14px"><div class="box-head"><b>README.md</b></div><div class="readme">' + esc(b.files["README.md"]) + '</div></div>';
+    return h;
+  }
+  function editView(path) {
+    var v = V(), b = br(v.branch), isNew = !path, rule = R().rules[v.branch];
+    var h = '<h2 class="pt">' + (isNew ? "새 파일 만들기" : "파일 편집") + ' <span class="mono" style="font-size:.9rem">on ' + esc(v.branch) + '</span></h2>';
+    h += '<form data-form="commit-file">';
+    h += '<div class="field"><label for="ed-name">파일 이름</label><input class="inp mono" id="ed-name" value="' + esc(path || "") + '"' + (isNew ? ' placeholder="예: calc.py"' : " readonly") + ' required></div>';
+    h += '<div class="field"><label for="ed-body">내용</label><textarea class="inp" id="ed-body" rows="8">' + esc(isNew ? "" : b.files[path]) + '</textarea></div>';
+    h += '<div class="box"><div class="box-head"><b>Commit changes</b></div><div style="padding:12px 14px">';
+    h += '<div class="field"><label for="ed-msg">커밋 메시지</label><input class="inp" id="ed-msg" placeholder="' + (isNew ? "Create " : "Update ") + esc(path || "파일명") + '"></div>';
+    h += '<label class="radio"><input type="radio" name="ed-where" id="ed-direct" value="direct" checked><span><b class="mono">' + esc(v.branch) + '</b> 브랜치에 바로 커밋' + (rule && rule.requirePR ? ' <span class="st-closed">(보호 규칙 때문에 불가)</span>' : "") + '</span></label>';
+    h += '<label class="radio"><input type="radio" name="ed-where" id="ed-newbr" value="branch"><span>새 브랜치를 만들어 커밋하고 Pull request 시작<br><input class="inp mono" id="ed-brname" placeholder="새 브랜치 이름" style="margin-top:4px"></span></label>';
+    h += '<div class="row" style="margin-top:8px"><button class="btn go" type="submit">Commit changes</button><button class="btn" type="button" data-act="code-root">Cancel</button></div></div></div></form>';
+    return h;
+  }
+
+  function tabIssues() {
+    var s = V().sub || {};
+    if (s.type === "new") return newIssueView();
+    if (s.type === "issue") return issueView(issue(s.num));
+    var st = s.state || "open", list = R().issues.filter(function (i) { return st === "open" ? i.state === "open" : i.state !== "open"; }).slice().reverse();
+    var nOpen = R().issues.filter(function (i) { return i.state === "open"; }).length;
+    var h = '<div class="row" style="justify-content:flex-end;margin-bottom:10px"><button type="button" class="btn go" data-act="new-issue">New issue</button></div>';
+    h += '<div class="box"><div class="box-head"><div class="row"><button type="button" class="link" data-act="issue-filter" data-arg="open">' + (st === "open" ? "<b>" : "") + nOpen + ' Open' + (st === "open" ? "</b>" : "") + '</button><button type="button" class="link" data-act="issue-filter" data-arg="closed">' + (st !== "open" ? "<b>" : "") + (R().issues.length - nOpen) + ' Closed' + (st !== "open" ? "</b>" : "") + '</button></div></div>';
+    h += list.length ? list.map(function (i) {
+      var cls = i.state === "open" ? "st-open" : i.reason === "not_planned" ? "st-np" : "st-merged";
+      return '<div class="item"><span class="' + cls + '">' + ICON.issue + '</span><div style="min-width:0"><button type="button" class="link t" data-act="open-issue" data-arg="' + i.num + '">' + esc(i.title) + '</button>' + labels(i.labels) + '<div class="sub">#' + i.num + ' · ' + esc(i.author) + ' 작성' + (i.assignees.length ? ' · 담당 ' + i.assignees.map(esc).join(", ") : "") + '</div></div></div>';
+    }).join("") : '<div class="empty">' + (st === "open" ? "열린 이슈가 없음" : "닫힌 이슈가 없음") + '</div>';
+    return h + '</div>';
+  }
+  function pickers(prefix, opts, sel) { return opts.map(function (o) { return '<label class="opt"><input type="checkbox" data-pick="' + prefix + '" value="' + esc(o) + '"' + (sel.indexOf(o) >= 0 ? " checked" : "") + '>' + (prefix.indexOf("lb") >= 0 ? labels([o]) : esc(o)) + '</label>'; }).join(""); }
+  function newIssueView() {
+    return '<form data-form="create-issue"><div class="two"><div><div class="field"><label for="ni-title">Title</label><input class="inp" id="ni-title" required></div>' +
+      '<div class="field"><label for="ni-body">Description</label><textarea class="inp" id="ni-body" placeholder="재현 방법, 기대 결과 등을 적음"></textarea></div><button class="btn go" type="submit">Submit new issue</button></div>' +
+      '<div class="side"><section><h4>Assignees</h4>' + pickers("ni-as", people(), []) + '</section><section><h4>Labels</h4>' + pickers("ni-lb", LABELS, []) + '</section></div></div></form>';
+  }
+  function timelineHTML(tl) {
+    return tl.map(function (t) {
+      if (t.k === "comment") return '<div class="tl">' + av(t.who) + '<div class="comment"><div class="ch"><b>' + esc(t.who) + '</b> commented</div><div class="cb">' + esc(t.text) + '</div></div></div>';
+      if (t.k === "review") return '<div class="tl">' + av(t.who) + '<div class="comment"><div class="ch"><b>' + esc(t.who) + '</b><span class="rv-' + t.state + '">' + { APPROVED: "approved these changes", CHANGES_REQUESTED: "requested changes", COMMENTED: "reviewed" }[t.state] + '</span></div>' + (t.text ? '<div class="cb">' + esc(t.text) + '</div>' : "") + '</div></div>';
+      if (t.k === "commit") return '<div class="ev">● <b>' + esc(t.who) + '</b> 커밋 추가 <span class="mono">' + t.id + '</span> ' + esc(t.msg) + '</div>';
+      return '<div class="ev">● <b>' + esc(t.who) + '</b> ' + esc(t.text) + '</div>';
+    }).join("");
+  }
+  function issueView(i) {
+    if (!i) { V().sub = null; return tabIssues(); }
+    var stc = i.state === "open" ? "open" : i.reason === "not_planned" ? "np" : "merged";
+    var h = '<h2 class="pt">' + esc(i.title) + ' <span>#' + i.num + '</span></h2><div class="row" style="margin-bottom:14px"><span class="state ' + stc + '">' + (i.state === "open" ? "Open" : i.reason === "not_planned" ? "Closed · not planned" : "Closed") + '</span><span class="kv">' + esc(i.author) + ' 작성</span></div>';
+    h += '<div class="two"><div class="timeline"><div class="tl">' + av(i.author) + '<div class="comment"><div class="ch"><b>' + esc(i.author) + '</b> opened</div><div class="cb">' + (esc(i.body) || '<span class="kv">설명 없음</span>') + '</div></div></div>' + timelineHTML(i.timeline);
+    h += '<form data-form="issue-comment" class="tl">' + av(ME) + '<div style="flex:1;min-width:0"><textarea class="inp" id="ic-text" placeholder="코멘트 작성"></textarea><div class="row" style="margin-top:6px;justify-content:flex-end">';
+    if (i.state === "open") h += '<button type="button" class="btn" data-act="close-issue" data-arg="completed">✓ Close as completed</button><button type="button" class="btn" data-act="close-issue" data-arg="not_planned">⊘ Close as not planned</button>';
+    else h += '<button type="button" class="btn" data-act="reopen-issue">Reopen issue</button>';
+    h += '<button class="btn go" type="submit">Comment</button></div></div></form></div>';
+    h += '<div class="side"><section><h4>Assignees</h4>' + pickers("is-as", people(), i.assignees) + '</section><section><h4>Labels</h4>' + pickers("is-lb", LABELS, i.labels) + '</section>';
+    var linked = R().prs.filter(function (p) { return closingRefs(p.body).indexOf(i.num) >= 0; });
+    h += '<section><h4>Development</h4>' + (linked.length ? linked.map(function (p) { return '<button type="button" class="link" data-act="open-pr" data-arg="' + p.num + '">PR #' + p.num + " " + esc(p.title) + '</button>'; }).join("<br>") : '<span class="kv">연결된 PR 없음</span>') + '</section></div></div>';
+    return h;
+  }
+
+  function tabPulls() {
+    var s = V().sub || {};
+    if (s.type === "compare") return compareView(s);
+    if (s.type === "pr") return prView(pr(s.num), s.files);
+    var st = s.state || "open", list = R().prs.filter(function (p) { return st === "open" ? p.state === "open" : p.state !== "open"; }).slice().reverse();
+    var nOpen = R().prs.filter(function (p) { return p.state === "open"; }).length;
+    var h = '<div class="row" style="justify-content:flex-end;margin-bottom:10px"><button type="button" class="btn go" data-act="compare">New pull request</button></div>';
+    h += '<div class="box"><div class="box-head"><div class="row"><button type="button" class="link" data-act="pr-filter" data-arg="open">' + (st === "open" ? "<b>" : "") + nOpen + ' Open' + (st === "open" ? "</b>" : "") + '</button><button type="button" class="link" data-act="pr-filter" data-arg="closed">' + (st !== "open" ? "<b>" : "") + (R().prs.length - nOpen) + ' Closed' + (st !== "open" ? "</b>" : "") + '</button></div></div>';
+    h += list.length ? list.map(function (p) {
+      var rs = latestReviews(p), rvs = Object.keys(rs).map(function (k) { return rs[k] === "APPROVED" ? "승인됨" : "변경 요청됨"; });
+      return '<div class="item"><span class="st-' + (p.state === "open" ? "open" : p.state === "merged" ? "merged" : "closed") + '">' + ICON.pr + '</span><div style="min-width:0"><button type="button" class="link t" data-act="open-pr" data-arg="' + p.num + '">' + esc(p.title) + '</button><div class="sub">#' + p.num + ' · ' + esc(p.author) + ' · <span class="mono">' + esc(p.base) + ' ← ' + esc(p.head) + '</span>' + (rvs.length ? " · " + rvs[rvs.length - 1] : p.reviewers.length ? " · 리뷰 대기" : "") + '</div></div></div>';
+    }).join("") : '<div class="empty">' + (st === "open" ? "열린 PR이 없음. 브랜치에서 작업한 뒤 [New pull request]로 올려 보기." : "닫힌 PR이 없음") + '</div>';
+    return h + '</div>';
+  }
+  function diffHTML(baseFiles, headFiles) {
+    var keys = Object.keys(Object.assign({}, baseFiles, headFiles)).sort().filter(function (k) { return baseFiles[k] !== headFiles[k]; });
+    if (!keys.length) return '<div class="empty">변경된 파일이 없음</div>';
+    return keys.map(function (k) {
+      var h = '<div class="box" style="margin-bottom:10px"><div class="box-head"><span class="mono">' + esc(k) + '</span><span class="kv">' + (!(k in baseFiles) ? "새 파일" : !(k in headFiles) ? "삭제" : "수정") + '</span></div><div class="diff">';
+      var a = k in baseFiles ? baseFiles[k].split("\n") : [], b = k in headFiles ? headFiles[k].split("\n") : [];
+      var sameTop = 0; while (sameTop < a.length && sameTop < b.length && a[sameTop] === b[sameTop]) sameTop++;
+      for (var i = 0; i < sameTop; i++) h += '<div>  ' + esc(a[i]) + '</div>';
+      a.slice(sameTop).forEach(function (l) { h += '<div class="d">- ' + esc(l) + '</div>'; });
+      b.slice(sameTop).forEach(function (l) { h += '<div class="a">+ ' + esc(l) + '</div>'; });
+      return h + '</div></div>';
+    }).join("");
+  }
+  function compareView(s) {
+    var names = Object.keys(R().branches), base = s.base || "main", head = s.head || names.filter(function (n) { return n !== base; })[0] || "";
+    var opt = function (sel) { return names.map(function (n) { return '<option' + (n === sel ? " selected" : "") + '>' + esc(n) + '</option>'; }).join(""); };
+    var h = '<h2 class="pt">Compare changes</h2><p class="kv">합칠 브랜치를 고름. 화살표 방향으로 compare 의 변경이 base 로 들어감.</p>';
+    h += '<div class="box" style="margin-bottom:14px"><div class="box-head"><div class="row"><label class="row">base: <select class="inp" id="cmp-base" data-change="cmp" style="width:auto">' + opt(base) + '</select></label><span>←</span><label class="row">compare: <select class="inp" id="cmp-head" data-change="cmp" style="width:auto"><option value="">브랜치 선택</option>' + opt(head) + '</select></label></div></div>';
+    var ah = head && br(head) ? aheadOf(head, base) : [];
+    var exist = R().prs.filter(function (p) { return p.state === "open" && p.base === base && p.head === head; })[0];
+    if (!head) h += '<div class="empty">compare 브랜치를 선택함. 브랜치가 main 하나뿐이면 먼저 Code 탭에서 브랜치를 만들어야 함.</div></div>';
+    else if (head === base) h += '<div class="empty">같은 브랜치끼리는 비교할 수 없음</div></div>';
+    else if (!ah.length) h += '<div class="empty">' + esc(head) + ' 에 ' + esc(base) + ' 보다 앞선 커밋이 없음. 먼저 그 브랜치에 커밋해야 함.</div></div>';
+    else if (exist) h += '<div class="empty">이미 열린 PR이 있음 → <button type="button" class="link" data-act="open-pr" data-arg="' + exist.num + '">#' + exist.num + ' ' + esc(exist.title) + '</button></div></div>';
+    else {
+      h += '<div style="padding:10px 14px" class="st-open">✓ Able to merge. ' + ah.length + '개 커밋을 합칠 수 있음</div></div>';
+      var revOpts = collaborators();
+      h += '<form data-form="create-pr"><div class="two"><div><div class="field"><label for="pr-title">Title</label><input class="inp" id="pr-title" required value="' + esc(s.title || S.commits[ah[ah.length - 1]].msg) + '"></div>' +
+        '<div class="field"><label for="pr-body">Description</label><textarea class="inp" id="pr-body" placeholder="무엇을 왜 바꿨는지. 이슈 연결: Closes #번호">' + esc(s.body || "") + '</textarea><small>Closes #번호 / Fixes #번호 를 쓰면 머지 시 해당 이슈가 자동으로 닫힘</small></div>' +
+        '<button class="btn go" type="submit">Create pull request</button></div><div class="side"><section><h4>Reviewers</h4>' + (revOpts.length ? pickers("pr-rv", revOpts, []) : '<span class="kv">협업자가 없음 (Settings → Collaborators)</span>') + '</section></div></div></form>';
+      h += '<h3 style="font-size:.95rem;margin:18px 0 8px">변경 파일</h3>' + diffHTML(br(base).files, br(head).files);
+    }
+    return h;
+  }
+  function prView(p, filesTab) {
+    if (!p) { V().sub = null; return tabPulls(); }
+    var stc = p.state === "open" ? "open" : p.state === "merged" ? "merged" : "closed", ah = br(p.head) ? aheadOf(p.head, p.base) : [];
+    var h = '<h2 class="pt">' + esc(p.title) + ' <span>#' + p.num + '</span></h2><div class="row" style="margin-bottom:6px"><span class="state ' + stc + '">' + { open: "Open", merged: "Merged", closed: "Closed" }[stc] + '</span><span class="kv"><b>' + esc(p.author) + '</b> 님이 <span class="mono">' + esc(p.head) + '</span> → <span class="mono">' + esc(p.base) + '</span> ' + (p.state === "merged" ? "머지 완료" : "머지 요청") + '</span></div>';
+    h += '<div class="subtabs"><button type="button" class="tab' + (filesTab ? "" : " on") + '" data-act="pr-tab" data-arg="conv">Conversation</button><button type="button" class="tab' + (filesTab ? " on" : "") + '" data-act="pr-tab" data-arg="files">Files changed</button></div>';
+    if (filesTab) {
+      h += p.state === "open" && br(p.head) ? diffHTML(br(p.base).files, br(p.head).files) : '<div class="empty">' + (p.state === "merged" ? "이미 머지됨" : "닫힌 PR") + '</div>';
+      if (p.state === "open") {
+        var own = p.author === ME;
+        h += '<form data-form="review" class="box" style="margin-top:14px"><div class="box-head"><b>Review changes</b></div><div style="padding:12px 14px"><textarea class="inp" id="rv-text" placeholder="리뷰 의견"></textarea>' +
+          '<label class="radio"><input type="radio" name="rv-kind" value="COMMENTED" checked><span><b>Comment</b> · 의견만 남김</span></label>' +
+          '<label class="radio"><input type="radio" name="rv-kind" value="APPROVED"' + (own ? " disabled" : "") + '><span><b>Approve</b> · 머지해도 좋다고 승인' + (own ? ' <span class="kv">(내 PR은 직접 승인 불가)</span>' : "") + '</span></label>' +
+          '<label class="radio"><input type="radio" name="rv-kind" value="CHANGES_REQUESTED"' + (own ? " disabled" : "") + '><span><b>Request changes</b> · 고쳐야 머지 가능</span></label>' +
+          '<button class="btn go" type="submit">Submit review</button></div></form>';
+      }
+      return h;
+    }
+    h += '<div class="two"><div class="timeline"><div class="tl">' + av(p.author) + '<div class="comment"><div class="ch"><b>' + esc(p.author) + '</b> opened' + (p.author === ME && p.state === "open" ? ' <span style="flex:1"></span><button type="button" class="btn sm" data-act="edit-pr-body">본문 편집</button>' : "") + '</div>';
+    if (ui.editBody === p.num) h += '<form data-form="pr-body" style="padding:10px"><textarea class="inp" id="pb-text">' + esc(p.body) + '</textarea><div class="row" style="margin-top:6px"><button class="btn go sm" type="submit">저장</button><button class="btn sm" type="button" data-act="edit-pr-body">취소</button></div></form>';
+    else h += '<div class="cb">' + (esc(p.body) || '<span class="kv">설명 없음</span>') + '</div>';
+    h += '</div></div>' + timelineHTML(p.timeline);
+    if (p.state === "open") {
+      var blocks = mergeBlock(p), rule = R().rules[p.base];
+      h += '<div class="mergebox">';
+      if (rule && rule.requirePR) h += '<div class="check">' + (approvals(p) >= rule.approvals && !changesReq(p) ? '<span class="ok">✓</span> 리뷰 승인 조건 충족' : '<span class="no">✕</span> 리뷰 승인 필요 (보호 규칙: 승인 ' + rule.approvals + '명)') + '</div>';
+      h += '<div class="check">' + (ah.length ? '<span class="ok">✓</span> 충돌 없음 · ' + ah.length + '개 커밋' : '<span class="no">✕</span> 합칠 커밋 없음') + '</div>';
+      blocks.forEach(function (b) { h += '<div class="check kv">· ' + esc(b) + '</div>'; });
+      h += '<form data-form="merge" class="row"><select class="inp" id="mg-method" style="width:auto"><option value="merge">Create a merge commit</option><option value="squash">Squash and merge</option><option value="rebase">Rebase and merge</option></select><button class="btn go" type="submit"' + (blocks.length ? " disabled" : "") + '>Confirm merge</button><button type="button" class="btn" data-act="close-pr">Close pull request</button></form></div>';
+    } else if (p.state === "merged" && br(p.head)) {
+      h += '<div class="mergebox"><div class="check"><span class="ok st-merged">✓</span> 머지 완료. 다 쓴 브랜치는 삭제해도 안전함</div><div><button type="button" class="btn" data-act="delete-branch" data-arg="' + esc(p.head) + '">Delete branch</button></div></div>';
+    } else if (p.state === "merged") h += '<div class="ev">● 브랜치 <span class="mono">' + esc(p.head) + '</span> 삭제됨</div>';
+    else if (p.state === "closed" && br(p.head)) h += '<div><button type="button" class="btn" data-act="reopen-pr">Reopen pull request</button></div>';
+    h += '<form data-form="pr-comment" class="tl">' + av(ME) + '<div style="flex:1;min-width:0"><textarea class="inp" id="pc-text" placeholder="코멘트 작성"></textarea><div class="row" style="margin-top:6px;justify-content:flex-end"><button class="btn go" type="submit">Comment</button></div></div></form></div>';
+    var cands = people().filter(function (x) { return x !== p.author; }), rs = latestReviews(p);
+    h += '<div class="side"><section><h4>Reviewers</h4>' + (cands.length ? cands.map(function (c) {
+      return '<label class="opt"><input type="checkbox" data-pick="pr-reviewer" value="' + esc(c) + '"' + (p.reviewers.indexOf(c) >= 0 ? " checked" : "") + (p.state !== "open" ? " disabled" : "") + '>' + esc(c) + (rs[c] ? ' <span class="rv-' + rs[c] + '">' + (rs[c] === "APPROVED" ? "✓" : "✕") + '</span>' : p.reviewers.indexOf(c) >= 0 ? ' <span class="kv">대기</span>' : "") + '</label>';
+    }).join("") : '<span class="kv">지정할 협업자가 없음</span>') + '</section>';
+    var refs = closingRefs(p.body);
+    h += '<section><h4>Development</h4>' + (refs.length ? refs.map(function (n) { var i = issue(n); return i ? '<button type="button" class="link" data-act="open-issue" data-arg="' + n + '">#' + n + " " + esc(i.title) + '</button>' : "#" + n + " (없는 이슈)"; }).join("<br>") + '<div class="kv">머지 시 자동으로 닫힘</div>' : '<span class="kv">본문에 Closes #번호 를 쓰면 이슈가 연결됨</span>') + '</section></div></div>';
+    return h;
+  }
+
+  function tabReleases() {
+    var s = V().sub || {};
+    if (s.type === "new") {
+      var names = Object.keys(R().branches);
+      return '<h2 class="pt">Draft a new release</h2><form data-form="release" style="max-width:560px"><div class="field"><label for="rl-tag">Tag</label><input class="inp mono" id="rl-tag" placeholder="v1.0.0" required><small>버전 형식: v주.부.수 (예: v1.2.0)</small></div>' +
+        '<div class="field"><label for="rl-target">Target</label><select class="inp" id="rl-target">' + names.map(function (n) { return "<option>" + esc(n) + "</option>"; }).join("") + '</select></div>' +
+        '<div class="field"><label for="rl-title">Release title</label><input class="inp" id="rl-title"></div><div class="field"><label for="rl-notes">Release notes</label><textarea class="inp" id="rl-notes" placeholder="이번 버전에 바뀐 점"></textarea></div><button class="btn go" type="submit">Publish release</button></form>';
+    }
+    var h = '<div class="row" style="justify-content:flex-end;margin-bottom:10px"><button type="button" class="btn go" data-act="new-release">Draft a new release</button></div><div class="box">';
+    h += R().releases.length ? R().releases.slice().reverse().map(function (r, i) { return '<div class="item">' + ICON.tag + '<div><span class="t">' + esc(r.title || r.tag) + '</span>' + (i === 0 ? ' <span class="label lb-good">Latest</span>' : "") + '<div class="sub mono">' + esc(r.tag) + ' · ' + esc(r.target) + ' @ ' + r.commit + '</div>' + (r.notes ? '<div class="sub" style="white-space:pre-wrap">' + esc(r.notes) + '</div>' : "") + '</div></div>'; }).join("") : '<div class="empty">릴리즈가 없음</div>';
+    return h + '</div>';
+  }
+  function tabSettings() {
+    var s = V().sub || {}, sec = s.sec || "general", r = R();
+    var h = '<div class="set-grid"><nav class="set-nav">' + [["general", "General"], ["collab", "Collaborators"], ["branches", "Branches"]].map(function (x) { return '<button type="button" class="' + (sec === x[0] ? "on" : "") + '" data-act="set-sec" data-arg="' + x[0] + '">' + x[1] + '</button>'; }).join("") + '</nav><div>';
+    if (sec === "general") {
+      h += '<h2 class="pt">General</h2><form data-form="rename" class="field" style="max-width:420px"><label for="st-name">Repository name</label><div class="row"><input class="inp" id="st-name" value="' + esc(r.name) + '" style="flex:1;width:auto"><button class="btn" type="submit">Rename</button></div></form>';
+      h += '<div class="field"><span class="lbl">Visibility</span><div class="row"><span>현재 <b>' + (r.private ? "Private" : "Public") + '</b></span><button type="button" class="btn danger sm" data-act="toggle-vis">' + (r.private ? "Public으로 변경" : "Private으로 변경") + '</button></div></div>';
+    } else if (sec === "collab") {
+      var cand = ["김주무관", "이주무관"].filter(function (c) { return !r.collabs.some(function (x) { return x.who === c; }); });
+      h += '<h2 class="pt">Collaborators</h2><p class="kv">초대받은 사람은 이 저장소에 푸시하고 PR을 리뷰할 수 있음.</p>';
+      h += '<div class="box" style="margin-bottom:14px">' + (r.collabs.length ? r.collabs.map(function (c) { return '<div class="item">' + av(c.who) + '<div><b>' + esc(c.who) + '</b><div class="sub">' + (c.ok ? "Collaborator" : "초대 수락 대기 중…") + '</div></div><span style="flex:1"></span><button type="button" class="btn sm danger" data-act="remove-collab" data-arg="' + esc(c.who) + '">Remove</button></div>'; }).join("") : '<div class="empty">아직 협업자가 없음</div>') + '</div>';
+      h += cand.length ? '<form data-form="invite" class="row"><select class="inp" id="iv-who" style="width:auto">' + cand.map(function (c) { return "<option>" + c + "</option>"; }).join("") + '</select><button class="btn go" type="submit">Add people</button></form>' : '<span class="kv">초대할 수 있는 팀원을 모두 초대함</span>';
+    } else {
+      h += '<h2 class="pt">Branch protection rules</h2><p class="kv">중요 브랜치에 규칙을 걸어 직접 커밋과 승인 없는 머지를 막음.</p><div class="box" style="margin-bottom:14px">';
+      var rk = Object.keys(r.rules);
+      h += rk.length ? rk.map(function (k) { return '<div class="item"><div><b class="mono">' + esc(k) + '</b><div class="sub">' + (r.rules[k].requirePR ? "PR 필수 · 승인 " + r.rules[k].approvals + "명" : "규칙 없음") + '</div></div><span style="flex:1"></span><button type="button" class="btn sm danger" data-act="delete-rule" data-arg="' + esc(k) + '">Delete</button></div>'; }).join("") : '<div class="empty">보호 규칙 없음</div>';
+      h += '</div><form data-form="rule" class="box"><div class="box-head"><b>Add branch protection rule</b></div><div style="padding:12px 14px"><div class="field"><label for="rl-pat">Branch name pattern</label><input class="inp mono" id="rl-pat" placeholder="main" required></div>' +
+        '<label class="radio"><input type="checkbox" id="rl-pr"><span><b>Require a pull request before merging</b><br><span class="kv">직접 커밋 금지, PR로만 변경</span></span></label>' +
+        '<div class="field" style="padding-left:26px"><label for="rl-n">Required approvals</label><select class="inp" id="rl-n" style="width:auto"><option>1</option><option>2</option></select></div><button class="btn go" type="submit">Create</button></div></form>';
+    }
+    return h + '</div></div>';
+  }
+
+  /* ---------- 사이트 동작 ---------- */
+  var site = $("site");
+  site.addEventListener("click", function (e) {
+    var t = e.target.closest("[data-act]"); if (!t) return;
+    var a = t.dataset.act, arg = t.dataset.arg, v = V(), r = R();
+    if (a === "home") go({ page: "home" });
+    else if (a === "new-repo") go({ page: "new" });
+    else if (a === "open-repo") go({ page: "repo", tab: "code", sub: null });
+    else if (a === "tab") go({ page: "repo", tab: arg, sub: null });
+    else if (a === "star") r.starred = !r.starred;
+    else if (a === "switch-branch") go({ branch: arg, sub: null });
+    else if (a === "code-root") go({ sub: null });
+    else if (a === "open-file") go({ sub: { type: "file", path: arg } });
+    else if (a === "edit-file") go({ sub: { type: "edit", path: arg } });
+    else if (a === "add-file") go({ sub: { type: "edit", path: null } });
+    else if (a === "delete-file") {
+      if (blockedDirect(v.branch)) return afterChange();
+      var f = clone(br(v.branch).files); delete f[arg]; addCommit(v.branch, "Delete " + arg, f); R().recent[v.branch] = 1; go({ sub: null }); ok(arg + " 삭제 커밋 완료");
+    }
+    else if (a === "compare") go({ tab: "pulls", sub: { type: "compare", base: "main", head: arg || "" } });
+    else if (a === "new-issue") go({ sub: { type: "new" } });
+    else if (a === "open-issue") go({ tab: "issues", sub: { type: "issue", num: +arg } });
+    else if (a === "issue-filter") go({ sub: { state: arg } });
+    else if (a === "pr-filter") go({ sub: { state: arg } });
+    else if (a === "close-issue" || a === "reopen-issue") {
+      var i = issue(v.sub.num), txt = $("ic-text").value.trim();
+      if (txt) i.timeline.push({ k: "comment", who: ME, text: txt });
+      if (a === "close-issue") { i.state = "closed"; i.reason = arg; i.timeline.push({ k: "ev", who: ME, text: arg === "completed" ? "이슈를 닫음 (completed)" : "이슈를 닫음 (not planned)" }); }
+      else { i.state = "open"; i.reason = null; i.timeline.push({ k: "ev", who: ME, text: "이슈를 다시 엶" }); }
+    }
+    else if (a === "open-pr") go({ tab: "pulls", sub: { type: "pr", num: +arg } });
+    else if (a === "pr-tab") { v.sub.files = arg === "files"; flash = null; }
+    else if (a === "edit-pr-body") ui.editBody = ui.editBody === v.sub.num ? null : v.sub.num;
+    else if (a === "close-pr") { var p = pr(v.sub.num); p.state = "closed"; p.timeline.push({ k: "ev", who: ME, text: "PR을 머지하지 않고 닫음" }); }
+    else if (a === "reopen-pr") { var p2 = pr(v.sub.num); p2.state = "open"; p2.timeline.push({ k: "ev", who: ME, text: "PR을 다시 엶" }); }
+    else if (a === "delete-branch") {
+      delete r.branches[arg]; delete r.recent[arg]; if (v.branch === arg) v.branch = "main";
+      var pm = pr(v.sub.num); if (pm) pm.timeline.push({ k: "ev", who: ME, text: arg + " 브랜치를 삭제함" }); ok(arg + " 브랜치 삭제됨");
+    }
+    else if (a === "new-release") go({ sub: { type: "new" } });
+    else if (a === "set-sec") go({ sub: { sec: arg } });
+    else if (a === "toggle-vis") r.private = !r.private;
+    else if (a === "remove-collab") r.collabs = r.collabs.filter(function (c) { return c.who !== arg; });
+    else if (a === "delete-rule") delete r.rules[arg];
+    else return;
+    afterChange();
+  });
+  site.addEventListener("change", function (e) {
+    var t = e.target;
+    if (t.dataset.change === "cmp") {
+      var tt = $("pr-title"), bb = $("pr-body");
+      go({ sub: { type: "compare", base: $("cmp-base").value, head: $("cmp-head").value, title: tt ? tt.value : "", body: bb ? bb.value : "" } });
+      afterChange(); return;
+    }
+    var pk = t.dataset.pick; if (!pk) return;
+    var v = V();
+    if (pk === "is-as" || pk === "is-lb") {
+      var i = issue(v.sub.num), arr = pk === "is-as" ? i.assignees : i.labels;
+      if (t.checked) { arr.push(t.value); i.timeline.push({ k: "ev", who: ME, text: (pk === "is-as" ? "담당자 지정: " : "라벨 추가: ") + t.value }); }
+      else { arr.splice(arr.indexOf(t.value), 1); i.timeline.push({ k: "ev", who: ME, text: (pk === "is-as" ? "담당자 해제: " : "라벨 제거: ") + t.value }); }
+      afterChange();
+    } else if (pk === "pr-reviewer") {
+      var p = pr(v.sub.num);
+      if (t.checked) { p.reviewers.push(t.value); p.timeline.push({ k: "ev", who: ME, text: t.value + " 님에게 리뷰를 요청함" }); }
+      else p.reviewers.splice(p.reviewers.indexOf(t.value), 1);
+      afterChange();
+    }
+  });
+  function picked(name) { return Array.prototype.slice.call(site.querySelectorAll('[data-pick="' + name + '"]:checked')).map(function (x) { return x.value; }); }
+  function blockedDirect(branch) {
+    var rule = R().rules[branch];
+    if (rule && rule.requirePR) { err("'" + branch + "' 브랜치는 보호 규칙(PR 필수) 때문에 직접 커밋할 수 없음. 새 브랜치에 커밋한 뒤 PR을 올려야 함."); return true; }
+    return false;
+  }
+  site.addEventListener("submit", function (e) {
+    var f = e.target.closest("[data-form]"); if (!f) return;
+    e.preventDefault();
+    var k = f.dataset.form, v = V(), r = R();
+    if (k === "create-repo") {
+      var name = $("nr-name").value.trim();
+      if (!/^[\w.-]+$/.test(name)) { err("저장소 이름에는 영문·숫자·- _ . 만 쓸 수 있음"); return afterChange(); }
+      var priv = $("nr-pri").checked, readme = $("nr-readme").checked;
+      S.repo = { name: name, desc: $("nr-desc").value.trim(), private: priv, branches: { main: { files: {}, commits: [] } }, issues: [], prs: [], releases: [], collabs: [], rules: {}, num: 0, starred: false, recent: {} };
+      if (readme) addCommit("main", "Initial commit", { "README.md": "# " + name + (S.repo.desc ? "\n" + S.repo.desc : "") });
+      go({ page: "repo", tab: "code", branch: "main", sub: null }); ok("저장소 " + name + " 생성됨");
+    } else if (k === "create-branch") {
+      var nb = $("br-new").value.trim();
+      if (!/^[\w.\-\/]+$/.test(nb)) err("브랜치 이름에는 영문·숫자·- _ . / 만 쓸 수 있음");
+      else if (br(nb)) err("이미 있는 브랜치임: " + nb);
+      else if (!br(v.branch).commits.length) err("커밋이 하나도 없는 저장소에선 브랜치를 만들 수 없음. 먼저 파일을 커밋해야 함.");
+      else { newBranch(nb, v.branch); go({ branch: nb, sub: null }); ok(v.branch + " 에서 " + nb + " 브랜치를 만들고 이동함"); S.v.branch = nb; }
+    } else if (k === "commit-file") {
+      var path = $("ed-name").value.trim(), body = $("ed-body").value, msg = $("ed-msg").value.trim(), toNew = $("ed-newbr").checked;
+      var isNew = !v.sub.path;
+      if (!path) { err("파일 이름을 입력해야 함"); return afterChange(); }
+      if (isNew && path in br(v.branch).files) { err("이미 같은 이름의 파일이 있음. 기존 파일은 편집 기능을 씀."); return afterChange(); }
+      msg = msg || (isNew ? "Create " : "Update ") + path;
+      var target = v.branch;
+      if (toNew) {
+        var nbn = $("ed-brname").value.trim();
+        if (!/^[\w.\-\/]+$/.test(nbn) || br(nbn)) { err(br(nbn) ? "이미 있는 브랜치임" : "새 브랜치 이름을 입력해야 함"); return afterChange(); }
+        if (!br(v.branch).commits.length) { err("빈 저장소에선 브랜치를 만들 수 없음"); return afterChange(); }
+        newBranch(nbn, v.branch); target = nbn;
+      } else if (blockedDirect(target)) return afterChange();
+      else if (!isNew && br(target).files[path] === body) { err("바뀐 내용이 없음"); return afterChange(); }
+      var files = clone(br(target).files); files[path] = body;
+      var cid = addCommit(target, msg, files); r.recent[target] = 1;
+      if (toNew) { go({ branch: target, tab: "pulls", sub: { type: "compare", base: v.branch === target ? "main" : S.v.branch, head: target } }); S.v.sub.base = "main"; ok("새 브랜치 " + target + " 에 커밋함. 이어서 PR을 작성함."); }
+      else { go({ sub: { type: "file", path: path } }); ok(target + " 에 커밋함 (" + cid + ")"); }
+    } else if (k === "create-issue") {
+      var ni = makeIssue({ title: $("ni-title").value.trim(), body: $("ni-body").value.trim(), assignees: picked("ni-as"), labels: picked("ni-lb") });
+      go({ sub: { type: "issue", num: ni.num } }); ok("이슈 #" + ni.num + " 등록됨");
+    } else if (k === "issue-comment") {
+      var tx = $("ic-text").value.trim(); if (!tx) return;
+      issue(v.sub.num).timeline.push({ k: "comment", who: ME, text: tx });
+    } else if (k === "create-pr") {
+      var s = v.sub, np = makePR({ title: $("pr-title").value.trim(), body: $("pr-body").value, base: $("cmp-base").value, head: $("cmp-head").value, reviewers: picked("pr-rv"), wantChanges: $("cmp-head").value === "fix/travel-expense" });
+      np.reviewers.forEach(function (x) { np.timeline.push({ k: "ev", who: ME, text: x + " 님에게 리뷰를 요청함" }); });
+      go({ sub: { type: "pr", num: np.num } }); ok("PR #" + np.num + " 생성됨"); void s;
+    } else if (k === "pr-body") {
+      pr(v.sub.num).body = $("pb-text").value; ui.editBody = null;
+    } else if (k === "pr-comment") {
+      var pt = $("pc-text").value.trim(); if (!pt) return;
+      pr(v.sub.num).timeline.push({ k: "comment", who: ME, text: pt });
+    } else if (k === "review") {
+      var kind = (f.querySelector('input[name="rv-kind"]:checked') || {}).value || "COMMENTED", rt = $("rv-text").value.trim(), p = pr(v.sub.num);
+      if (kind !== "APPROVED" && !rt) { err(kind === "COMMENTED" ? "코멘트 리뷰는 내용을 입력해야 함" : "Request changes는 무엇을 고칠지 내용을 입력해야 함"); return afterChange(); }
+      p.reviews.push({ who: ME, state: kind, text: rt }); p.timeline.push({ k: "review", who: ME, state: kind, text: rt });
+      if (p.reviewers.indexOf(ME) < 0) p.reviewers.push(ME);
+      v.sub.files = false; ok("리뷰 제출됨");
+      if (p.author !== ME) feed(p.author, "내 리뷰를 확인함");
+    } else if (k === "merge") {
+      var pm = pr(v.sub.num), bl = mergeBlock(pm);
+      if (bl.length) { err("머지할 수 없음: " + bl.join(", ")); return afterChange(); }
+      doMerge(pm, $("mg-method").value); ok("PR #" + pm.num + " 머지됨");
+    } else if (k === "release") {
+      var tag = $("rl-tag").value.trim(), tgt = $("rl-target").value;
+      if (r.releases.some(function (x) { return x.tag === tag; })) { err("이미 있는 태그임: " + tag); return afterChange(); }
+      var bc = br(tgt).commits;
+      r.releases.push({ tag: tag, target: tgt, commit: bc[bc.length - 1] || "-", title: $("rl-title").value.trim() || tag, notes: $("rl-notes").value.trim() });
+      go({ sub: null }); ok(tag + " 릴리즈 발행됨");
+    } else if (k === "rename") {
+      var nn = $("st-name").value.trim(); if (/^[\w.-]+$/.test(nn)) { r.name = nn; ok("이름이 " + nn + " 으로 바뀜"); } else err("쓸 수 없는 이름임");
+    } else if (k === "invite") {
+      r.collabs.push({ who: $("iv-who").value, ok: false }); ok($("iv-who").value + " 님에게 초대를 보냄");
+    } else if (k === "rule") {
+      var pat = $("rl-pat").value.trim();
+      if (!br(pat)) { err("'" + pat + "' 브랜치가 없음. 연습허브에선 정확한 브랜치 이름만 지원함"); return afterChange(); }
+      r.rules[pat] = { requirePR: $("rl-pr").checked, approvals: +$("rl-n").value }; ok(pat + " 브랜치 보호 규칙 생성됨");
+    }
+    afterChange();
+  });
+
+  /* ---------- 내 컴퓨터의 클론 (VS Code·데스크톱 앱 공용) ---------- */
+  function lbr(n) { return S.local ? S.local.branches[n] : null; }
+  function lHead() { return lbr(S.local.head); }
+  function dk(a, b) {
+    var out = [];
+    Object.keys(Object.assign({}, a, b)).sort().forEach(function (k) { if (!(k in a)) out.push([k, "U"]); else if (!(k in b)) out.push([k, "D"]); else if (a[k] !== b[k]) out.push([k, "M"]); });
+    return out;
+  }
+  function lStaged() { return dk(lHead().files, S.local.index); }
+  function lUnstaged() { return dk(S.local.index, S.local.work); }
+  function lAll() { return dk(lHead().files, S.local.work); }
+  function lDirty() { return lAll().length > 0; }
+  function repoUrl() { return "https://practicehub.local/" + OWNER + "/" + (R() ? R().name : REPO) + ".git"; }
+  function setOf(arr) { var o = {}; arr.forEach(function (c) { o[c] = 1; }); return o; }
+  function lSync(n) {
+    n = n || S.local.head;
+    var l = lbr(n), r = S.repo && S.repo.branches[n];
+    if (!l.upstream || !r) return { pub: true, ahead: l.commits.length, behind: 0 };
+    var rs = setOf(r.commits), ls = setOf(l.commits);
+    return { pub: false, ahead: l.commits.filter(function (c) { return !rs[c]; }).length, behind: r.commits.filter(function (c) { return !ls[c]; }).length };
+  }
+  function lClone(url) {
+    if (!R() || !br("main") || !br("main").commits.length) return err("복제할 저장소가 없거나 비어 있음. [웹 사이트] 모드에서 README 포함 레포를 먼저 만들어야 함.");
+    var u = (url || "").trim().replace(/\/+$/, "");
+    if (!new RegExp("/" + R().name.replace(/[.]/g, "\\.") + "(\\.git)?$").test(u)) return err("저장소를 찾을 수 없음: " + (u || "(빈 주소)") + " → 주소 끝이 /" + R().name + ".git 이어야 함");
+    var m = br("main");
+    S.local = { head: "main", branches: { main: { commits: m.commits.slice(), files: clone(m.files), upstream: true } }, work: clone(m.files), index: clone(m.files) };
+    ok("클론 완료 → 내 컴퓨터의 ~/Documents/" + R().name + " 폴더에 복사됨"); feed(ME, "저장소를 내 컴퓨터로 클론함");
+  }
+  function lCommit(msg, pickFiles) {
+    var L = S.local;
+    if (pickFiles) pickFiles.forEach(function (f) { if (f in L.work) L.index[f] = L.work[f]; else delete L.index[f]; });
+    if (!lStaged().length) { err("커밋할 변경이 없음" + (pickFiles ? " (체크된 파일이 없음)" : "")); return false; }
+    if (!msg) { err("커밋 메시지를 입력해야 함"); return false; }
+    var id = sha(); S.commits[id] = { id: id, msg: msg, author: ME, tree: clone(L.index) };
+    var b = lHead(); b.commits.push(id); b.files = clone(L.index);
+    ok(L.head + " 에 커밋함 (" + id + "). 아직 내 컴퓨터에만 있음 → Push 해야 원격에 올라감");
+    return true;
+  }
+  function lPush() {
+    var L = S.local, n = L.head, l = lbr(n), s = lSync(n), rule = S.repo.rules[n];
+    if (s.pub) {
+      S.repo.branches[n] = { files: clone(l.files), commits: l.commits.slice() }; l.upstream = true; S.repo.recent[n] = 1; S.flags["pushed:" + n] = true;
+      ok("브랜치 " + n + " 를 원격(origin)에 게시(Publish)함"); feed(ME, n + " 브랜치를 Publish 함"); return true;
+    }
+    if (s.behind) { err("Push 거절됨: 원격 " + n + " 에 내 컴퓨터에 없는 커밋 " + s.behind + "개가 있음. 먼저 Pull 해야 함."); return false; }
+    if (!s.ahead) { ok("올릴 커밋이 없음 (이미 최신)"); return true; }
+    if (rule && rule.requirePR) { err("Push 거절됨: " + n + " 는 보호된 브랜치(PR 필수)임. 새 브랜치를 만들어 커밋한 뒤 Publish → PR 로 올려야 함."); return false; }
+    var r = S.repo.branches[n], rs = setOf(r.commits), newc = l.commits.filter(function (c) { return !rs[c]; });
+    r.commits = l.commits.slice(); r.files = clone(l.files); S.repo.recent[n] = 1; S.flags["pushed:" + n] = true;
+    S.repo.prs.forEach(function (p) { if (p.state === "open" && p.head === n) newc.forEach(function (c) { p.timeline.push({ k: "commit", id: c, msg: S.commits[c].msg, who: S.commits[c].author }); }); });
+    ok(newc.length + "개 커밋을 origin/" + n + " 에 Push 함"); feed(ME, "origin/" + n + " 에 Push 함"); return true;
+  }
+  function lPull() {
+    var L = S.local, n = L.head, l = lbr(n), r = S.repo.branches[n];
+    if (!l.upstream || !r) { err("원격에 " + n + " 브랜치가 없음. 먼저 Publish 해야 함."); return false; }
+    if (lDirty()) { err("커밋하지 않은 변경이 있어 Pull 할 수 없음. 먼저 커밋함."); return false; }
+    var s = lSync(n);
+    if (!s.behind) { ok("이미 최신 상태임 (받을 커밋 없음)"); return true; }
+    var rs = setOf(r.commits), ls = setOf(l.commits), remoteOnly = r.commits.filter(function (c) { return !ls[c]; });
+    if (!s.ahead) { l.commits = r.commits.slice(); l.files = clone(r.files); }
+    else {
+      var common = null; for (var i = l.commits.length - 1; i >= 0; i--) if (rs[l.commits[i]]) { common = l.commits[i]; break; }
+      var base = (common && S.commits[common].tree) || {}, mine = l.files, theirs = r.files, res = {};
+      Object.keys(Object.assign({}, base, mine, theirs)).forEach(function (f) { var v = mine[f] !== base[f] ? mine[f] : theirs[f]; if (v !== undefined) res[f] = v; });
+      l.commits = l.commits.concat(remoteOnly);
+      var id = sha(); S.commits[id] = { id: id, msg: "Merge branch '" + n + "' of origin", author: ME, tree: clone(res) };
+      l.commits.push(id); l.files = res;
+    }
+    L.work = clone(l.files); L.index = clone(l.files);
+    ok("원격 커밋 " + remoteOnly.length + "개를 받아옴 (Pull)" + (s.ahead ? ". 내 커밋과 합쳐 머지 커밋이 생김" : "")); return true;
+  }
+  function lFetch() { var s = lSync(); ok(s.pub ? "이 브랜치는 아직 원격에 없음 (Publish 필요)" : "Fetch 완료: 받을 커밋 " + s.behind + "개, 올릴 커밋 " + s.ahead + "개"); }
+  function lSwitch(n) {
+    var L = S.local;
+    if (n === L.head) return;
+    if (lDirty()) return err("커밋하지 않은 변경이 있어 브랜치를 바꿀 수 없음. 먼저 커밋함.");
+    if (!lbr(n)) { var r = S.repo.branches[n]; if (!r) return err("브랜치가 없음: " + n); L.branches[n] = { commits: r.commits.slice(), files: clone(r.files), upstream: true }; }
+    L.head = n; L.work = clone(lbr(n).files); L.index = clone(lbr(n).files); ok(n + " 브랜치로 체크아웃함");
+  }
+  function lNewBranch(n) {
+    n = (n || "").trim();
+    if (!/^[\w.\-\/]+$/.test(n)) { err("브랜치 이름에는 영문·숫자·- _ . / 만 쓸 수 있음"); return false; }
+    if (lbr(n)) { err("이미 있는 브랜치임: " + n); return false; }
+    var from = S.local.head;
+    S.local.branches[n] = { commits: lHead().commits.slice(), files: clone(lHead().files), upstream: false };
+    S.local.head = n; ok(from + " 에서 " + n + " 브랜치를 만들고 이동함 (아직 내 컴퓨터에만 있음)"); return true;
+  }
+  function lNewFile(n) {
+    n = (n || "").trim();
+    if (!/^[\w.\-\/]+$/.test(n)) { err("파일 이름에는 영문·숫자·- _ . / 만 쓸 수 있음"); return false; }
+    if (n in S.local.work) { err("이미 있는 파일임: " + n); return false; }
+    S.local.work[n] = ""; return true;
+  }
+  function openPRWeb() {
+    var n = S.local.head;
+    if (n === "main") return err("main 브랜치에선 PR을 만들 수 없음. 작업 브랜치로 바꿔야 함.");
+    if (lSync(n).pub) return err("먼저 브랜치를 Publish 해야 PR을 만들 수 있음");
+    S.mode = "web"; go({ page: "repo", tab: "pulls", sub: { type: "compare", base: "main", head: n } });
+    ok("웹 사이트에서 PR 작성 화면을 열었음. 내용 확인 후 [Create pull request]");
+  }
+  function teamPushMain(who) {
+    var m = br("main"), f = clone(m.files);
+    f["TEAM.md"] = (f["TEAM.md"] ? f["TEAM.md"] + "\n" : "") + who + " 회의 결과 정리";
+    var id = addCommit("main", "회의 결과 정리", f, who);
+    feed(who, "origin/main 에 커밋을 Push 함"); return id;
+  }
+
+  /* 로컬 트랙 요청 */
+  function hasRepo() { return !!R() && !!br("main") && br("main").commits.length > 0; }
+  function inMain(id) { return !!id && !!lbr("main") && lbr("main").commits.indexOf(id) >= 0; }
+  var PREP = { t: "준비: 웹에 레포", r: function () { return "이 모드는 원격 레포를 내 컴퓨터로 받아서 작업합니다. [웹 사이트] 모드에서 README 포함 레포가 없으면 먼저 만들어 주세요."; },
+    w: "VS Code·데스크톱 앱은 웹의 원격 저장소(origin)를 클론해서 씀. 웹 트랙 1번을 했다면 이미 완료됨.",
+    s: ["왼쪽 위 [웹 사이트] 클릭", "+ 새 저장소 → Add a README file 체크 → Create", "다시 이 모드 버튼 클릭"], ok: hasRepo };
+  var MV = [PREP,
+    { t: "클론", r: function () { return "VS Code로 레포 클론 받아 주세요. 주소는 " + repoUrl() + " 입니다."; },
+      w: "클론(Clone) = 원격 저장소를 통째로 내 컴퓨터에 복사하는 것. 이후 작업은 내 컴퓨터에서 하고 Push로 올림. 데스크톱 앱에서 이미 클론했다면 같은 폴더라 자동 완료됨.",
+      s: ["왼쪽 세로 막대의 탐색기(문서 모양) 아이콘", "주소 입력칸에 주소 입력 (아래 [입력칸에 넣기] 사용 가능)", "[Git 저장소 복제] 클릭"], ok: function () { return !!S.local; } },
+    { t: "브랜치 만들기", r: function () { return "작업은 feature/vscode 브랜치에서 하세요. 맨 아래 상태바에서 만들면 됩니다."; },
+      w: "상태바 왼쪽의 브랜치 이름(⎇ main)을 누르면 브랜치 전환·생성 메뉴가 위에 뜸.",
+      s: ["맨 아래 파란 상태바의 ⎇ main 클릭", "위 입력칸에 feature/vscode 입력 → Enter"], ok: function () { return !!lbr("feature/vscode"); } },
+    { t: "파일 작성·저장", r: function () { return "notes.md 새 파일 만들어서 회의 메모 한 줄 쓰고 저장하세요."; },
+      w: "저장(Ctrl+S)해야 작업 폴더에 반영되고 소스 제어에 '변경 사항'으로 뜸. U = 새 파일(Untracked), M = 수정됨(Modified).",
+      s: ["탐색기의 [+ 새 파일] → notes.md 입력 → Enter", "편집기에 내용 입력", "[저장] 또는 Ctrl+S"],
+      ok: function () { var b = lbr("feature/vscode"); return !!S.local && (!!S.local.work["notes.md"] || !!(b && b.files["notes.md"])); } },
+    { t: "스테이징", r: function () { return "소스 제어 탭에서 notes.md 스테이징(+) 해 주세요."; },
+      w: "파일 옆 + 를 누르면 '스테이징된 변경 사항'으로 올라감. 다음 커밋에 넣을 파일을 고르는 단계임.",
+      s: ["왼쪽 세로 막대의 소스 제어(가지 모양) 아이콘", "변경 사항의 notes.md 오른쪽 + 클릭"], ok: function () { var b = lbr("feature/vscode"); return !!S.local && (!!S.local.index["notes.md"] || !!(b && "notes.md" in b.files)); } },
+    { t: "커밋", r: function () { return "'회의 메모 추가' 메시지로 커밋하세요."; },
+      w: "커밋은 내 컴퓨터에만 기록됨. 상태바에 ☁ 또는 ↑ 표시가 생기는 걸 확인함.",
+      s: ["소스 제어 맨 위 메시지 칸에 입력", "[✓ 커밋] 클릭 (또는 Ctrl+Enter)"], ok: function () { var b = lbr("feature/vscode"); return !!b && "notes.md" in b.files; } },
+    { t: "Publish Branch", r: function () { return "브랜치를 원격에 게시(Publish)해 주세요. 그래야 저도 볼 수 있어요."; },
+      w: "새 브랜치는 원격에 아직 없음. Publish Branch = 원격에 같은 이름의 브랜치를 만들고 Push 하는 것. 웹 모드 Code 탭에서 확인 가능.",
+      s: ["소스 제어의 [☁ Publish Branch] 클릭"], ok: function () { return !!S.flags["pushed:feature/vscode"]; } },
+    { t: "Pull 받기", from: "김주무관", r: function () { return "제가 방금 origin/main에 회의 결과 올렸어요. main으로 체크아웃해서 Pull 받으세요."; },
+      w: "Pull = 원격의 새 커밋을 받아와 내 브랜치에 합침. 상태바의 ↓ 숫자가 받을 커밋 수임.",
+      s: ["상태바 ⎇ 클릭 → main 선택", "소스 제어 ··· 메뉴 → 끌어오기(Pull), 또는 상태바 ⟳ 클릭"], ok: function () { return inMain(S.flags.vTeam); } }
+  ];
+  var MD = [PREP,
+    { t: "클론", r: function () { return "데스크톱 앱으로 레포 클론 받아 주세요."; },
+      w: "데스크톱 앱은 로그인한 계정의 레포 목록에서 골라 클론함. VS Code에서 이미 클론했다면 같은 폴더라 자동 완료됨.",
+      s: ["메뉴 [파일] → [Clone repository...] 또는 가운데 버튼", "목록에서 레포 선택 → [Clone]"], ok: function () { return !!S.local; } },
+    { t: "새 브랜치", r: function () { return "feature/desktop 브랜치 만들어 주세요."; },
+      w: "상단 가운데 Current branch 를 누르면 브랜치 목록과 [New branch] 가 나옴.",
+      s: ["상단 [Current branch ▾] 클릭", "[New branch] → feature/desktop 입력 → [Create branch]"], ok: function () { return !!lbr("feature/desktop"); } },
+    { t: "파일 작성", r: function () { return "편집기에서 todo.txt 만들어서 할 일 목록 적어 주세요."; },
+      w: "데스크톱 앱은 직접 편집하지 않고 외부 편집기(VS Code·메모장 등)를 열어 고침. 저장하면 Changes 목록에 바로 뜸.",
+      s: ["[Open in editor] 클릭 (또는 메뉴 [저장소] → Open in editor)", "파일 선택에서 '(새 파일)' → 이름 todo.txt, 내용 입력", "[저장]"],
+      ok: function () { var b = lbr("feature/desktop"); return !!S.local && (!!S.local.work["todo.txt"] || !!(b && b.files["todo.txt"])); } },
+    { t: "커밋", r: function () { return "Changes에서 todo.txt 체크하고 Summary '할 일 목록 추가'로 커밋하세요."; },
+      w: "데스크톱 앱은 스테이징 대신 체크박스로 커밋할 파일을 고름. Summary 가 커밋 메시지임.",
+      s: ["왼쪽 Changes 목록의 todo.txt 체크 확인", "아래 Summary 입력 → [Commit to feature/desktop]"], ok: function () { var b = lbr("feature/desktop"); return !!b && "todo.txt" in b.files; } },
+    { t: "Publish branch", r: function () { return "브랜치 Publish 해 주세요."; },
+      w: "상단 오른쪽 버튼은 상황에 따라 Publish branch / Push origin / Pull origin / Fetch origin 으로 바뀜.",
+      s: ["상단 오른쪽 [Publish branch] 클릭"], ok: function () { return !!S.flags["pushed:feature/desktop"]; } },
+    { t: "PR 만들기", r: function () { return "앱에서 바로 Pull Request 만들어 주세요."; },
+      w: "앱의 Create Pull Request 는 웹 사이트의 PR 작성 화면을 열어 줌. 거기서 [Create pull request] 로 마무리함.",
+      s: ["메뉴 [브랜치] → Create pull request, 또는 화면의 [Create Pull Request]", "웹 화면에서 [Create pull request]", "왼쪽 위 [데스크톱 앱] 으로 복귀"],
+      ok: function () { return !!R() && R().prs.some(function (p) { return p.head === "feature/desktop"; }); } },
+    { t: "Pull origin", from: "김주무관", r: function () { return "origin/main에 제가 커밋 올렸어요. main으로 바꿔서 Pull origin 해 주세요."; },
+      w: "원격이 앞서 있으면 상단 버튼이 Pull origin ↓1 로 바뀜.",
+      s: ["[Current branch ▾] → main 선택", "상단 오른쪽 [Pull origin] 클릭"], ok: function () { return inMain(S.flags.dTeam); } }
+  ];
+  function prepareLocal() {
+    if (!hasRepo()) return;
+    if (current(MV) === 7 && !S.flags.vTeam) S.flags.vTeam = teamPushMain("김주무관");
+    if (current(MD) === 7 && !S.flags.dTeam) S.flags.dTeam = teamPushMain("김주무관");
+  }
+  function newLocalQuest() {
+    var types = ["feat", "pull", "pr"], last = S.lq && S.lq.type;
+    var type = pick(types.filter(function (t) { return t !== last; })), q = { type: type, n: S.lqDone + 1, from: "팀장" };
+    if (type === "pull") {
+      var who = collaborators().length ? pick(collaborators()) : "김주무관";
+      q.id = teamPushMain(who); q.from = who;
+      q.r = "origin/main에 새 커밋 올렸어요. 로컬 main 으로 Pull 받아서 최신으로 맞춰 주세요.";
+      q.w = "Pull 전에 내 변경은 커밋해 둬야 함. 받을 커밋 수는 ↓ 숫자로 보임.";
+    } else {
+      var c = FEATS.filter(function (f) { var b = "feature/" + f[0] + "-local"; return !lbr(b) && !br(b); }), f = c.length ? pick(c) : [pick(FEATS)[0] + S.seqL, "추가"];
+      S.seqL = (S.seqL || 0) + 1;
+      q.br = "feature/" + f[0] + "-local"; q.file = f[0] + ".md";
+      q.r = type === "feat" ? f[1] + " 기능 메모 작업입니다. " + q.br + " 브랜치 만들어서 " + q.file + " 작성·커밋하고 Publish까지 해 주세요."
+        : f[1] + " 작업입니다. " + q.br + " 브랜치에 " + q.file + " 커밋하고 Publish한 뒤 Pull Request까지 만들어 주세요.";
+      q.w = type === "feat" ? "내 컴퓨터 작업의 기본 순서: 브랜치 → 편집·저장 → 커밋 → Publish(Push)." : "Publish 후 PR을 만들어야 팀원이 리뷰할 수 있음.";
+    }
+    S.lq = q;
+  }
+  function localQuestOk(q) {
+    if (q.type === "pull") return inMain(q.id);
+    var pushed = !!S.flags["pushed:" + q.br] && (!br(q.br) || q.file in br(q.br).files);
+    if (q.type === "feat") return pushed;
+    return pushed && R().prs.some(function (p) { return p.head === q.br; });
+  }
+  function localSteps(q) {
+    var vs = S.track === "vscode";
+    if (q.type === "pull") return vs ? ["상태바 ⎇ 클릭 → main 선택", "소스 제어 ··· → 끌어오기(Pull), 또는 상태바 ⟳ 클릭"] : ["[Current branch ▾] → main", "상단 [Pull origin] 클릭"];
+    var s = vs ? ["상태바 ⎇ → " + q.br + " 입력 후 Enter", "탐색기 [+ 새 파일] → " + q.file + " → 내용 입력 → 저장", "소스 제어: + 로 스테이징 → 메시지 입력 → ✓ 커밋", "[☁ Publish Branch]"]
+      : ["[Current branch ▾] → [New branch] → " + q.br, "[Open in editor] → 새 파일 " + q.file + " 작성 → 저장", "Summary 입력 → [Commit to " + q.br + "]", "상단 [Publish branch]"];
+    if (q.type === "pr") s.push(vs ? "소스 제어 ··· → Pull Request 만들기 → 웹에서 [Create pull request]" : "[Create Pull Request] → 웹에서 [Create pull request]");
+    return s;
+  }
+
+  /* ---------- VS Code 화면 ---------- */
+  var VSI = {
+    files: '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M7 3h7l4 4v14H7z"/><path d="M14 3v4h4"/></svg>',
+    scm: '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><circle cx="7" cy="5" r="2"/><circle cx="7" cy="19" r="2"/><circle cx="17" cy="9" r="2"/><path d="M7 7v10M17 11c0 4-6 3-9.5 6.5"/></svg>'
+  };
+  function vsState() { return ui.vs || (ui.vs = { view: "explorer", file: null, buf: null, pick: false, newFile: false }); }
+  function renderVS() {
+    var L = S.local, v = vsState(), badge = L ? lAll().length : 0;
+    var h = '<div class="vsc"><div class="vs-act">' +
+      '<button type="button" data-l="vs-view" data-arg="explorer" class="' + (v.view === "explorer" ? "on" : "") + '" title="탐색기" aria-label="탐색기">' + VSI.files + '</button>' +
+      '<button type="button" data-l="vs-view" data-arg="scm" class="' + (v.view === "scm" ? "on" : "") + '" title="소스 제어" aria-label="소스 제어">' + VSI.scm + (badge ? "<i>" + badge + "</i>" : "") + '</button></div>';
+    h += '<div class="vs-side">' + (v.view === "scm" ? vsSCM() : vsExplorer()) + '</div>';
+    h += '<div class="vs-main">' + (v.pick && L ? vsPicker() : "") + vsEditor() + (flash ? '<div class="vs-toast ' + flash.t + '" role="status">' + esc(flash.m) + '</div>' : "") + '</div>';
+    h += '<div class="vs-status">';
+    if (L) { var s = lSync(); h += '<button type="button" data-l="vs-pick" title="브랜치 전환·만들기">⎇ ' + esc(L.head) + (lDirty() ? "*" : "") + '</button><button type="button" data-l="sync" title="변경 내용 동기화">' + (s.pub ? "☁ 게시 필요" : "⟳ " + s.behind + "↓ " + s.ahead + "↑") + '</button>'; }
+    else h += '<span>Git 저장소 없음</span>';
+    return h + '<span style="flex:1"></span><span>UTF-8 · 연습용 편집기</span></div></div>';
+  }
+  function vsExplorer() {
+    var L = S.local, v = vsState(), h = '<div class="vs-h">탐색기</div>';
+    if (!L) {
+      h += '<div class="vs-pad"><p>열린 폴더가 없음.</p><p class="vs-dim">원격 저장소를 내 컴퓨터로 복제(Clone)해서 시작함.</p>' +
+        '<form data-lform="clone" class="vs-col"><input class="vs-inp" id="vs-url" placeholder="저장소 URL 입력" spellcheck="false"><button class="vs-btn" type="submit">Git 저장소 복제</button></form>';
+      if (R()) h += '<p class="vs-dim">웹 레포 주소<br><span class="mono">' + esc(repoUrl()) + '</span><br><button type="button" class="vs-link" data-l="fill-url">입력칸에 넣기</button></p>';
+      return h + '</div>';
+    }
+    h += '<div class="vs-sub"><span>' + esc(R().name.toUpperCase()) + '</span><button type="button" class="vs-mini" data-l="vs-newfile" title="새 파일">+ 새 파일</button></div>';
+    if (v.newFile) h += '<form data-lform="vs-newfile" class="vs-pad"><input class="vs-inp" id="vs-fname" placeholder="파일 이름 입력 후 Enter (예: notes.md)" spellcheck="false"></form>';
+    var stat = {}; lAll().forEach(function (d) { stat[d[0]] = d[1]; });
+    Object.keys(L.work).sort().forEach(function (f) {
+      h += '<button type="button" class="vs-file' + (v.file === f ? " on" : "") + '" data-l="vs-open" data-arg="' + esc(f) + '"><span>' + esc(f) + '</span>' + (stat[f] ? '<b class="g-' + stat[f] + '">' + stat[f] + '</b>' : "") + '</button>';
+    });
+    return h;
+  }
+  function vsRow(d, act, sym, tip) {
+    return '<div class="vs-file"><button type="button" class="vs-fn" data-l="vs-open" data-arg="' + esc(d[0]) + '">' + esc(d[0]) + '</button><button type="button" class="vs-mini" data-l="' + act + '" data-arg="' + esc(d[0]) + '" title="' + tip + '" aria-label="' + tip + '">' + sym + '</button><b class="g-' + d[1] + '">' + d[1] + '</b></div>';
+  }
+  function vsSCM() {
+    var L = S.local, h = '<div class="vs-h"><span>소스 제어</span>';
+    if (L) h += '<details class="dd vs-more"><summary title="추가 작업" aria-label="추가 작업">···</summary><div class="menu">' +
+      [["pull", "끌어오기 (Pull)"], ["push", "밀어넣기 (Push)"], ["fetch", "가져오기 (Fetch)"], ["vs-pick", "분기 만들기 / 체크아웃"], ["open-pr-web", "Pull Request 만들기 (웹에서 열기)"]].map(function (x) { return '<button type="button" class="mi" data-l="' + x[0] + '">' + x[1] + '</button>'; }).join("") + '</div></details>';
+    h += '</div>';
+    if (!L) return h + '<div class="vs-pad vs-dim">열린 Git 저장소가 없음. 탐색기에서 먼저 복제함.</div>';
+    var st = lStaged(), un = lUnstaged(), s = lSync();
+    h += '<form data-lform="vs-commit" class="vs-pad vs-col"><textarea class="vs-inp" id="vs-msg" rows="2" placeholder="메시지 (Ctrl+Enter로 \'' + esc(L.head) + '\'에 커밋)"></textarea>';
+    if (st.length || un.length) h += '<button class="vs-btn" type="submit">✓ 커밋</button>';
+    else if (s.pub) h += '<button class="vs-btn" type="button" data-l="push">☁ Publish Branch</button>';
+    else if (s.ahead || s.behind) h += '<button class="vs-btn" type="button" data-l="sync">⟳ 변경 내용 동기화 ' + s.behind + '↓ ' + s.ahead + '↑</button>';
+    else h += '<button class="vs-btn" type="submit" disabled>✓ 커밋</button>';
+    h += '</form>';
+    if (st.length) h += '<div class="vs-sub"><span>스테이징된 변경 사항 ' + st.length + '</span><button type="button" class="vs-mini" data-l="unstage-all" title="모두 스테이징 취소">−</button></div>' + st.map(function (d) { return vsRow(d, "unstage", "−", "스테이징 취소"); }).join("");
+    h += '<div class="vs-sub"><span>변경 사항 ' + un.length + '</span>' + (un.length ? '<button type="button" class="vs-mini" data-l="stage-all" title="모든 변경 내용 스테이징">+</button>' : "") + '</div>' + un.map(function (d) { return vsRow(d, "stage", "+", "변경 내용 스테이징"); }).join("");
+    if (!un.length && !st.length) h += '<div class="vs-pad vs-dim">변경 사항 없음</div>';
+    return h;
+  }
+  function vsEditor() {
+    var v = vsState(), L = S.local;
+    if (!L || !v.file || !(v.file in L.work)) return '<div class="vs-welcome"><b>연습용 코드 편집기</b><p>왼쪽 탐색기에서 파일을 열거나 새 파일을 만듦.</p><p class="vs-dim">Ctrl+S 저장 · 소스 제어 메시지 칸에서 Ctrl+Enter 커밋 · Esc 메뉴 닫기</p></div>';
+    var buf = v.buf != null ? v.buf : L.work[v.file], dirty = v.buf != null && v.buf !== L.work[v.file];
+    return '<div class="vs-tabs"><span class="vs-tab" id="vs-tabname">' + esc(v.file) + (dirty ? " ●" : "") + '</span><span style="flex:1"></span><button type="button" class="vs-btn sm" data-l="vs-save">저장 (Ctrl+S)</button></div><textarea id="vs-ed" class="vs-ed" spellcheck="false" aria-label="파일 내용">' + esc(buf) + '</textarea>';
+  }
+  function vsPicker() {
+    var L = S.local, rem = Object.keys(S.repo.branches).filter(function (n) { return !lbr(n); });
+    return '<div class="vs-pick"><form data-lform="vs-newbr"><input class="vs-inp" id="vs-brname" placeholder="새 분기 이름 입력 후 Enter (예: feature/abc)" spellcheck="false"></form>' +
+      '<div class="vs-dim vs-pi-h">+ 새 분기 만들기: 위 칸에 이름 입력 · 아래에서 고르면 체크아웃</div>' +
+      Object.keys(L.branches).map(function (n) { return '<button type="button" class="vs-pi" data-l="switch" data-arg="' + esc(n) + '">⎇ ' + esc(n) + (n === L.head ? "  (현재)" : "") + '</button>'; }).join("") +
+      rem.map(function (n) { return '<button type="button" class="vs-pi" data-l="switch" data-arg="' + esc(n) + '">☁ origin/' + esc(n) + '</button>'; }).join("") +
+      '<button type="button" class="vs-pi vs-dim" data-l="vs-pick">닫기 (Esc)</button></div>';
+  }
+
+  /* ---------- 데스크톱 앱 화면 ---------- */
+  function dkState() { return ui.dk || (ui.dk = { tab: "changes", sel: null, editor: false, efile: "", newbr: false, clone: false, off: {} }); }
+  function dkMenu(name, items) {
+    return '<details class="dd"><summary>' + name + '</summary><div class="menu">' + items.map(function (x) { return '<button type="button" class="mi" data-l="' + x[0] + '"' + (x[2] ? " disabled" : "") + '>' + x[1] + '</button>'; }).join("") + '</div></details>';
+  }
+  function renderDesk() {
+    var L = S.local, d = dkState(), noL = !L;
+    var h = '<div class="dk"><div class="dk-menu">' + dkMenu("파일", [["dk-clone", "Clone repository..."]]) +
+      dkMenu("저장소", [["dk-editor", "Open in editor", noL], ["push", "Push", noL], ["pull", "Pull", noL], ["fetch", "Fetch", noL]]) +
+      dkMenu("브랜치", [["dk-newbr", "New branch...", noL], ["open-pr-web", "Create pull request", noL]]) + '</div>';
+    h += '<div class="dk-bar"><div class="dk-seg"><small>Current repository</small><b>' + (L ? esc(R().name) : "없음") + '</b></div>';
+    if (L) {
+      var rem = Object.keys(S.repo.branches).filter(function (n) { return !lbr(n); }), s = lSync();
+      h += '<details class="dd"><summary class="dk-seg"><small>Current branch</small><b>⎇ ' + esc(L.head) + ' ▾</b></summary><div class="menu"><button type="button" class="btn go sm" data-l="dk-newbr">New branch</button>' +
+        Object.keys(L.branches).map(function (n) { return '<button type="button" class="mi" data-l="switch" data-arg="' + esc(n) + '">' + (n === L.head ? "✓ " : "   ") + esc(n) + '</button>'; }).join("") +
+        (rem.length ? '<span class="kv" style="font-size:.75rem">원격 브랜치</span>' + rem.map(function (n) { return '<button type="button" class="mi" data-l="switch" data-arg="' + esc(n) + '">origin/' + esc(n) + '</button>'; }).join("") : "") + '</div></details>';
+      var act = s.pub ? ["push", "Publish branch", "이 브랜치를 원격에 게시"] : s.behind ? ["pull", "Pull origin ↓" + s.behind, "원격의 새 커밋 받기"] : s.ahead ? ["push", "Push origin ↑" + s.ahead, "내 커밋 올리기"] : ["fetch", "Fetch origin", "원격 변경 확인"];
+      h += '<button type="button" class="dk-seg" data-l="' + act[0] + '"><small>' + act[2] + '</small><b>' + act[1] + '</b></button>';
+    } else h += '<div class="dk-seg"><small>Current branch</small><b>-</b></div>';
+    h += '</div>';
+    if (flash) h += '<div class="flash ' + flash.t + '" role="status" style="margin:10px 12px 0">' + esc(flash.m) + '</div>';
+    if (noL || d.clone) {
+      h += '<div class="dk-empty">' + (d.clone || noL ? dkCloneBox() : "") + '</div>';
+      return h + '</div>';
+    }
+    var ch = lAll();
+    h += '<div class="dk-body"><div class="dk-left"><div class="dk-tabs"><button type="button" class="' + (d.tab === "changes" ? "on" : "") + '" data-l="dk-tab" data-arg="changes">Changes ' + ch.length + '</button><button type="button" class="' + (d.tab === "history" ? "on" : "") + '" data-l="dk-tab" data-arg="history">History</button></div>';
+    if (d.tab === "changes") {
+      h += '<div class="dk-list">' + (ch.length ? ch.map(function (c) {
+        return '<div class="dk-row' + (d.sel === c[0] ? " on" : "") + '"><input type="checkbox" data-lpick="' + esc(c[0]) + '"' + (d.off[c[0]] ? "" : " checked") + ' aria-label="' + esc(c[0]) + ' 커밋에 포함"><button type="button" class="dk-fn" data-l="dk-sel" data-arg="' + esc(c[0]) + '">' + esc(c[0]) + '</button><b class="g-' + c[1] + '">' + { U: "+", M: "•", D: "−" }[c[1]] + '</b></div>';
+      }).join("") : '<div class="kv" style="padding:12px">변경 없음</div>') + '</div>';
+      h += '<form data-lform="dk-commit" class="dk-commit"><input class="inp" id="dk-sum" placeholder="Summary (필수)"><textarea class="inp" id="dk-desc" rows="2" placeholder="Description" style="min-height:52px"></textarea><button class="btn go" type="submit"' + (ch.length ? "" : " disabled") + '>Commit to <b>' + esc(L.head) + '</b></button></form>';
+    } else {
+      var rb = S.repo.branches[L.head], rs = rb ? setOf(rb.commits) : {};
+      h += '<div class="dk-list">' + lHead().commits.slice().reverse().map(function (c) { var o = S.commits[c]; return '<div class="dk-hist"><b>' + esc(o.msg) + '</b><span class="kv">' + esc(o.author) + ' · <span class="mono">' + c + '</span>' + (rs[c] ? "" : ' · <span class="st-closed">↑ Push 안 됨</span>') + '</span></div>'; }).join("") + '</div>';
+    }
+    h += '</div><div class="dk-right">';
+    if (d.editor) h += dkEditor();
+    else if (d.newbr) h += '<form data-lform="dk-newbr" class="dk-dialog"><h3>Create a branch</h3><div class="field"><label for="dk-brname">Name</label><input class="inp mono" id="dk-brname" placeholder="예: feature/abc"></div><p class="kv">현재 브랜치 <b class="mono">' + esc(L.head) + '</b> 를 기준으로 만듦</p><div class="row"><button class="btn go" type="submit">Create branch</button><button class="btn" type="button" data-l="dk-newbr">Cancel</button></div></form>';
+    else if (d.sel && ch.some(function (c) { return c[0] === d.sel; })) {
+      var a = {}, b = {}; if (d.sel in lHead().files) a[d.sel] = lHead().files[d.sel]; if (d.sel in L.work) b[d.sel] = L.work[d.sel];
+      h += diffHTML(a, b);
+    } else if (ch.length) h += '<div class="empty">왼쪽 목록에서 파일을 누르면 변경 내용(diff)이 보임</div>';
+    else {
+      var s2 = lSync(), rbr = S.repo.branches[L.head];
+      h += '<h3 style="margin:0 0 4px">No local changes</h3><p class="kv" style="margin:0 0 14px">커밋하지 않은 변경이 없음. 다음에 할 수 있는 일:</p>';
+      h += '<div class="dk-card"><span>외부 편집기에서 파일 열기·만들기</span><button type="button" class="btn" data-l="dk-editor">Open in editor</button></div>';
+      if (s2.pub) h += '<div class="dk-card"><span>브랜치를 원격에 게시</span><button type="button" class="btn go" data-l="push">Publish branch</button></div>';
+      else if (s2.behind) h += '<div class="dk-card"><span>원격의 새 커밋 ' + s2.behind + '개 받기</span><button type="button" class="btn go" data-l="pull">Pull origin</button></div>';
+      else if (s2.ahead) h += '<div class="dk-card"><span>커밋 ' + s2.ahead + '개를 원격에 올리기</span><button type="button" class="btn go" data-l="push">Push origin</button></div>';
+      if (!s2.pub && L.head !== "main" && rbr && aheadOf(L.head, "main").length && !S.repo.prs.some(function (p) { return p.head === L.head && p.state === "open"; }))
+        h += '<div class="dk-card"><span>이 브랜치로 Pull Request 만들기</span><button type="button" class="btn go" data-l="open-pr-web">Create Pull Request</button></div>';
+    }
+    return h + '</div></div></div>';
+  }
+  function dkCloneBox() {
+    if (!hasRepo()) return '<h3>저장소 시작하기</h3><p class="kv">클론할 원격 저장소가 없음. [웹 사이트] 모드에서 README 포함 레포를 먼저 만들어야 함.</p>';
+    return '<form data-lform="dk-clone" class="dk-dialog"><h3>Clone a repository</h3><p class="kv">내 계정의 저장소 목록</p>' +
+      '<label class="radio"><input type="radio" name="dk-repo" checked><span class="mono">' + OWNER + '/' + esc(R().name) + '</span></label>' +
+      '<div class="field"><span class="lbl">Local path</span><span class="mono kv">~/Documents/' + esc(R().name) + '</span></div><div class="row"><button class="btn go" type="submit">Clone</button>' + (S.local ? '<button class="btn" type="button" data-l="dk-clone">Cancel</button>' : "") + '</div></form>';
+  }
+  function dkEditor() {
+    var d = dkState(), L = S.local, files = Object.keys(L.work).sort();
+    if (d.efile && !(d.efile in L.work)) d.efile = "";
+    return '<form data-lform="dk-esave" class="dk-dialog wide"><div class="row" style="justify-content:space-between"><h3 style="margin:0">외부 편집기 (연습용 메모장)</h3><button type="button" class="btn sm" data-l="dk-editor">닫기</button></div>' +
+      '<div class="row"><select class="inp" id="dk-efile" data-lchange="dk-efile" style="width:auto">' + files.map(function (f) { return '<option' + (f === d.efile ? " selected" : "") + '>' + esc(f) + '</option>'; }).join("") + '<option value=""' + (d.efile ? "" : " selected") + '>(새 파일)</option></select>' +
+      (d.efile ? "" : '<input class="inp mono" id="dk-enew" placeholder="새 파일 이름 (예: todo.txt)" style="flex:1;width:auto">') + '</div>' +
+      '<textarea class="inp" id="dk-etext" rows="8">' + esc(d.efile ? L.work[d.efile] : "") + '</textarea><div class="row"><button class="btn go" type="submit">저장</button><span class="kv">저장하면 앱의 Changes 목록에 반영됨</span></div></form>';
+  }
+
+  /* ---------- 로컬 화면 동작 ---------- */
+  function vsSaveBuf() { var v = vsState(); if (v.file && v.buf != null) { S.local.work[v.file] = v.buf; v.buf = null; ok(v.file + " 저장됨 → 작업 폴더에 반영"); } }
+  site.addEventListener("click", function (e) {
+    var t = e.target.closest("[data-l]"); if (!t || t.disabled) return;
+    var a = t.dataset.l, arg = t.dataset.arg, L = S.local, v = vsState(), d = dkState();
+    flash = null;
+    var dd = t.closest("details"); if (dd && dd.open && t.tagName !== "SUMMARY") dd.open = false;
+    if (a === "vs-view") v.view = arg;
+    else if (a === "fill-url") { var inp = $("vs-url"); if (inp) inp.value = repoUrl(); return; }
+    else if (a === "vs-newfile") v.newFile = !v.newFile;
+    else if (a === "vs-open") { if (L.work[arg] === undefined) return; if (v.file !== arg) { vsSaveBuf(); flash = null; } v.file = arg; v.buf = null; }
+    else if (a === "vs-save") vsSaveBuf();
+    else if (a === "vs-pick") v.pick = !v.pick;
+    else if (a === "stage") { if (arg in L.work) L.index[arg] = L.work[arg]; else delete L.index[arg]; }
+    else if (a === "unstage") { var hf = lHead().files; if (arg in hf) L.index[arg] = hf[arg]; else delete L.index[arg]; }
+    else if (a === "stage-all") lUnstaged().forEach(function (x) { if (x[0] in L.work) L.index[x[0]] = L.work[x[0]]; else delete L.index[x[0]]; });
+    else if (a === "unstage-all") L.index = clone(lHead().files);
+    else if (a === "switch") { vsSaveBuf(); lSwitch(arg); v.pick = false; d.sel = null; }
+    else if (a === "push") lPush();
+    else if (a === "pull") lPull();
+    else if (a === "fetch") lFetch();
+    else if (a === "sync") { if (lSync().pub) lPush(); else if (lPull()) { if (lSync().ahead) lPush(); } }
+    else if (a === "open-pr-web") openPRWeb();
+    else if (a === "dk-clone") d.clone = !d.clone;
+    else if (a === "dk-tab") d.tab = arg;
+    else if (a === "dk-sel") { d.sel = arg; d.editor = d.newbr = false; }
+    else if (a === "dk-editor") { d.editor = !d.editor; d.newbr = false; }
+    else if (a === "dk-newbr") { d.newbr = !d.newbr; d.editor = false; }
+    else return;
+    afterChange();
+  });
+  site.addEventListener("change", function (e) {
+    var t = e.target;
+    if (t.dataset.lpick !== undefined) { dkState().off[t.dataset.lpick] = !t.checked; return; }
+    if (t.dataset.lchange === "dk-efile") { dkState().efile = t.value; afterChange(); }
+  });
+  site.addEventListener("input", function (e) {
+    if (e.target.id !== "vs-ed") return;
+    var v = vsState(); v.buf = e.target.value;
+    var tn = $("vs-tabname"); if (tn) tn.textContent = v.file + (v.buf !== S.local.work[v.file] ? " ●" : "");
+  });
+  site.addEventListener("submit", function (e) {
+    var f = e.target.closest("[data-lform]"); if (!f) return;
+    e.preventDefault();
+    var k = f.dataset.lform, v = vsState(), d = dkState();
+    flash = null;
+    if (k === "clone") lClone($("vs-url").value);
+    else if (k === "dk-clone") { lClone(repoUrl()); d.clone = false; }
+    else if (k === "vs-newfile") { var nm = $("vs-fname").value.trim(); if (lNewFile(nm)) { v.file = nm; v.buf = null; v.newFile = false; ok(nm + " 만듦. 내용 입력 후 저장함"); } }
+    else if (k === "vs-newbr") { vsSaveBuf(); if (lNewBranch($("vs-brname").value)) v.pick = false; }
+    else if (k === "vs-commit") {
+      vsSaveBuf(); flash = null;
+      var msg = $("vs-msg").value.trim(), smart = !lStaged().length && lUnstaged().length;
+      if (smart && msg) lUnstaged().forEach(function (x) { if (x[0] in S.local.work) S.local.index[x[0]] = S.local.work[x[0]]; else delete S.local.index[x[0]]; });
+      if (lCommit(msg) && smart) flash.m += " (스테이징된 항목이 없어 모든 변경을 스테이징 후 커밋함)";
+    }
+    else if (k === "dk-commit") {
+      var picks = lAll().map(function (x) { return x[0]; }).filter(function (x) { return !d.off[x]; });
+      var sum = $("dk-sum").value.trim();
+      if (!picks.length) err("커밋할 파일이 체크되지 않음");
+      else if (lCommit(sum, picks)) { d.off = {}; d.sel = null; }
+    }
+    else if (k === "dk-newbr") { if (lNewBranch($("dk-brname").value)) d.newbr = false; }
+    else if (k === "dk-esave") {
+      var name = d.efile || ($("dk-enew") ? $("dk-enew").value.trim() : "");
+      if (!d.efile) { if (!lNewFile(name)) return afterChange(); d.efile = name; }
+      S.local.work[name] = $("dk-etext").value; d.editor = false; d.sel = name; d.tab = "changes"; ok(name + " 저장됨 → Changes 목록에 반영");
+    }
+    afterChange();
+  });
+  document.addEventListener("keydown", function (e) {
+    if (S.mode !== "vscode") return;
+    if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "s") { e.preventDefault(); if (S.local) { vsSaveBuf(); afterChange(); } }
+    else if ((e.ctrlKey || e.metaKey) && e.key === "Enter" && e.target.id === "vs-msg") { e.preventDefault(); e.target.form.requestSubmit(); }
+    else if (e.key === "Escape" && vsState().pick) { vsState().pick = false; afterChange(); }
+  });
+
+  function afterChange(preserve) {
+    if (R()) { prepare(); prepareLocal(); }
+    var keep = {}, focusId = null, sel = null;
+    if (preserve) {
+      Array.prototype.forEach.call($("site").querySelectorAll("input[id],textarea[id],select[id]"), function (el) { keep[el.id] = el.type === "checkbox" || el.type === "radio" ? el.checked : el.value; });
+      var ae = document.activeElement; if (ae && ae.id && $("site").contains(ae)) { focusId = ae.id; try { sel = [ae.selectionStart, ae.selectionEnd]; } catch (x) {} }
+    }
+    renderRail(); renderSite(); save();
+    if (preserve) {
+      Object.keys(keep).forEach(function (id) { var el = $(id); if (!el) return; if (el.type === "checkbox" || el.type === "radio") el.checked = keep[id]; else el.value = keep[id]; });
+      if (focusId && $(focusId)) { $(focusId).focus(); try { if (sel) $(focusId).setSelectionRange(sel[0], sel[1]); } catch (x) {} }
+    }
+    if (R()) scheduleBots();
+  }
+  var armed = false;
+  $("reset").addEventListener("click", function () {
+    var b = this;
+    if (!armed) { armed = true; b.textContent = "한 번 더 누르면 초기화"; setTimeout(function () { armed = false; b.textContent = "처음부터 다시"; }, 3000); return; }
+    armed = false; b.textContent = "처음부터 다시"; S = fresh(); ui.view = null; ui.vs = null; ui.dk = null; flash = null; afterChange();
+  });
+  afterChange();
+})();
+</script>

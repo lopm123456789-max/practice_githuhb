@@ -1,0 +1,816 @@
+<!doctype html>
+<html lang="ko">
+<title>Git 연습장</title>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans+KR:wght@400;500;700&display=swap">
+<style>
+/* Layout: 왼쪽 미션 레일 + 오른쪽 작업대(터미널 → 3영역 보드 → 커밋 그래프) */
+:root {
+  --bg: #eef0ec;
+  --surface: #ffffff;
+  --ink: #1d2420;
+  --muted: #5b665f;
+  --line: #d6dbd4;
+  --accent: #2b6a58;
+  --accent-soft: #dcebe5;
+  --warn: #b5541a;
+  --ok: #2b6a58;
+  --term-bg: #18211d;
+  --term-fg: #d5e2da;
+  --term-dim: #85968c;
+  --term-cmd: #f2f5f3;
+  --term-err: #f08b6b;
+  --term-ok: #8fd6b8;
+  --term-hl: #e8c46a;
+  --l0: #2b6a58; --l1: #c2601e; --l2: #3d5fb0; --l3: #9b3f86; --l4: #8a7a12;
+  --f-display: "IBM Plex Sans KR", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
+  --f-body: "IBM Plex Sans KR", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
+  --f-mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #111614; --surface: #19201d; --ink: #e2e9e5; --muted: #98a69e; --line: #2b3530;
+    --accent: #6cc1a6; --accent-soft: #1f3a31; --warn: #ef9a63; --ok: #6cc1a6;
+    --term-bg: #0b100e;
+    --l0: #6cc1a6; --l1: #ef9a63; --l2: #8aa6f0; --l3: #d58cc4; --l4: #d2c35a;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #111614; --surface: #19201d; --ink: #e2e9e5; --muted: #98a69e; --line: #2b3530;
+  --accent: #6cc1a6; --accent-soft: #1f3a31; --warn: #ef9a63; --ok: #6cc1a6;
+  --term-bg: #0b100e;
+  --l0: #6cc1a6; --l1: #ef9a63; --l2: #8aa6f0; --l3: #d58cc4; --l4: #d2c35a;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--ink); font-family: var(--f-body); font-size: 14px; line-height: 1.55; }
+.wrap { max-width: 1280px; margin: 0 auto; padding-inline: 16px; padding-block: 20px 40px; }
+header.top { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 8px 16px; margin-bottom: 16px; }
+header.top h1 { font-family: var(--f-display); font-size: 1.5rem; font-weight: 700; margin: 0; letter-spacing: -0.01em; text-wrap: balance; }
+header.top h1 span { font-family: var(--f-mono); font-weight: 600; color: var(--accent); }
+header.top p { margin: 0; color: var(--muted); }
+.btn { font: inherit; font-size: 0.85rem; border: 1px solid var(--line); background: var(--surface); color: var(--ink); padding: 6px 12px; border-radius: 6px; cursor: pointer; }
+.btn:hover { border-color: var(--accent); }
+.btn:focus-visible, button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.btn.primary { background: var(--accent); color: var(--surface); border-color: var(--accent); }
+.btn:disabled { opacity: 0.45; cursor: not-allowed; }
+.actions { display: flex; gap: 8px; flex-wrap: wrap; }
+
+.grid { display: grid; grid-template-columns: 320px minmax(0, 1fr); gap: 20px; align-items: start; }
+@media (max-width: 900px) { .grid { grid-template-columns: minmax(0, 1fr); } }
+
+/* 미션 레일 */
+.rail { display: flex; flex-direction: column; gap: 12px; min-width: 0; }
+.progress { display: flex; align-items: center; gap: 10px; font-size: 0.85rem; color: var(--muted); }
+.bar { flex: 1; height: 6px; background: var(--line); border-radius: 3px; overflow: hidden; }
+.bar i { display: block; height: 100%; background: var(--accent); transition: width .3s; }
+.now { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 16px; display: flex; flex-direction: column; gap: 10px; }
+.now .eyebrow { font-size: 0.72rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--accent); font-weight: 700; }
+.now h2 { margin: 0; font-size: 1.1rem; text-wrap: balance; }
+.now p { margin: 0; color: var(--ink); }
+.now .why { color: var(--muted); font-size: 0.88rem; }
+.req { background: var(--bg); border-radius: 8px; padding: 10px 12px; display: flex; flex-direction: column; gap: 4px; }
+.req .who { font-size: 0.75rem; font-weight: 700; color: var(--accent); }
+.req p { margin: 0; font-size: 0.95rem; }
+.done-msg { color: var(--ok); font-weight: 700; font-size: 0.88rem; align-self: center; }
+.cmds { display: flex; flex-direction: column; gap: 6px; }
+.cmd-chip { font-family: var(--f-mono); font-size: 0.82rem; text-align: left; background: var(--accent-soft); color: var(--ink); border: 1px solid transparent; border-radius: 6px; padding: 6px 10px; cursor: pointer; overflow-wrap: anywhere; }
+.cmd-chip:hover { border-color: var(--accent); }
+.list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
+.list li { display: grid; grid-template-columns: 22px 1fr; gap: 8px; align-items: start; padding: 6px 4px; border-bottom: 1px solid var(--line); font-size: 0.88rem; color: var(--muted); }
+.list li .mk { width: 18px; height: 18px; border-radius: 50%; border: 1.5px solid var(--line); display: grid; place-items: center; font-size: 0.7rem; font-family: var(--f-mono); margin-top: 2px; }
+.list li.done { color: var(--ink); }
+.list li.done .mk { background: var(--accent); border-color: var(--accent); color: var(--surface); }
+.list li.cur { color: var(--ink); font-weight: 700; }
+.list li.cur .mk { border-color: var(--accent); color: var(--accent); }
+.list li button { all: unset; cursor: pointer; }
+.list li button:disabled { cursor: not-allowed; }
+.list li button:focus-visible { outline: 2px solid var(--accent); }
+
+/* 작업대 */
+.bench { display: flex; flex-direction: column; gap: 16px; min-width: 0; }
+.term { background: var(--term-bg); color: var(--term-fg); border-radius: 10px; font-family: var(--f-mono); font-size: 0.86rem; display: flex; flex-direction: column; min-width: 0; }
+.term-head { display: flex; justify-content: space-between; align-items: center; gap: 8px; padding: 8px 14px; border-bottom: 1px solid rgba(255,255,255,0.08); color: var(--term-dim); font-size: 0.78rem; flex-wrap: wrap; }
+.out { height: 300px; overflow-y: auto; padding: 12px 14px; white-space: pre-wrap; overflow-wrap: anywhere; }
+.out .c { color: var(--term-cmd); }
+.out .c b { color: var(--term-ok); font-weight: 600; }
+.out .e { color: var(--term-err); }
+.out .o { color: var(--term-ok); }
+.out .d { color: var(--term-dim); }
+.out .h { color: var(--term-hl); }
+.in { display: flex; gap: 8px; align-items: center; padding: 10px 14px; border-top: 1px solid rgba(255,255,255,0.08); }
+.in label { color: var(--term-ok); white-space: nowrap; }
+.in input { flex: 1; min-width: 0; background: transparent; border: 0; color: var(--term-cmd); font: inherit; outline: none; }
+
+.board { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+@media (max-width: 640px) { .board { grid-template-columns: minmax(0, 1fr); } }
+.zone { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 12px; min-width: 0; display: flex; flex-direction: column; gap: 8px; }
+.zone h3 { margin: 0; font-size: 0.9rem; display: flex; justify-content: space-between; gap: 6px; }
+.zone h3 small { font-family: var(--f-mono); font-weight: 400; color: var(--muted); font-size: 0.75rem; }
+.zone .desc { margin: 0; font-size: 0.78rem; color: var(--muted); }
+.files { display: flex; flex-direction: column; gap: 4px; }
+.file { font-family: var(--f-mono); font-size: 0.8rem; display: flex; justify-content: space-between; gap: 8px; padding: 4px 8px; border-radius: 4px; background: var(--bg); overflow-wrap: anywhere; }
+.tag { font-family: var(--f-body); font-size: 0.7rem; font-weight: 700; white-space: nowrap; }
+.tag.new { color: var(--l2); } .tag.mod { color: var(--warn); } .tag.del { color: var(--l3); } .tag.cf { color: var(--warn); }
+.empty { font-size: 0.8rem; color: var(--muted); font-style: italic; }
+
+.graph-card { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 12px; display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+.graph-card h3 { margin: 0; font-size: 0.9rem; display: flex; justify-content: space-between; flex-wrap: wrap; gap: 8px; align-items: center; }
+.graph-scroll { overflow-x: auto; }
+#graph text { font-family: var(--f-mono); font-size: 12px; fill: var(--ink); }
+#graph .msg { fill: var(--ink); font-family: var(--f-body); }
+#graph .sha { fill: var(--muted); }
+.remote-row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; font-size: 0.82rem; color: var(--muted); }
+.remote-row code { font-family: var(--f-mono); color: var(--ink); background: var(--bg); padding: 2px 6px; border-radius: 4px; }
+
+.cheat { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 12px 16px; }
+.cheat summary { cursor: pointer; font-weight: 700; font-size: 0.9rem; }
+.cheat-table { overflow-x: auto; }
+.cheat table { border-collapse: collapse; width: 100%; font-size: 0.82rem; margin-top: 8px; }
+.cheat td { padding: 5px 8px; border-bottom: 1px solid var(--line); vertical-align: top; }
+.cheat td:first-child { font-family: var(--f-mono); white-space: nowrap; color: var(--accent); }
+@media (prefers-reduced-motion: reduce) { .bar i { transition: none; } }
+</style>
+
+<div class="wrap">
+  <header class="top">
+    <div>
+      <h1><span>git</span> 연습장</h1>
+      <p>팀장 요청을 받아 브랜치·커밋·머지·푸시를 직접 처리해 보는 모의 Git 환경임. 실제 GitHub와 연결되지 않음.</p>
+    </div>
+    <div class="actions">
+      <button class="btn" id="btn-reset" type="button">처음부터 다시</button>
+    </div>
+  </header>
+
+  <div class="grid">
+    <aside class="rail">
+      <div class="progress"><span id="prog-text">기본 0 / 12</span><div class="bar"><i id="prog-bar" style="width:0%"></i></div></div>
+      <section class="now" id="now"></section>
+      <ul class="list" id="mlist"></ul>
+    </aside>
+
+    <main class="bench">
+      <section class="term" aria-label="터미널">
+        <div class="term-head"><span id="term-where">~/my-project</span><span>↑↓ 이전 명령 · help 입력 시 명령어 목록</span></div>
+        <div class="out" id="out" aria-live="polite"></div>
+        <form class="in" id="form" autocomplete="off">
+          <label for="cmd" id="prompt">$</label>
+          <input id="cmd" type="text" spellcheck="false" autocapitalize="off" placeholder="여기에 명령어 입력 (예: git init)">
+        </form>
+      </section>
+
+      <section class="board" aria-label="Git의 세 영역">
+        <div class="zone">
+          <h3>① 작업 폴더 <small>working dir</small></h3>
+          <p class="desc">내 컴퓨터에서 실제로 편집하는 파일</p>
+          <div class="files" id="z-work"></div>
+        </div>
+        <div class="zone">
+          <h3>② 스테이징 <small>git add</small></h3>
+          <p class="desc">다음 커밋에 담길 변경 목록</p>
+          <div class="files" id="z-stage"></div>
+        </div>
+        <div class="zone">
+          <h3>③ 저장소 <small>git commit</small></h3>
+          <p class="desc">현재 브랜치 최신 커밋의 파일</p>
+          <div class="files" id="z-repo"></div>
+        </div>
+      </section>
+
+      <section class="graph-card" aria-label="커밋 그래프">
+        <h3>커밋 그래프
+          <button class="btn" id="btn-team" type="button" title="원격 저장소 main에 동료 커밋을 하나 추가함">동료가 push 하기</button>
+        </h3>
+        <div class="remote-row" id="remote-row"></div>
+        <div class="graph-scroll"><svg id="graph" role="img" aria-label="커밋 그래프"></svg></div>
+      </section>
+
+      <details class="cheat">
+        <summary>명령어 요약표</summary>
+        <div class="cheat-table"><table id="cheat"></table></div>
+      </details>
+    </main>
+  </div>
+</div>
+
+<script>
+(function () {
+  "use strict";
+  var KEY = "git-practice-v1";
+  var $ = function (id) { return document.getElementById(id); };
+  var clone = function (o) { return JSON.parse(JSON.stringify(o)); };
+
+  function fresh() {
+    return {
+      inited: false, files: {}, index: {}, commits: {}, branches: {}, HEAD: "main",
+      seq: 0, remote: null, tracking: {}, merge: null, teamCount: 0, resolved: false,
+      lanes: ["main"], history: [], quest: null, questDone: 0
+    };
+  }
+  var S = load() || fresh();
+
+  function load() { try { var r = localStorage.getItem(KEY); return r ? JSON.parse(r) : null; } catch (e) { return null; } }
+  function save() { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) {} }
+
+  /* ---------- 저장소 헬퍼 ---------- */
+  function headId() { return S.branches[S.HEAD] || null; }
+  function headTree() { var id = headId(); return id ? S.commits[id].tree : {}; }
+  function sha() { var s = ""; for (var i = 0; i < 7; i++) s += "0123456789abcdef"[Math.floor(Math.random() * 16)]; return S.commits[s] ? sha() : s; }
+  function ancestors(id) {
+    var seen = {}, stack = id ? [id] : [];
+    while (stack.length) { var c = stack.pop(); if (seen[c]) continue; seen[c] = 1; S.commits[c].parents.forEach(function (p) { stack.push(p); }); }
+    return seen;
+  }
+  function isAncestor(a, b) { return !a || !!ancestors(b)[a]; }
+  function mergeBase(a, b) {
+    var A = ancestors(a), best = null;
+    Object.keys(ancestors(b)).forEach(function (c) { if (A[c] && (!best || S.commits[c].seq > S.commits[best].seq)) best = c; });
+    return best;
+  }
+  function laneOf(name) { if (S.lanes.indexOf(name) < 0) S.lanes.push(name); return name; }
+  function makeCommit(msg, parents, tree, lane, author) {
+    var id = sha();
+    S.commits[id] = { id: id, msg: msg, parents: parents, tree: clone(tree), lane: laneOf(lane), seq: ++S.seq, author: author || "나" };
+    return id;
+  }
+  function diffKeys(a, b) {
+    var out = [];
+    Object.keys(Object.assign({}, a, b)).sort().forEach(function (k) {
+      if (!(k in a)) out.push([k, "new"]); else if (!(k in b)) out.push([k, "del"]); else if (a[k] !== b[k]) out.push([k, "mod"]);
+    });
+    return out;
+  }
+  function staged() { return diffKeys(headTree(), S.index); }
+  function unstaged() { return diffKeys(S.index, S.files).filter(function (d) { return d[1] !== "new"; }); }
+  function untracked() { return Object.keys(S.files).filter(function (f) { return !(f in S.index); }).sort(); }
+  function dirty() { return staged().length > 0 || unstaged().length > 0; }
+
+  /* ---------- 출력 ---------- */
+  var out = $("out");
+  function esc(s) { return String(s).replace(/[&<>"]/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]; }); }
+  function print(text, cls) { var d = document.createElement("div"); if (cls) d.className = cls; d.textContent = text; out.appendChild(d); out.scrollTop = out.scrollHeight; }
+  function printCmd(line) { var d = document.createElement("div"); d.className = "c"; d.innerHTML = "<b>" + esc(promptText()) + "</b> " + esc(line); out.appendChild(d); }
+  function promptText() { return S.inited ? "(" + S.HEAD + (S.merge ? "|MERGING" : "") + ") $" : "$"; }
+
+  function tokenize(line) {
+    var t = [], m, re = /"([^"]*)"|'([^']*)'|(>>|>)|([^\s"'>]+)/g;
+    while ((m = re.exec(line))) t.push(m[1] !== undefined ? m[1] : m[2] !== undefined ? m[2] : m[3] || m[4]);
+    return t;
+  }
+
+  /* ---------- 명령 실행 ---------- */
+  function run(line) {
+    line = line.trim();
+    if (!line) return;
+    printCmd(line);
+    S.history.push(line); if (S.history.length > 100) S.history.shift();
+    var a = tokenize(line);
+    try {
+      if (a[0] === "git") git(a.slice(1)); else shell(a);
+    } catch (err) { print(err.message, "e"); }
+    afterChange();
+  }
+  function fail(msg) { throw new Error(msg); }
+  function needRepo() { if (!S.inited) fail("fatal: not a git repository\n→ 먼저 git init 으로 저장소를 만들어야 함"); }
+
+  function shell(a) {
+    var cmd = a[0];
+    if (cmd === "help") return help();
+    if (cmd === "clear") { out.innerHTML = ""; return; }
+    if (cmd === "ls") { var f = Object.keys(S.files).sort(); print(f.length ? f.join("   ") : "(빈 폴더)", "d"); return; }
+    if (cmd === "touch") { if (!a[1]) fail("사용법: touch <파일명>"); a.slice(1).forEach(function (n) { if (!(n in S.files)) S.files[n] = ""; }); return; }
+    if (cmd === "cat") { if (!(a[1] in S.files)) fail("cat: " + (a[1] || "") + ": 파일이 없음"); print(S.files[a[1]] || "(빈 파일)"); return; }
+    if (cmd === "rm") { if (!(a[1] in S.files)) fail("rm: " + (a[1] || "") + ": 파일이 없음"); delete S.files[a[1]]; return; }
+    if (cmd === "echo") {
+      var i = a.indexOf(">"), j = a.indexOf(">>"), k = i >= 0 ? i : j;
+      if (k < 0) { print(a.slice(1).join(" ")); return; }
+      var text = a.slice(1, k).join(" "), file = a[k + 1];
+      if (!file) fail("사용법: echo \"내용\" > 파일명");
+      if (j >= 0 && file in S.files && S.files[file]) S.files[file] += "\n" + text; else S.files[file] = text;
+      return;
+    }
+    fail(cmd + ": 알 수 없는 명령임 (help 입력 시 목록 표시)");
+  }
+
+  function git(a) {
+    var sub = a[0];
+    if (!sub) return help();
+    if (sub === "init") {
+      if (S.inited) { print("Reinitialized existing Git repository", "d"); return; }
+      S.inited = true; print("Initialized empty Git repository in ~/my-project/.git/", "o"); return;
+    }
+    needRepo();
+    switch (sub) {
+      case "status": return status();
+      case "add": return add(a.slice(1));
+      case "commit": return commit(a.slice(1));
+      case "log": return log(a.slice(1));
+      case "branch": return branch(a.slice(1));
+      case "checkout": return checkout(a.slice(1), false);
+      case "switch": return checkout(a.slice(1), true);
+      case "merge": return merge(a.slice(1));
+      case "remote": return remote(a.slice(1));
+      case "push": return push(a.slice(1));
+      case "fetch": return fetch_(a.slice(1), true);
+      case "pull": return pull(a.slice(1));
+      case "diff": return diff();
+      case "restore": return restore(a.slice(1));
+    }
+    fail("git: '" + sub + "' is not a git command (help 참고)");
+  }
+
+  function status() {
+    print("On branch " + S.HEAD, "d");
+    if (S.merge) print("병합 중임: 충돌을 고친 뒤 git add → git commit 하면 완료됨 (취소: git merge --abort)", "h");
+    var tr = S.tracking["origin/" + S.HEAD];
+    if (tr && headId()) {
+      if (tr === headId()) print("Your branch is up to date with 'origin/" + S.HEAD + "'.", "d");
+      else if (isAncestor(tr, headId())) print("Your branch is ahead of 'origin/" + S.HEAD + "' → git push 필요", "h");
+      else if (isAncestor(headId(), tr)) print("Your branch is behind 'origin/" + S.HEAD + "' → git pull 필요", "h");
+    }
+    if (!headId()) print("No commits yet", "d");
+    var s = staged(), u = unstaged(), n = untracked(), lbl = { new: "new file:", mod: "modified:", del: "deleted:" };
+    if (s.length) { print("Changes to be committed:"); s.forEach(function (d) { print("    " + lbl[d[1]] + "   " + d[0], "o"); }); }
+    if (u.length) { print("Changes not staged for commit:  (git add 로 스테이징)"); u.forEach(function (d) { print("    " + lbl[d[1]] + "   " + d[0], "e"); }); }
+    if (n.length) { print("Untracked files:  (git add 로 추적 시작)"); n.forEach(function (f) { print("    " + f, "e"); }); }
+    if (!s.length && !u.length && !n.length) print("nothing to commit, working tree clean", "d");
+  }
+
+  function add(args) {
+    if (!args.length) fail("Nothing specified, nothing added.\n→ git add <파일명> 또는 git add .");
+    var targets = args.indexOf(".") >= 0 || args.indexOf("-A") >= 0
+      ? Object.keys(Object.assign({}, S.files, S.index)) : args;
+    targets.forEach(function (f) {
+      if (f in S.files) S.index[f] = S.files[f];
+      else if (f in S.index) delete S.index[f];
+      else fail("fatal: pathspec '" + f + "' did not match any files");
+    });
+  }
+
+  function commit(args) {
+    var mi = args.indexOf("-m"), msg = mi >= 0 ? args[mi + 1] : null;
+    if (args.indexOf("-am") >= 0) { msg = args[args.indexOf("-am") + 1]; Object.keys(S.index).forEach(function (f) { if (f in S.files) S.index[f] = S.files[f]; else delete S.index[f]; }); }
+    if (!msg) fail("커밋 메시지가 필요함 → git commit -m \"메시지\"");
+    if (S.merge) {
+      var left = S.merge.conflicts.filter(function (f) { return !(f in S.index) || /^<<<<<<< /m.test(S.index[f]) || S.index[f] !== S.files[f]; });
+      if (left.length) fail("error: 아직 해결되지 않은 충돌 파일이 있음: " + left.join(", ") + "\n→ 파일 내용을 고친 뒤(echo \"내용\" > 파일) git add 하기");
+      var id = makeCommit(msg, [headId(), S.merge.theirs], S.index, S.HEAD);
+      S.branches[S.HEAD] = id; S.merge = null; S.resolved = true;
+      print("[" + S.HEAD + " " + id + "] " + msg + "  (병합 커밋, 충돌 해결 완료)", "o"); return;
+    }
+    if (!staged().length) fail("nothing to commit" + (unstaged().length || untracked().length ? "\n→ 먼저 git add 로 스테이징해야 함" : ", working tree clean"));
+    var parents = headId() ? [headId()] : [];
+    var nid = makeCommit(msg, parents, S.index, S.HEAD);
+    S.branches[S.HEAD] = nid;
+    print("[" + S.HEAD + (parents.length ? "" : " (root-commit)") + " " + nid + "] " + msg, "o");
+    print(" " + diffKeys(parents.length ? S.commits[parents[0]].tree : {}, S.index).length + " file(s) changed", "d");
+  }
+
+  function log(args) {
+    if (!headId()) fail("fatal: your current branch '" + S.HEAD + "' does not have any commits yet");
+    var ids = Object.keys(ancestors(headId())).sort(function (x, y) { return S.commits[y].seq - S.commits[x].seq; });
+    var one = args.indexOf("--oneline") >= 0;
+    ids.forEach(function (id) {
+      var c = S.commits[id], refs = refsAt(id);
+      var r = refs.length ? " (" + refs.join(", ") + ")" : "";
+      if (one) print(id + r + " " + c.msg, "h");
+      else { print("commit " + id + r, "h"); print("Author: " + c.author + (c.parents.length > 1 ? "   Merge: " + c.parents.join(" ") : "")); print("    " + c.msg + "\n"); }
+    });
+  }
+  function refsAt(id) {
+    var r = [];
+    Object.keys(S.branches).forEach(function (b) { if (S.branches[b] === id) r.push(b === S.HEAD ? "HEAD -> " + b : b); });
+    Object.keys(S.tracking).forEach(function (t) { if (S.tracking[t] === id) r.push(t); });
+    return r;
+  }
+
+  function branch(args) {
+    if (!args.length) {
+      var names = Object.keys(S.branches); if (!names.length) names = [S.HEAD];
+      names.forEach(function (b) { print((b === S.HEAD ? "* " : "  ") + b, b === S.HEAD ? "o" : ""); }); return;
+    }
+    if (args[0] === "-d" || args[0] === "-D") {
+      var d = args[1];
+      if (!(d in S.branches)) fail("error: branch '" + d + "' not found");
+      if (d === S.HEAD) fail("error: 지금 있는 브랜치는 삭제할 수 없음");
+      if (args[0] === "-d" && !isAncestor(S.branches[d], headId())) fail("error: '" + d + "'는 아직 병합되지 않았음 (강제 삭제: -D)");
+      delete S.branches[d]; print("Deleted branch " + d, "o"); return;
+    }
+    if (args[0] === "-a" || args[0] === "-r") { branch([]); Object.keys(S.tracking).forEach(function (t) { print("  remotes/" + t, "e"); }); return; }
+    createBranch(args[0]); print("브랜치 '" + args[0] + "' 생성됨 (이동하려면 git switch " + args[0] + ")", "o");
+  }
+  function createBranch(name) {
+    if (!headId()) fail("fatal: Not a valid object name: '" + S.HEAD + "'\n→ 첫 커밋을 먼저 해야 브랜치를 만들 수 있음");
+    if (name in S.branches) fail("fatal: a branch named '" + name + "' already exists");
+    if (!/^[\w.\-\/]+$/.test(name)) fail("fatal: 브랜치 이름에 쓸 수 없는 문자가 있음");
+    S.branches[name] = headId(); laneOf(name);
+  }
+
+  function checkout(args, isSwitch) {
+    var create = args[0] === "-b" || args[0] === "-c" || args[0] === "-C";
+    var name = create ? args[1] : args[0];
+    if (!name) fail("사용법: git " + (isSwitch ? "switch [-c] <브랜치>" : "checkout [-b] <브랜치>"));
+    if (S.merge) fail("error: 병합 중에는 브랜치를 옮길 수 없음 (git merge --abort 또는 충돌 해결)");
+    if (create) { createBranch(name); S.HEAD = name; print("Switched to a new branch '" + name + "'", "o"); return; }
+    if (!(name in S.branches)) {
+      if (S.tracking["origin/" + name]) { S.branches[name] = S.tracking["origin/" + name]; laneOf(name); }
+      else fail("error: pathspec '" + name + "' did not match any branch\n→ 새로 만들려면 git switch -c " + name);
+    }
+    if (name === S.HEAD) { print("Already on '" + name + "'", "d"); return; }
+    if (dirty()) fail("error: 커밋하지 않은 변경 사항이 있어 이동할 수 없음\n→ 먼저 git add / git commit 하기");
+    moveTo(S.branches[name]); S.HEAD = name;
+    print("Switched to branch '" + name + "'", "o");
+  }
+  function moveTo(id) {
+    var oldT = headTree(), newT = S.commits[id].tree;
+    Object.keys(oldT).forEach(function (f) { delete S.files[f]; });
+    Object.keys(newT).forEach(function (f) { S.files[f] = newT[f]; });
+    S.index = clone(newT);
+  }
+
+  function merge(args) {
+    if (args[0] === "--abort") {
+      if (!S.merge) fail("fatal: 진행 중인 병합이 없음");
+      var t = headTree(); Object.keys(S.files).forEach(function (f) { if (f in S.index || f in t) delete S.files[f]; });
+      Object.keys(t).forEach(function (f) { S.files[f] = t[f]; }); S.index = clone(t); S.merge = null;
+      print("병합을 취소하고 이전 상태로 돌아감", "o"); return;
+    }
+    var name = args[0];
+    if (!name) fail("사용법: git merge <브랜치>");
+    var other = S.branches[name] || S.tracking[name];
+    if (!other) fail("merge: " + name + " - not something we can merge");
+    doMerge(other, name);
+  }
+  function doMerge(other, name) {
+    if (S.merge) fail("error: 이미 병합이 진행 중임");
+    if (dirty()) fail("error: 커밋하지 않은 변경 사항이 있어 병합할 수 없음");
+    var mine = headId();
+    if (!mine) { S.branches[S.HEAD] = other; moveTo(other); print("Fast-forward", "o"); return; }
+    if (isAncestor(other, mine)) { print("Already up to date.", "d"); return; }
+    if (isAncestor(mine, other)) {
+      moveTo(other); S.branches[S.HEAD] = other;
+      print("Updating " + mine + ".." + other + "\nFast-forward  (갈라진 적이 없어 브랜치 끝만 앞으로 이동함)", "o"); return;
+    }
+    var base = S.commits[mergeBase(mine, other)].tree, ours = S.commits[mine].tree, theirs = S.commits[other].tree;
+    var result = {}, conflicts = [];
+    Object.keys(Object.assign({}, base, ours, theirs)).forEach(function (f) {
+      var b = base[f], o = ours[f], t = theirs[f];
+      if (o === t || t === b) { if (o !== undefined) result[f] = o; }
+      else if (o === b) { if (t !== undefined) result[f] = t; }
+      else { conflicts.push(f); result[f] = "<<<<<<< HEAD\n" + (o || "") + "\n=======\n" + (t || "") + "\n>>>>>>> " + name; }
+    });
+    var t0 = headTree(); Object.keys(t0).forEach(function (f) { delete S.files[f]; });
+    Object.keys(result).forEach(function (f) { S.files[f] = result[f]; });
+    if (conflicts.length) {
+      S.index = clone(ours);
+      Object.keys(result).forEach(function (f) { if (conflicts.indexOf(f) < 0) S.index[f] = result[f]; });
+      Object.keys(S.index).forEach(function (f) { if (!(f in result)) delete S.index[f]; });
+      S.merge = { theirs: other, name: name, conflicts: conflicts };
+      conflicts.forEach(function (f) { print("CONFLICT (content): Merge conflict in " + f, "e"); });
+      print("Automatic merge failed.\n→ cat " + conflicts[0] + " 으로 확인 → echo \"최종 내용\" > " + conflicts[0] + " → git add " + conflicts[0] + " → git commit -m \"충돌 해결\"", "h");
+      return;
+    }
+    S.index = clone(result);
+    var id = makeCommit("Merge " + name + " into " + S.HEAD, [mine, other], result, S.HEAD);
+    S.branches[S.HEAD] = id;
+    print("Merge made by the 'ort' strategy.  [" + id + "] (양쪽 변경을 합친 병합 커밋 생성)", "o");
+  }
+
+  function remote(args) {
+    if (!args.length || args[0] === "-v") {
+      if (!S.remote) { print("(연결된 원격 저장소 없음)", "d"); return; }
+      print("origin  " + S.remote.url + " (fetch)\norigin  " + S.remote.url + " (push)"); return;
+    }
+    if (args[0] === "add") {
+      if (args[1] !== "origin") fail("이 연습장에서는 원격 이름을 origin 으로 사용함 → git remote add origin <주소>");
+      if (S.remote) fail("error: remote origin already exists.");
+      if (!args[2]) fail("사용법: git remote add origin https://github.com/내아이디/저장소.git");
+      S.remote = { url: args[2], branches: {} }; print("원격 저장소 origin 연결됨 → " + args[2], "o"); return;
+    }
+    fail("지원 명령: git remote add origin <주소>, git remote -v");
+  }
+  function needRemote(name) { if (!S.remote) fail("fatal: 'origin' does not appear to be a git repository\n→ git remote add origin <주소> 먼저 실행"); if (name && name !== "origin") fail("이 연습장의 원격 이름은 origin 임"); }
+
+  function push(args) {
+    var rest = args.filter(function (x) { return x !== "-u" && x !== "--set-upstream"; });
+    needRemote(rest[0] || "origin");
+    var b = rest[1] || S.HEAD;
+    if (!S.branches[b]) fail("error: src refspec " + b + " does not match any (커밋이 없음)");
+    var theirs = S.remote.branches[b], mine = S.branches[b];
+    if (theirs && !isAncestor(theirs, mine)) fail(" ! [rejected]  " + b + " -> " + b + " (fetch first)\n→ 원격에 내가 없는 커밋이 있음. git pull origin " + b + " 후 다시 push");
+    if (theirs === mine) { print("Everything up-to-date", "d"); return; }
+    S.remote.branches[b] = mine; S.tracking["origin/" + b] = mine;
+    print("To " + S.remote.url + "\n   " + (theirs || "[new branch]") + (theirs ? ".." : "  ") + mine + "  " + b + " -> " + b, "o");
+  }
+  function fetch_(args, verbose) {
+    needRemote(args[0] || "origin");
+    var changed = 0;
+    Object.keys(S.remote.branches).forEach(function (b) { if (S.tracking["origin/" + b] !== S.remote.branches[b]) { S.tracking["origin/" + b] = S.remote.branches[b]; changed++; } });
+    if (verbose) print(changed ? "From " + S.remote.url + "  (원격 변경 " + changed + "건 받아옴, 아직 병합 전)" : "(받아올 변경 없음)", changed ? "o" : "d");
+  }
+  function pull(args) {
+    needRemote(args[0] || "origin");
+    var b = args[1] || S.HEAD;
+    if (!S.remote.branches[b]) fail("fatal: couldn't find remote ref " + b);
+    fetch_([], false);
+    print("From " + S.remote.url + "\n * branch  " + b + " -> FETCH_HEAD", "d");
+    doMerge(S.tracking["origin/" + b], "origin/" + b);
+  }
+
+  function diff() {
+    var u = unstaged();
+    if (!u.length) { print("(스테이징 안 된 변경 없음. 스테이징된 변경은 git status 로 확인)", "d"); return; }
+    u.forEach(function (d) {
+      print("diff --git a/" + d[0] + " b/" + d[0], "h");
+      if (d[1] !== "new") (S.index[d[0]] || "").split("\n").forEach(function (l) { print("- " + l, "e"); });
+      if (d[1] !== "del") (S.files[d[0]] || "").split("\n").forEach(function (l) { print("+ " + l, "o"); });
+    });
+  }
+  function restore(args) {
+    var st = args[0] === "--staged", f = st ? args[1] : args[0];
+    if (!f) fail("사용법: git restore [--staged] <파일>");
+    var t = headTree();
+    if (st) { if (f in t) S.index[f] = t[f]; else delete S.index[f]; print(f + " 스테이징 취소됨", "o"); }
+    else { if (!(f in S.index)) fail("error: pathspec '" + f + "' did not match any file(s) known to git"); S.files[f] = S.index[f]; print(f + " 변경 내용 되돌림", "o"); }
+  }
+
+  var CHEAT = [
+    ["git init", "현재 폴더를 Git 저장소로 만듦"],
+    ["git status", "지금 상태 확인 (가장 자주 쓰는 명령)"],
+    ["git add <파일> / git add .", "변경 사항을 스테이징 영역에 올림"],
+    ["git commit -m \"메시지\"", "스테이징된 내용을 하나의 기록(커밋)으로 저장"],
+    ["git log --oneline", "커밋 기록을 한 줄씩 보기"],
+    ["git diff", "아직 스테이징 안 된 변경 내용 보기"],
+    ["git restore [--staged] <파일>", "변경 되돌리기 / 스테이징 취소"],
+    ["git branch <이름>", "새 브랜치 만들기 (git branch 만 치면 목록)"],
+    ["git switch <이름>", "브랜치 이동 (-c 붙이면 만들면서 이동)"],
+    ["git merge <브랜치>", "다른 브랜치 작업을 현재 브랜치로 합침"],
+    ["git merge --abort", "충돌난 병합 취소"],
+    ["git remote add origin <주소>", "GitHub 저장소 주소 연결"],
+    ["git push -u origin <브랜치>", "내 커밋을 GitHub로 올림"],
+    ["git pull origin <브랜치>", "GitHub의 새 커밋을 받아 합침"],
+    ["touch / echo \"글\" > 파일 / cat / ls / rm", "파일 만들기·쓰기·보기·목록·삭제"],
+    ["clear / help", "화면 지우기 / 도움말"]
+  ];
+  function help() { print("사용 가능한 명령어:", "h"); CHEAT.forEach(function (r) { print("  " + r[0] + "\n      " + r[1], "d"); }); }
+
+  /* ---------- 업무 요청 (미션) ---------- */
+  function hasLaneCommit() { return Object.keys(S.commits).some(function (id) { return S.commits[id].lane !== "main" && S.commits[id].author === "나"; }); }
+  var REPO_URL = "https://github.com/jeonnam/my-project.git";
+  var M = [
+    { t: "저장소 만들기", from: "팀장", r: "새 프로젝트 시작합니다. 이 폴더를 깃 저장소로 init 해 주세요.", w: "init 하면 숨은 .git 폴더가 생기고 여기에 모든 기록이 쌓임.", c: ["git init"], ok: function () { return S.inited; } },
+    { t: "파일 만들기", from: "팀장", r: "README.md 하나 만들어서 프로젝트 제목 한 줄 적어 주세요.", w: "echo \"내용\" > 파일명 으로 파일을 만들 수 있음. 만든 직후 파일은 untracked(추적 안 됨) 상태임.", c: ["echo \"# 근태 자동화\" > README.md", "git status"], ok: function () { return Object.keys(S.files).length > 0; } },
+    { t: "스테이징", from: "팀장", r: "README.md 스테이징해 주세요. 커밋은 아직 하지 말고요.", w: "스테이징 = 다음 커밋에 담을 변경을 고르는 것(add). ② 스테이징 칸으로 옮겨짐.", c: ["git add README.md"], ok: function () { return Object.keys(S.index).length > 0 || Object.keys(S.commits).length > 0; } },
+    { t: "첫 커밋", from: "팀장", r: "스테이징한 거 \"README 추가\" 메시지로 커밋 쳐 주세요.", w: "commit 은 -m 옵션으로 메시지를 붙임. 커밋은 그 시점의 스냅숏임.", c: ["git commit -m \"README 추가\""], ok: function () { return Object.keys(S.commits).length > 0; } },
+    { t: "브랜치 따기", from: "팀장", r: "기능 개발은 main에서 하지 마세요. feature 브랜치 하나 따 두세요.", w: "'브랜치를 딴다' = 현재 커밋에서 새 브랜치를 만든다는 뜻. 명령은 git branch.", c: ["git branch feature"], ok: function () { return Object.keys(S.branches).length > 1; } },
+    { t: "브랜치 이동", from: "팀장", r: "feature로 체크아웃 하세요.", w: "체크아웃 = 브랜치 이동. 요즘은 git switch 를 많이 씀. 프롬프트 (괄호) 안 이름이 바뀌면 성공임.", c: ["git switch feature"], ok: function () { return S.HEAD !== "main" || hasLaneCommit(); } },
+    { t: "브랜치에서 커밋", from: "팀장", r: "feature 브랜치에서 idea.txt 추가하고 커밋까지 해 주세요.", w: "파일 만들기 → add → commit 순서. 그래프에서 줄기가 갈라지는 걸 확인함.", c: ["echo \"출근 시간 자동 집계\" > idea.txt", "git add idea.txt", "git commit -m \"아이디어 메모 추가\""], ok: hasLaneCommit },
+    { t: "main에 머지", from: "팀장", r: "feature 작업 확인했습니다. main에 머지해 주세요.", w: "머지는 '받는 쪽' 브랜치로 먼저 이동한 뒤 실행함. 즉 main으로 switch → merge feature.", c: ["git switch main", "git merge feature"], ok: function () { var m = S.branches.main; return !!m && Object.keys(ancestors(m)).some(function (id) { return S.commits[id].lane !== "main"; }); } },
+    { t: "리모트 등록", from: "팀장", r: "GitHub에 레포 만들어 뒀어요. origin으로 리모트 등록해 주세요. 주소는 " + REPO_URL, w: "리모트 = 원격 저장소. 관례상 이름을 origin 으로 씀.", c: ["git remote add origin " + REPO_URL], ok: function () { return !!S.remote; } },
+    { t: "푸시", from: "팀장", r: "main 브랜치 origin에 푸시해 주세요. 업스트림도 같이 잡고요.", w: "업스트림 설정 = -u 옵션. 이후엔 git push 만 쳐도 됨.", c: ["git push -u origin main"], ok: function () { return !!(S.remote && S.remote.branches.main); } },
+    { t: "풀 받기", from: "김주무관", r: "제가 방금 main에 TEAM.md 올렸어요. 풀 받아서 최신화하세요.", w: "pull = fetch(받기) + merge(합치기). 받지 않고 push하면 rejected 남.", c: ["git pull origin main"], ok: function () { var m = S.branches.main; return S.teamCount > 0 && !!m && Object.keys(ancestors(m)).some(function (id) { return S.commits[id].author !== "나"; }); } },
+    { t: "컨플릭트 해결", from: "팀장", r: "fix 브랜치와 main에서 README.md를 서로 다르게 고친 뒤 머지해서 컨플릭트를 내 보세요. 그리고 직접 해결해서 머지 커밋까지 마무리하세요.", w: "같은 파일을 양쪽에서 다르게 고치면 Git이 고를 수 없어 컨플릭트가 남. 파일을 최종 내용으로 고친 뒤 add → commit 하면 해결됨.", c: ["git switch -c fix", "echo \"fix 버전\" > README.md", "git commit -am \"fix에서 수정\"", "git switch main", "echo \"main 버전\" > README.md", "git commit -am \"main에서 수정\"", "git merge fix", "echo \"최종 합의 버전\" > README.md", "git add README.md", "git commit -m \"컨플릭트 해결\""], ok: function () { return S.resolved; } }
+  ];
+  function current() { for (var i = 0; i < M.length; i++) if (!M[i].ok()) return i; return M.length; }
+
+  /* 실전 요청: 기본 미션을 마친 뒤 무작위로 계속 생성됨 */
+  var FEATS = ["login", "search", "upload", "report", "calendar", "notice", "budget", "survey", "excel", "alarm"];
+  var PHRASES = ["문의: 정보화담당관실", "배포일: 매월 첫째 주", "담당: 디지털혁신팀", "실행: python run.py"];
+  function pick(a) { return a[Math.floor(Math.random() * a.length)]; }
+  function freeName(prefix) { var c = FEATS.filter(function (n) { return !((prefix + n) in S.branches) && !Object.keys(S.commits).some(function (id) { return S.commits[id].lane === prefix + n; }); }); return c.length ? pick(c) : pick(FEATS) + S.seq; }
+  function teamPush() {
+    var base = S.remote.branches.main, tree = clone(S.commits[base].tree), who = TEAM[S.teamCount % TEAM.length];
+    tree["TEAM.md"] = (tree["TEAM.md"] ? tree["TEAM.md"] + "\n" : "") + who + " 의견 추가";
+    var id = makeCommit("팀 문서 의견 추가", [base], tree, "main", who);
+    S.remote.branches.main = id; S.teamCount++;
+    print("[알림] " + who + "님이 origin/main에 커밋을 푸시했음", "h");
+    return { id: id, who: who };
+  }
+  var TEAM = ["김주무관", "이주무관", "박주무관"];
+  function newQuest() {
+    var main = S.branches.main, feats = Object.keys(S.branches).filter(function (b) { return b !== "main"; });
+    var unmerged = feats.filter(function (b) { return !isAncestor(S.branches[b], main); });
+    var merged = feats.filter(function (b) { return isAncestor(S.branches[b], main) && b !== S.HEAD; });
+    var pool = ["feat", "edit", "hotfix"];
+    if (unmerged.length) pool.push("merge", "merge");
+    if (merged.length) pool.push("delete");
+    if (S.remote && S.remote.branches.main !== main) pool.push("push", "push");
+    if (S.remote && S.remote.branches.main) pool.push("pull");
+    var last = S.quest && S.quest.type, choices = pool.filter(function (p) { return p !== last; });
+    var type = pick(choices.length ? choices : pool), q = { type: type, start: S.seq, n: (S.questDone || 0) + 1 };
+    if (type === "feat") {
+      var n = freeName("feature/"); q.br = "feature/" + n; q.file = n + ".py"; q.from = "팀장";
+      q.r = "이번엔 " + n + " 기능입니다. main에서 " + q.br + " 브랜치 따서 " + q.file + " 추가하고 커밋해 주세요. main엔 아직 머지하지 마세요.";
+      q.w = "main으로 이동 → 새 브랜치 만들며 이동(switch -c) → 파일 작성 → add → commit.";
+      q.c = ["git switch main", "git switch -c " + q.br, "echo \"def " + n + "(): pass\" > " + q.file, "git add " + q.file, "git commit -m \"" + n + " 기능 추가\""];
+    } else if (type === "merge") {
+      q.br = pick(unmerged); q.tip = S.branches[q.br]; q.from = "팀장";
+      q.r = q.br + " 리뷰 끝났습니다. main에 머지해 주세요.";
+      q.w = "머지는 받는 쪽(main)으로 먼저 이동한 뒤 git merge <브랜치>.";
+      q.c = ["git switch main", "git merge " + q.br];
+    } else if (type === "delete") {
+      q.br = pick(merged); q.from = "팀장";
+      q.r = q.br + " 는 이미 머지됐으니 브랜치 정리(삭제)해 주세요.";
+      q.w = "머지된 브랜치는 git branch -d 로 지움. 머지 안 된 브랜치는 -d 로 안 지워져서 안전함.";
+      q.c = ["git branch -d " + q.br];
+    } else if (type === "push") {
+      q.from = "팀장";
+      q.r = "로컬 main이 origin보다 앞서 있네요. 오늘 작업분 푸시해 주세요.";
+      q.w = "git status 로 ahead/behind 확인 가능. 거절(rejected)되면 먼저 pull.";
+      q.c = ["git switch main", "git push origin main"];
+    } else if (type === "pull") {
+      var t = teamPush(); q.team = t.id; q.from = t.who;
+      q.r = "저 방금 main에 푸시했어요. 풀 받아서 로컬 main 최신으로 맞춰 주세요.";
+      q.w = "main으로 이동한 뒤 pull. 내 커밋도 있으면 머지 커밋이 생길 수 있음.";
+      q.c = ["git switch main", "git pull origin main"];
+    } else if (type === "edit") {
+      q.phrase = pick(PHRASES); q.from = "팀장";
+      q.r = "main의 README.md 끝에 \"" + q.phrase + "\" 한 줄 추가해서 \"docs: README 수정\" 메시지로 커밋해 주세요.";
+      q.w = "echo \"글\" >> 파일 은 내용을 덧붙임(> 는 덮어씀). 이미 추적 중인 파일은 commit -am 으로 add 생략 가능.";
+      q.c = ["git switch main", "echo \"" + q.phrase + "\" >> README.md", "git commit -am \"docs: README 수정\""];
+    } else if (type === "hotfix") {
+      var h = freeName("hotfix/"); q.br = "hotfix/" + h; q.from = "팀장";
+      q.r = "운영에서 " + h + " 쪽 버그 터졌어요! main에서 " + q.br + " 따서 bugfix.txt 수정 커밋하고, main에 머지" + (S.remote ? "한 다음 푸시까지" : "까지") + " 바로 해 주세요.";
+      q.w = "핫픽스 = 급한 버그 수정용 브랜치. 따기 → 커밋 → main 머지" + (S.remote ? " → 푸시" : "") + " 순서.";
+      q.c = ["git switch main", "git switch -c " + q.br, "echo \"" + h + " 버그 수정\" > bugfix.txt", "git add bugfix.txt", "git commit -m \"fix: " + h + " 버그 수정\"", "git switch main", "git merge " + q.br].concat(S.remote ? ["git push origin main"] : []);
+      q.needPush = !!S.remote;
+    }
+    S.quest = q;
+  }
+  function questOk(q) {
+    var main = S.branches.main, newer = function (id) { return id && S.commits[id].seq > q.start; };
+    switch (q.type) {
+      case "feat": var tip = S.branches[q.br]; return !!tip && newer(tip) && q.file in S.commits[tip].tree && !(main && q.file in S.commits[main].tree);
+      case "merge": return !!main && isAncestor(q.tip, main);
+      case "delete": return !(q.br in S.branches);
+      case "push": return !!S.remote && S.remote.branches.main === main;
+      case "pull": return !!main && isAncestor(q.team, main);
+      case "edit": return newer(main) && (S.commits[main].tree["README.md"] || "").indexOf(q.phrase) >= 0;
+      case "hotfix":
+        var hit = !!main && Object.keys(ancestors(main)).some(function (id) { return S.commits[id].lane === q.br; });
+        return hit && (!q.needPush || S.remote.branches.main === main);
+    }
+    return false;
+  }
+
+  var viewIdx = null, showHint = false, showAns = false, lastShown = null;
+  function requestCard(eyebrow, item, done) {
+    var now = $("now");
+    now.innerHTML = '<span class="eyebrow">' + esc(eyebrow) + (done ? " · 완료" : "") + '</span>' +
+      '<div class="req"><span class="who">' + esc(item.from) + '</span><p>' + esc(item.r) + '</p></div>' +
+      '<div class="actions"><button type="button" class="btn" id="b-hint">' + (showHint ? "힌트 닫기" : "힌트 보기") + '</button>' +
+      '<button type="button" class="btn" id="b-ans">' + (showAns ? "정답 닫기" : "정답 명령 보기") + '</button></div>' +
+      (showHint ? '<p class="why">' + esc(item.w) + '</p>' : "") + '<div class="cmds"></div>';
+    $("b-hint").addEventListener("click", function () { showHint = !showHint; renderMissions(); });
+    $("b-ans").addEventListener("click", function () { showAns = !showAns; renderMissions(); });
+    if (showAns) {
+      var box = now.querySelector(".cmds");
+      item.c.forEach(function (c) {
+        var b = document.createElement("button"); b.type = "button"; b.className = "cmd-chip"; b.textContent = c;
+        b.title = "클릭하면 입력창에 채워짐"; b.addEventListener("click", function () { var i = $("cmd"); i.value = c; i.focus(); });
+        box.appendChild(b);
+      });
+    }
+    return now;
+  }
+  function renderMissions() {
+    var cur = current(), done = 0;
+    M.forEach(function (m) { if (m.ok()) done++; });
+    $("prog-text").textContent = "기본 " + done + " / " + M.length + (S.questDone ? " · 실전 " + S.questDone + "건 처리" : "");
+    $("prog-bar").style.width = (done / M.length * 100) + "%";
+    var show = viewIdx !== null ? viewIdx : cur, key;
+    if (show >= M.length) {
+      if (!S.quest) newQuest();
+      var q = S.quest, ok = questOk(q);
+      key = "q" + q.n; if (key !== lastShown) { showHint = showAns = false; lastShown = key; }
+      var now = requestCard("실전 요청 #" + q.n, q, ok);
+      var bar = document.createElement("div"); bar.className = "actions";
+      if (ok) {
+        bar.innerHTML = '<span class="done-msg">처리 완료됨.</span>';
+        var nx = document.createElement("button"); nx.type = "button"; nx.className = "btn primary"; nx.textContent = "다음 요청 받기";
+        nx.addEventListener("click", function () { S.questDone = (S.questDone || 0) + 1; newQuest(); afterChange(); });
+        bar.appendChild(nx);
+      } else {
+        var sk = document.createElement("button"); sk.type = "button"; sk.className = "btn"; sk.textContent = "다른 요청으로 바꾸기";
+        sk.addEventListener("click", function () { newQuest(); S.quest.n = q.n; afterChange(); });
+        bar.appendChild(sk);
+      }
+      now.appendChild(bar);
+    } else {
+      key = "m" + show; if (key !== lastShown) { showHint = showAns = false; lastShown = key; }
+      requestCard("기본 요청 " + (show + 1) + " · " + M[show].t, M[show], M[show].ok());
+    }
+    var ul = $("mlist"); ul.innerHTML = "";
+    M.concat([{ t: "실전 요청 (무작위·무제한)", ok: function () { return false; } }]).forEach(function (m, i) {
+      var li = document.createElement("li"), ok = m.ok();
+      li.className = ok ? "done" : i === cur ? "cur" : "";
+      li.innerHTML = '<span class="mk">' + (ok ? "✓" : i < M.length ? i + 1 : "∞") + '</span>';
+      var b = document.createElement("button"); b.type = "button"; b.textContent = m.t;
+      if (i === M.length && cur < M.length) { b.disabled = true; b.title = "기본 요청 12개를 마치면 열림"; }
+      b.addEventListener("click", function () { viewIdx = (i === cur || i === M.length) ? null : i; renderMissions(); });
+      li.appendChild(b); ul.appendChild(li);
+    });
+  }
+
+  /* ---------- 보드 ---------- */
+  function fileRow(name, tag, cls) { return '<div class="file"><span>' + esc(name) + '</span>' + (tag ? '<span class="tag ' + cls + '">' + tag + '</span>' : "") + '</div>'; }
+  var TAGK = { new: ["새 파일", "new"], mod: ["수정", "mod"], del: ["삭제", "del"] };
+  function renderBoard() {
+    var work = "", conf = S.merge ? S.merge.conflicts : [];
+    var mods = {}; unstaged().forEach(function (d) { mods[d[0]] = d[1]; });
+    Object.keys(S.files).sort().forEach(function (f) {
+      var tag = conf.indexOf(f) >= 0 && /^<<<<<<< /m.test(S.files[f]) ? ["충돌", "cf"] : !(f in S.index) ? ["추적 안 됨", "new"] : mods[f] ? TAGK[mods[f]] : null;
+      work += fileRow(f, tag && tag[0], tag && tag[1]);
+    });
+    Object.keys(mods).forEach(function (f) { if (mods[f] === "del") work += fileRow(f, "삭제", "del"); });
+    $("z-work").innerHTML = work || '<span class="empty">' + (S.inited ? "파일 없음 (touch 또는 echo로 만들기)" : "git init 전임") + '</span>';
+    var st = staged();
+    $("z-stage").innerHTML = st.length ? st.map(function (d) { return fileRow(d[0], TAGK[d[1]][0], TAGK[d[1]][1]); }).join("") : '<span class="empty">비어 있음</span>';
+    var t = headTree(), keys = Object.keys(t).sort();
+    $("z-repo").innerHTML = keys.length ? keys.map(function (f) { return fileRow(f, "", ""); }).join("") + '<span class="empty">' + S.HEAD + " @ " + headId() + '</span>' : '<span class="empty">커밋 없음</span>';
+  }
+
+  /* ---------- 그래프 ---------- */
+  var SVGNS = "http://www.w3.org/2000/svg";
+  function el(tag, attrs, text) { var e = document.createElementNS(SVGNS, tag); for (var k in attrs) e.setAttribute(k, attrs[k]); if (text != null) e.textContent = text; return e; }
+  function renderGraph() {
+    var svg = $("graph"); while (svg.firstChild) svg.removeChild(svg.firstChild);
+    var tips = Object.values(S.branches).concat(Object.values(S.tracking)).filter(Boolean), vis = {};
+    tips.forEach(function (t) { Object.assign(vis, ancestors(t)); });
+    var ids = Object.keys(vis).sort(function (a, b) { return S.commits[b].seq - S.commits[a].seq; });
+    var rr = $("remote-row");
+    if (S.remote) {
+      var rb = Object.keys(S.remote.branches);
+      rr.innerHTML = "원격 origin: <code>" + esc(S.remote.url) + "</code>" + (rb.length ? rb.map(function (b) { return " <code>" + esc(b) + " @ " + S.remote.branches[b] + "</code>"; }).join("") : " (아직 push 없음)");
+    } else rr.textContent = "원격 저장소 미연결";
+    $("btn-team").disabled = !(S.remote && S.remote.branches.main) || !!S.merge;
+    if (!ids.length) { svg.setAttribute("viewBox", "0 0 300 40"); svg.setAttribute("width", 300); svg.setAttribute("height", 40); svg.appendChild(el("text", { x: 4, y: 24, class: "sha" }, "아직 커밋이 없음")); return; }
+    var usedLanes = []; ids.forEach(function (id) { var l = S.commits[id].lane; if (usedLanes.indexOf(l) < 0) usedLanes.push(l); });
+    usedLanes.sort(function (a, b) { return S.lanes.indexOf(a) - S.lanes.indexOf(b); });
+    var RH = 34, LW = 26, PX = 16, PY = 18, pos = {};
+    ids.forEach(function (id, i) { pos[id] = { x: PX + usedLanes.indexOf(S.commits[id].lane) * LW, y: PY + i * RH }; });
+    var color = function (lane) { return "var(--l" + (S.lanes.indexOf(lane) % 5) + ")"; };
+    ids.forEach(function (id) {
+      S.commits[id].parents.forEach(function (p) {
+        if (!pos[p]) return; var a = pos[id], b = pos[p], my = (a.y + b.y) / 2;
+        var lane = a.x === b.x ? S.commits[id].lane : (b.x > a.x ? S.commits[p].lane : S.commits[id].lane);
+        svg.appendChild(el("path", { d: a.x === b.x ? "M" + a.x + " " + a.y + " L" + b.x + " " + b.y : "M" + a.x + " " + a.y + " C" + a.x + " " + my + " " + b.x + " " + my + " " + b.x + " " + b.y, stroke: color(lane), "stroke-width": 2, fill: "none" }));
+      });
+    });
+    var tx = PX + usedLanes.length * LW + 6, maxW = 0;
+    ids.forEach(function (id) {
+      var c = S.commits[id], p = pos[id], head = id === headId();
+      svg.appendChild(el("circle", { cx: p.x, cy: p.y, r: head ? 7 : 5.5, fill: head ? "var(--surface)" : color(c.lane), stroke: color(c.lane), "stroke-width": head ? 3 : 0 }));
+      var x = tx;
+      svg.appendChild(el("text", { x: x, y: p.y + 4, class: "sha" }, id)); x += 62;
+      refsAt(id).forEach(function (r) {
+        var remote = r.indexOf("origin/") === 0, w = r.length * 7.4 + 12;
+        svg.appendChild(el("rect", { x: x, y: p.y - 10, width: w, height: 20, rx: 10, fill: remote ? "var(--bg)" : "var(--accent-soft)", stroke: remote ? "var(--line)" : "var(--accent)", "stroke-width": 1 }));
+        svg.appendChild(el("text", { x: x + 6, y: p.y + 4, style: r.indexOf("HEAD") === 0 ? "font-weight:600" : "" }, r));
+        x += w + 6;
+      });
+      var label = c.msg + (c.author !== "나" ? "  — " + c.author : "");
+      svg.appendChild(el("text", { x: x + 2, y: p.y + 4, class: "msg" }, label));
+      maxW = Math.max(maxW, x + label.length * 9 + 20);
+    });
+    var W = Math.max(maxW, 320), H = PY * 2 + (ids.length - 1) * RH;
+    svg.setAttribute("viewBox", "0 0 " + W + " " + H); svg.setAttribute("width", W); svg.setAttribute("height", H);
+  }
+
+  function afterChange() {
+    if (current() === 10 && S.teamCount === 0 && S.remote && S.remote.branches.main && !S.merge) teamPush();
+    $("prompt").textContent = promptText();
+    $("term-where").textContent = "~/my-project" + (S.inited ? "  ·  브랜치 " + S.HEAD : "");
+    renderMissions(); renderBoard(); renderGraph(); save();
+  }
+
+  /* ---------- 이벤트 ---------- */
+  var hIdx = -1;
+  $("form").addEventListener("submit", function (e) { e.preventDefault(); var i = $("cmd"); var v = i.value; i.value = ""; hIdx = -1; viewIdx = null; run(v); });
+  $("cmd").addEventListener("keydown", function (e) {
+    var h = S.history; if (!h.length) return;
+    if (e.key === "ArrowUp") { e.preventDefault(); hIdx = hIdx < 0 ? h.length - 1 : Math.max(0, hIdx - 1); this.value = h[hIdx]; }
+    else if (e.key === "ArrowDown") { e.preventDefault(); if (hIdx < 0) return; hIdx++; if (hIdx >= h.length) { hIdx = -1; this.value = ""; } else this.value = h[hIdx]; }
+  });
+  var resetArmed = false;
+  $("btn-reset").addEventListener("click", function () {
+    var b = this;
+    if (!resetArmed) { resetArmed = true; b.textContent = "한 번 더 누르면 초기화"; setTimeout(function () { resetArmed = false; b.textContent = "처음부터 다시"; }, 3000); return; }
+    resetArmed = false; b.textContent = "처음부터 다시"; S = fresh(); viewIdx = null; out.innerHTML = ""; intro(); afterChange();
+  });
+  $("btn-team").addEventListener("click", function () {
+    if (!(S.remote && S.remote.branches.main)) return;
+    teamPush(); afterChange();
+  });
+
+  var cheat = $("cheat"); CHEAT.forEach(function (r) { var tr = document.createElement("tr"); tr.innerHTML = "<td>" + esc(r[0]) + "</td><td>" + esc(r[1]) + "</td>"; cheat.appendChild(tr); });
+  function intro() { print("Git 연습장에 오신 것을 환영함. 왼쪽 업무 요청을 읽고 직접 명령어를 입력해 처리하면 됨. 막히면 힌트·정답 버튼 사용.", "h"); print("help 를 입력하면 쓸 수 있는 명령어가 나옴.", "d"); }
+  intro();
+  afterChange();
+})();
+</script>
