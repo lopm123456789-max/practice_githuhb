@@ -191,6 +191,22 @@ h2.pt span { color: var(--muted); }
 .modes { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 4px; background: rgba(255,255,255,0.06); padding: 4px; border-radius: 8px; }
 .modes button { background: none; border: 0; color: var(--rail-ink); padding: 7px 4px; border-radius: 6px; cursor: pointer; font-size: 0.82rem; }
 .modes button.on { background: #2f9a66; font-weight: 700; }
+.modes .qa-btn { grid-column: 1 / -1; border: 1px dashed rgba(255,255,255,0.25); }
+.modes .qa-btn.on { background: #b9862a; border-color: #b9862a; }
+.quiz { display: flex; flex-direction: column; gap: 6px; }
+.quiz .btn { text-align: left; white-space: normal; }
+.wrong { margin: 0; color: #f2a39b; font-size: 0.85rem; }
+.faq { margin-top: 18px; background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 14px 18px; }
+.faq > summary { cursor: pointer; font-weight: 700; font-size: 1rem; }
+.faq-body { display: flex; flex-direction: column; gap: 16px; margin-top: 14px; max-width: 860px; }
+.faq h3 { margin: 0 0 6px; font-size: 0.98rem; }
+.faq p, .faq li { margin: 0; font-size: 0.9rem; }
+.faq ul { margin: 4px 0 0; padding-left: 18px; display: flex; flex-direction: column; gap: 3px; }
+.faq pre { background: var(--sunk); border-radius: 8px; padding: 10px 12px; font-family: var(--f-mono); font-size: 0.8rem; overflow-x: auto; margin: 6px 0 0; }
+.faq .tbl { overflow-x: auto; }
+.faq table { border-collapse: collapse; font-size: 0.85rem; margin-top: 6px; }
+.faq td, .faq th { border-bottom: 1px solid var(--line); padding: 5px 10px; text-align: left; vertical-align: top; }
+.faq td:first-child { font-family: var(--f-mono); white-space: nowrap; color: var(--accent); }
 
 /* VS Code 모드: 의도적으로 어두운 단일 테마 */
 :root { --vs-bg: #1e1f22; --vs-side: #25262a; --vs-act: #2c2d31; --vs-fg: #d4d6da; --vs-dim: #8b9098; --vs-line: #36383d; --vs-inp: #2f3135; --vs-accent: #3b82c4; --vs-status: #2f6aa3; --vs-hover: #2f3238; --g-M: #d7a14a; --g-U: #6cbf7d; --g-D: #e06c6c; }
@@ -286,7 +302,7 @@ h2.pt span { color: var(--muted); }
   </div>
   <div class="grid">
     <aside class="rail" aria-label="업무 요청">
-      <div class="modes" role="group" aria-label="연습 도구"><button type="button" data-mode="web">웹 사이트</button><button type="button" data-mode="vscode">VS Code</button><button type="button" data-mode="desktop">데스크톱 앱</button></div>
+      <div class="modes" role="group" aria-label="연습 도구"><button type="button" data-mode="web">웹 사이트</button><button type="button" data-mode="vscode">VS Code</button><button type="button" data-mode="desktop">데스크톱 앱</button><button type="button" data-mode="qa" class="qa-btn">내 질문 실습</button></div>
       <div class="prog"><span id="prog-t"></span><div class="bar"><i id="prog-b"></i></div></div>
       <div class="msg" id="req"></div>
       <h3>요청 목록</h3>
@@ -299,6 +315,49 @@ h2.pt span { color: var(--muted); }
       <div id="site"></div>
     </div>
   </div>
+  <details class="faq" id="faq">
+    <summary>자주 묻는 질문 (실제로 물어본 내용 정리)</summary>
+    <div class="faq-body">
+      <section><h3>Q1. 로컬에서 브랜치 자체를 push 할 수 있나?</h3>
+        <p>가능함. push는 브랜치 단위로 동작함. 원격에 없으면 같은 이름의 브랜치가 새로 생기고, 있으면 새 커밋만 올라감.</p>
+        <div class="tbl"><table><tbody>
+          <tr><td>git push -u origin 브랜치명</td><td>처음 올릴 때 사용. -u로 연결하면 다음부터 git push만 입력해도 됨</td></tr>
+          <tr><td>git push</td><td>연결된 원격 브랜치로 새 커밋을 올림</td></tr>
+          <tr><td>git push origin 로컬명:원격명</td><td>다른 이름으로 올림 (예: test:main)</td></tr>
+          <tr><td>git push --all origin</td><td>모든 로컬 브랜치를 한 번에 올림</td></tr>
+          <tr><td>git push origin --delete 브랜치명</td><td>원격 브랜치 삭제 (로컬은 유지)</td></tr>
+        </tbody></table></div>
+        <ul><li>VS Code: 새 브랜치에서는 <b>Publish Branch</b>, 올린 뒤에는 <b>동기화(↑숫자)</b> 버튼</li><li>데스크톱 앱: 처음 <b>Publish branch</b>, 이후 <b>Push origin</b> 버튼</li><li>둘 다 내부적으로 git push -u origin 브랜치명과 같음</li></ul>
+      </section>
+      <section><h3>Q2. 브랜치에서 수정한 걸 push하면 main에도 반영되나?</h3>
+        <p>반영되지 않음. 원격의 같은 이름 브랜치에만 올라가고 main은 그대로임.</p>
+        <pre>[내 컴퓨터]                      [원격 저장소]
+feature/login 에서 수정·커밋
+        │ git push
+        ▼
+                               feature/login  ← 여기에만 올라감
+                               main           ← 변화 없음</pre>
+        <ul><li>main에 넣으려면: push → PR 생성 → 리뷰·승인 → Merge</li><li>같은 브랜치에 계속 push 가능하며, 열려 있는 PR에 커밋이 자동으로 추가됨</li><li>브랜치 작업이 망가져도 main은 안전함. 그래서 실무에선 main에 직접 올리지 않음</li></ul>
+      </section>
+      <section><h3>Q3. push가 거절되는 경우는?</h3>
+        <ul><li>원격에 내가 받지 않은 새 커밋이 있음 → 먼저 pull</li><li>보호 규칙(PR 필수)이 걸린 브랜치에 직접 push → 새 브랜치에 올리고 PR</li><li>쓰기 권한이 없음(403) → 협업자 초대를 받거나 Fork 후 PR</li></ul>
+      </section>
+      <section><h3>Q4. 로컬 main에서 pull하면 원격의 다른 브랜치도 딸려오나?</h3>
+        <p>내용은 main에만 합쳐짐. 다른 브랜치는 <b>정보(목록과 커밋)만</b> 받아지고, 내 로컬 브랜치로 자동 생성되지 않음.</p>
+        <pre>git pull  =  git fetch  +  git merge
+            (원격 정보 받기)   (지금 브랜치에만 합치기)
+
+[pull 후 내 컴퓨터]
+main              ← 원격 main 내용이 합쳐짐
+origin/main       ← 원격 상태 기록
+origin/feature-a  ← 다른 브랜치는 '기록'만 생김 (로컬 브랜치 아님)</pre>
+        <ul><li>다른 브랜치에서 작업하려면 그 브랜치로 체크아웃함 → 그때 로컬 브랜치가 생김 (git switch feature-a)</li><li>git pull origin main 처럼 브랜치를 지정하면 main 정보만 받음</li><li>다른 브랜치 내용이 main에 섞여 들어가는 일은 없음. main에 넣으려면 PR 머지가 필요함</li><li>연습허브: VS Code 상태바 ⎇ 메뉴, 데스크톱 앱 Current branch 메뉴에서 'origin/이름'으로 보이는 것이 이것임</li></ul>
+      </section>
+      <section><h3>Q5. 다른 사람 저장소에 올려도 되나?</h3>
+        <p>허락 없이 올리면 안 됨. 권한이 없으면 403으로 막히고, 권한이 있더라도 소유자와 협의가 먼저임. 내 작업은 내 저장소에 두고, 기여하고 싶으면 Fork 후 PR을 보내는 것이 원칙임.</p>
+      </section>
+    </div>
+  </details>
 </div>
 
 <script>
@@ -368,7 +427,7 @@ h2.pt span { color: var(--muted); }
     var p = { num: nextNum(), title: o.title, body: o.body || "", base: o.base, head: o.head, author: o.author || ME, state: "open",
       reviewers: o.reviewers || [], reviews: [], timeline: [], wantChanges: !!o.wantChanges };
     aheadOf(p.head, p.base).forEach(function (c) { p.timeline.push({ k: "commit", id: c, msg: S.commits[c].msg, who: S.commits[c].author }); });
-    S.repo.prs.push(p); return p;
+    p.init = p.timeline.length; S.repo.prs.push(p); return p;
   }
   function makeIssue(o) {
     var i = { num: nextNum(), title: o.title, body: o.body || "", labels: o.labels || [], assignees: o.assignees || [], author: o.author || ME, state: "open", reason: null, timeline: [] };
@@ -545,17 +604,20 @@ h2.pt span { color: var(--muted); }
 
   /* ---------- 요청 레일 렌더 ---------- */
   var ui = { hint: false, steps: false, key: null, view: null };
-  var TRACK_NAME = { web: "웹 사이트", vscode: "VS Code", desktop: "데스크톱 앱" };
-  function trackList(t) { t = t || S.track; return t === "vscode" ? MV : t === "desktop" ? MD : M; }
-  function isLocalTrack() { return S.track !== "web"; }
+  var TRACK_NAME = { web: "웹 사이트", vscode: "VS Code", desktop: "데스크톱 앱", qa: "내 질문 실습" };
+  function trackList(t) { t = t || S.track; return t === "vscode" ? MV : t === "desktop" ? MD : t === "qa" ? MQ : M; }
+  function isLocalTrack() { return S.track === "vscode" || S.track === "desktop"; }
   function renderRail() {
-    Array.prototype.forEach.call(document.querySelectorAll("[data-mode]"), function (b) { var on = b.dataset.mode === S.mode; b.classList.toggle("on", on); b.setAttribute("aria-pressed", on ? "true" : "false"); });
+    Array.prototype.forEach.call(document.querySelectorAll("[data-mode]"), function (b) { var on = b.dataset.mode === "qa" ? S.track === "qa" : b.dataset.mode === S.mode; b.classList.toggle("on", on); b.setAttribute("aria-pressed", on ? "true" : "false"); });
     var list = trackList(), cur = current(list), done = list.filter(function (m) { return m.ok(); }).length;
     var extra = isLocalTrack() ? S.lqDone : S.questDone;
-    $("prog-t").textContent = TRACK_NAME[S.track] + " 기본 " + done + "/" + list.length + (extra ? " · 실전 " + extra + "건" : "");
+    $("prog-t").textContent = TRACK_NAME[S.track] + (S.track === "qa" ? " " : " 기본 ") + done + "/" + list.length + (extra ? " · 실전 " + extra + "건" : "");
     $("prog-b").style.width = (done / list.length * 100) + "%";
     var show = ui.view !== null ? ui.view : cur, item, eyebrow, isDone, key, q;
-    if (show >= list.length) {
+    if (show >= list.length && S.track === "qa") {
+      item = { from: "안내", r: "질문하신 내용을 모두 실습함. 아래 '자주 묻는 질문'에서 다시 정리해 볼 수 있음.", w: "새로 궁금한 점이 생기면 Claude에게 물어보면 이 트랙에 추가할 수 있음.", s: ["화면 아래 '자주 묻는 질문' 펼치기"] };
+      eyebrow = TRACK_NAME.qa + " · 완료"; isDone = true; key = "qa-done";
+    } else if (show >= list.length) {
       if (isLocalTrack()) { if (!S.lq) newLocalQuest(); q = S.lq; item = { from: q.from, r: q.r, w: q.w, s: localSteps(q) }; isDone = localQuestOk(q); key = S.track + "lq" + q.n; }
       else { if (!S.quest) newQuest(); q = S.quest; item = { from: q.from, r: q.r, w: q.w, s: q.s }; isDone = questOk(q); key = "q" + q.n; }
       eyebrow = TRACK_NAME[S.track] + " · 실전 요청 #" + q.n;
@@ -564,14 +626,22 @@ h2.pt span { color: var(--muted); }
     }
     if (key !== ui.key) { ui.hint = ui.steps = false; ui.key = key; }
     var h = '<span class="eyebrow">' + esc(eyebrow) + '</span><span class="who">' + esc(item.from) + '</span><p>' + esc(item.r) + '</p>';
+    var mq = show < list.length ? list[show] : null;
+    if (mq && mq.quiz) {
+      if (isDone) h += '<p class="hint">정답: ' + esc(mq.quiz.opts[mq.quiz.ans]) + '</p><p class="hint">' + esc(mq.quiz.exp) + '</p>';
+      else {
+        h += '<div class="quiz">' + mq.quiz.opts.map(function (o, i) { return '<button type="button" class="btn sm" data-rail="quiz" data-i="' + i + '">' + (i + 1) + ". " + esc(o) + '</button>'; }).join("") + '</div>';
+        if (ui.wrong === key) h += '<p class="wrong">오답임. 힌트를 보고 다시 골라 보기.</p>';
+      }
+    }
     h += '<div class="row"><button type="button" class="btn sm" data-rail="hint">' + (ui.hint ? "힌트 닫기" : "힌트 보기") + '</button><button type="button" class="btn sm" data-rail="steps">' + (ui.steps ? "클릭 경로 닫기" : "클릭 경로 보기") + '</button></div>';
     if (ui.hint) h += '<p class="hint">' + esc(item.w) + '</p>';
     if (ui.steps) h += '<ol>' + item.s.map(function (s) { return "<li>" + esc(s) + "</li>"; }).join("") + '</ol>';
-    if (show >= list.length) h += '<div class="row">' + (isDone ? '<span class="done-tag">처리 완료</span><button type="button" class="btn go sm" data-rail="next">다음 요청 받기</button>' : '<button type="button" class="btn sm" data-rail="skip">다른 요청으로 바꾸기</button>') + '</div>';
+    if (show >= list.length && S.track !== "qa") h += '<div class="row">' + (isDone ? '<span class="done-tag">처리 완료</span><button type="button" class="btn go sm" data-rail="next">다음 요청 받기</button>' : '<button type="button" class="btn sm" data-rail="skip">다른 요청으로 바꾸기</button>') + '</div>';
     else if (isDone) h += '<span class="done-tag">처리 완료</span>';
-    if (S.mode !== S.track) h += '<p class="hint">지금 오른쪽 화면은 ' + TRACK_NAME[S.mode] + ' 모드임. 요청은 ' + TRACK_NAME[S.track] + ' 기준이며, 위 버튼으로 돌아갈 수 있음.</p>';
+    if (S.mode !== S.track && S.track !== "qa") h += '<p class="hint">지금 오른쪽 화면은 ' + TRACK_NAME[S.mode] + ' 모드임. 요청은 ' + TRACK_NAME[S.track] + ' 기준이며, 위 버튼으로 돌아갈 수 있음.</p>';
     $("req").innerHTML = h;
-    var rows = list.map(function (m, i) { return { t: m.t, ok: m.ok(), i: i }; }).concat([{ t: "실전 요청 (무작위·무제한)", ok: false, i: list.length }]);
+    var rows = list.map(function (m, i) { return { t: m.t, ok: m.ok(), i: i }; }).concat(S.track === "qa" ? [] : [{ t: "실전 요청 (무작위·무제한)", ok: false, i: list.length }]);
     $("qlist").innerHTML = rows.map(function (x) {
       return '<li class="' + (x.ok ? "done" : x.i === cur ? "cur" : "") + '"><span class="mk">' + (x.ok ? "✓" : x.i < list.length ? x.i + 1 : "∞") + '</span><button type="button" data-rail="view" data-i="' + x.i + '"' + (x.i === list.length && cur < list.length ? " disabled" : "") + '>' + esc(x.t) + '</button></li>';
     }).join("");
@@ -579,13 +649,14 @@ h2.pt span { color: var(--muted); }
   }
   document.querySelector(".rail").addEventListener("click", function (e) {
     var md = e.target.closest("[data-mode]");
-    if (md) { S.mode = S.track = md.dataset.mode; ui.view = null; flash = null; return afterChange(); }
+    if (md) { if (md.dataset.mode === "qa") S.track = "qa"; else S.mode = S.track = md.dataset.mode; ui.view = null; flash = null; return afterChange(); }
     var b = e.target.closest("[data-rail]"); if (!b) return;
     var a = b.dataset.rail, loc = isLocalTrack();
     if (a === "hint") ui.hint = !ui.hint;
     else if (a === "steps") ui.steps = !ui.steps;
     else if (a === "next") { if (loc) { S.lqDone++; newLocalQuest(); } else { S.questDone++; newQuest(); } }
     else if (a === "skip") { if (loc) { var ln = S.lq.n; newLocalQuest(); S.lq.n = ln; } else { var n = S.quest.n; newQuest(); S.quest.n = n; } }
+    else if (a === "quiz") { var mqz = trackList()[current(trackList())]; if (ui.view !== null) mqz = trackList()[ui.view]; if (mqz && mqz.quiz) { if (+b.dataset.i === mqz.quiz.ans) { S.flags["quiz:" + mqz.quiz.id] = true; ui.wrong = null; } else ui.wrong = ui.key; } }
     else if (a === "view") { var i = +b.dataset.i, L = trackList().length; ui.view = (i === current(trackList()) || i === L) ? null : i; }
     afterChange();
   });
@@ -673,6 +744,9 @@ h2.pt span { color: var(--muted); }
       names.map(function (n) { return '<button type="button" class="mi" data-act="switch-branch" data-arg="' + esc(n) + '">' + (n === v.branch ? "✓ " : "  ") + esc(n) + (n === "main" ? "  (default)" : "") + '</button>'; }).join("") + '</div></details>';
   }
   function tabCode() {
+    var qb = br("qa/push-test"), vb = V().branch;
+    if (qb && vb === "qa/push-test" && "qa.txt" in qb.files && !S.flags.qaSeen) { S.flags.qaSeen = true; setTimeout(function () { renderRail(); save(); }, 0); }
+    if (S.flags.qaSeen && vb === "main" && !("qa.txt" in br("main").files) && !S.flags.qaMain) { S.flags.qaMain = true; setTimeout(function () { renderRail(); save(); }, 0); }
     var v = V(), s = v.sub || {}, b = br(v.branch), h = "";
     if (s.type === "edit") return editView(s.path);
     if (s.type === "file") {
@@ -1191,6 +1265,32 @@ h2.pt span { color: var(--muted); }
     { t: "Pull origin", from: "김주무관", r: function () { return "origin/main에 제가 커밋 올렸어요. main으로 바꿔서 Pull origin 해 주세요."; },
       w: "원격이 앞서 있으면 상단 버튼이 Pull origin ↓1 로 바뀜.",
       s: ["[Current branch ▾] → main 선택", "상단 오른쪽 [Pull origin] 클릭"], ok: function () { return inMain(S.flags.dTeam); } }
+  ];
+  /* 내 질문 실습: 사용자가 실제로 물어본 내용 */
+  function qz(id) { return function () { return !!S.flags["quiz:" + id]; }; }
+  var MQ = [
+    { t: "Q. 브랜치째 push 되나", from: "질문", quiz: { id: "q1", opts: ["안 됨. main만 push 가능함", "됨. 원격에 같은 이름의 브랜치가 생김", "되지만 원격에선 이름이 main으로 바뀜"], ans: 1, exp: "push는 브랜치 단위로 동작함. 로컬 브랜치를 push하면 원격에 같은 이름의 브랜치가 생기고, 이미 있으면 새 커밋만 올라감." },
+      r: function () { return "로컬(내 컴퓨터)에서 만든 브랜치를 그대로 push 할 수 있을까요?"; }, w: "git push -u origin 브랜치명. VS Code는 Publish Branch, 데스크톱 앱은 Publish branch 버튼이 같은 일을 함.", s: ["보기 중 하나를 고름"], ok: qz("q1") },
+    { t: "직접 확인: 브랜치 push", from: "팀장", r: function () { return "직접 해 봅시다. VS Code나 데스크톱 앱에서 qa/push-test 브랜치를 만들고 qa.txt 를 커밋한 뒤 Publish(push) 해 주세요."; },
+      w: "아직 클론하지 않았다면 VS Code 또는 데스크톱 앱 모드에서 먼저 클론해야 함. 이 트랙은 화면 모드와 상관없이 진행됨.",
+      s: ["왼쪽 위 [VS Code] 또는 [데스크톱 앱]으로 화면 전환 후 [내 질문]을 다시 눌러 요청 유지", "브랜치 qa/push-test 만들기", "qa.txt 만들고 저장 → 커밋", "Publish Branch / Publish branch 클릭"],
+      ok: function () { return !!S.flags["pushed:qa/push-test"]; } },
+    { t: "Q. 브랜치 push가 main에 반영되나", from: "질문", quiz: { id: "q2", opts: ["바로 main에도 반영됨", "반영 안 됨. PR을 머지해야 main에 들어감", "main이 그 브랜치로 바뀜"], ans: 1, exp: "브랜치에 push하면 원격의 같은 이름 브랜치에만 올라감. main은 그대로이며, PR을 만들어 Merge 해야 main에 합쳐짐." },
+      r: function () { return "그럼 제가 브랜치에서 수정한 걸 push하면 main에도 바로 들어가나요?"; }, w: "브랜치 = main과 분리된 작업 공간. 합치는 건 PR → 리뷰 → Merge 단계에서 일어남.", s: ["보기 중 하나를 고름"], ok: qz("q2") },
+    { t: "직접 확인: main은 그대로", from: "팀장", r: function () { return "웹 사이트 Code 탭에서 브랜치를 qa/push-test 로 바꿔 qa.txt 가 있는 걸 보고, 다시 main 으로 바꿔 qa.txt 가 없는 걸 확인해 주세요."; },
+      w: "같은 저장소라도 브랜치마다 파일 내용이 다름. 브랜치 선택 메뉴로 오가며 비교할 수 있음.",
+      s: ["왼쪽 위 [웹 사이트]로 화면 전환 후 [내 질문] 다시 클릭", "Code 탭 [⎇ ▾] → qa/push-test 선택 (qa.txt 확인)", "[⎇ ▾] → main 선택 (qa.txt 없음 확인)"],
+      ok: function () { return !!S.flags.qaMain; } },
+    { t: "직접 확인: 추가 push가 PR에 붙음", from: "팀장", r: function () { return "qa/push-test 로 PR을 만든 다음, 같은 브랜치에 커밋을 하나 더 push 해서 그 PR에 자동으로 붙는지 확인해 주세요."; },
+      w: "PR이 열려 있는 동안 head 브랜치에 push한 커밋은 PR에 자동으로 추가됨. 새 PR을 만들 필요 없음.",
+      s: ["웹: Pull requests → New pull request → compare: qa/push-test → Create", "VS Code 또는 데스크톱 앱: qa/push-test 에서 qa.txt 수정 → 커밋 → Push", "웹: PR 화면 타임라인에 새 커밋이 붙었는지 확인"],
+      ok: function () { return !!R() && R().prs.some(function (p) { return p.head === "qa/push-test" && p.timeline.slice(p.init || 0).some(function (t) { return t.k === "commit"; }); }); } },
+    { t: "Q. 남의 저장소에 push", from: "질문", quiz: { id: "q3", opts: ["그냥 올라감", "권한이 없으면 403 오류로 거절됨", "내 저장소로 자동 복사됨"], ans: 1, exp: "쓰기 권한이 없는 저장소에 push하면 403으로 거절됨. 협업자(Collaborator)로 초대받거나, Fork 해서 내 저장소에 올린 뒤 PR을 보내야 함. 다른 사람 저장소에는 허락 없이 올리지 않는 것이 원칙임." },
+      r: function () { return "권한이 없는 다른 사람 저장소에 push하면 어떻게 되나요?"; }, w: "실제로 이번 작업 중 다른 사람 저장소에 push하려다 403이 났음. 그래서 본인 저장소로 옮겨 올렸음.", s: ["보기 중 하나를 고름"], ok: qz("q3") },
+    { t: "Q. push가 거절되는 경우", from: "질문", quiz: { id: "q4", opts: ["원격에 내가 받지 않은 새 커밋이 있을 때", "보호 규칙이 걸린 main에 직접 push할 때", "내 작업 브랜치에 새 커밋을 push할 때"], ans: 2, exp: "1·2번은 거절됨(먼저 pull / 브랜치 만들어 PR). 3번은 정상적으로 올라감. 이 문제는 '거절되지 않는 경우'를 고르는 문제임." },
+      r: function () { return "다음 중 push가 거절되지 않는 경우는 무엇일까요?"; }, w: "거절 사유는 ① 원격이 앞서 있음 ② 보호된 브랜치 ③ 권한 없음(403) 세 가지가 대표적임.", s: ["보기 중 하나를 고름"], ok: qz("q4") },
+    { t: "Q. main에서 pull하면 다른 브랜치도?", from: "질문", quiz: { id: "q5", opts: ["다른 브랜치도 전부 내 로컬 브랜치로 생김", "main에만 합쳐짐. 다른 브랜치는 origin/이름 형태로 '정보만' 받아짐", "다른 브랜치 내용이 main에 같이 섞여 들어감"], ans: 1, exp: "git pull = fetch + merge. fetch 단계에서 원격의 다른 브랜치 정보(origin/브랜치명)도 받아오지만, 합치기(merge)는 지금 있는 main에만 함. 다른 브랜치를 내 컴퓨터에서 쓰려면 그 브랜치로 체크아웃해야 로컬 브랜치가 생김. 단, git pull origin main 처럼 브랜치를 지정하면 main 정보만 받음." },
+      r: function () { return "로컬 main에서 pull 하면 원격 main 내용이 복사되잖아요. 그때 원격에 새로 생긴 다른 브랜치들도 같이 딸려오나요?"; }, w: "연습허브 VS Code 상태바 ⎇ 메뉴나 데스크톱 앱 Current branch 메뉴를 열면, 아직 로컬에 없는 원격 브랜치가 'origin/이름'으로 따로 보임. 고르면 그때 로컬 브랜치가 생김.", s: ["보기 중 하나를 고름", "확인: VS Code 상태바 ⎇ 메뉴에서 ☁ origin/... 항목 보기"], ok: qz("q5") }
   ];
   function prepareLocal() {
     if (!hasRepo()) return;
