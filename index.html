@@ -353,7 +353,22 @@ origin/main       ← 원격 상태 기록
 origin/feature-a  ← 다른 브랜치는 '기록'만 생김 (로컬 브랜치 아님)</pre>
         <ul><li>다른 브랜치에서 작업하려면 그 브랜치로 체크아웃함 → 그때 로컬 브랜치가 생김 (git switch feature-a)</li><li>git pull origin main 처럼 브랜치를 지정하면 main 정보만 받음</li><li>다른 브랜치 내용이 main에 섞여 들어가는 일은 없음. main에 넣으려면 PR 머지가 필요함</li><li>연습허브: VS Code 상태바 ⎇ 메뉴, 데스크톱 앱 Current branch 메뉴에서 'origin/이름'으로 보이는 것이 이것임</li></ul>
       </section>
-      <section><h3>Q5. 다른 사람 저장소에 올려도 되나?</h3>
+      <section><h3>Q5. 실무에선 어떤 순서로 작업하나? (로컬 main 경유 vs 원격 main 직행)</h3>
+        <p>둘 다 아님. <b>브랜치는 같은 이름의 원격 브랜치로 올리고, main에는 PR 머지로만 합치는 방식</b>이 표준임 (GitHub Flow).</p>
+        <pre>① git switch -c feature/x        로컬에서 브랜치 만들기
+② 수정 → 커밋 (여러 번 가능)
+③ git push -u origin feature/x   원격의 같은 이름 브랜치로 올리기
+④ 웹에서 PR 생성 (feature/x → main) → 리뷰 → Merge
+⑤ git switch main → git pull      로컬 main 최신화
+⑥ 다 쓴 브랜치 삭제 (원격·로컬)</pre>
+        <div class="tbl"><table><thead><tr><th>방식</th><th>평가</th></tr></thead><tbody>
+          <tr><td>로컬 main에 merge → 원격 main push</td><td>리뷰 없이 main이 바뀜. 보호된 main이면 거절됨. 혼자 하는 저장소에서만 가끔 씀</td></tr>
+          <tr><td>git push origin feature/x:main</td><td>가장 위험함. 리뷰·기록 없이 원격 main을 직접 덮어씀. 권장하지 않음</td></tr>
+          <tr><td>브랜치 push → PR → 머지</td><td>권장. 리뷰·토론·자동 검사·이슈 연결이 남고 main이 늘 안정적임</td></tr>
+        </tbody></table></div>
+        <ul><li>참고: 로컬 main으로 옮기는 동작은 push가 아니라 merge임. push는 항상 '내 컴퓨터 → 원격' 방향임</li><li>혼자 쓰는 연습 저장소라도 이 순서로 하면 실무 습관이 그대로 잡힘</li></ul>
+      </section>
+      <section><h3>Q6. 다른 사람 저장소에 올려도 되나?</h3>
         <p>허락 없이 올리면 안 됨. 권한이 없으면 403으로 막히고, 권한이 있더라도 소유자와 협의가 먼저임. 내 작업은 내 저장소에 두고, 기여하고 싶으면 Fork 후 PR을 보내는 것이 원칙임.</p>
       </section>
     </div>
@@ -1290,7 +1305,9 @@ origin/feature-a  ← 다른 브랜치는 '기록'만 생김 (로컬 브랜치 �
     { t: "Q. push가 거절되는 경우", from: "질문", quiz: { id: "q4", opts: ["원격에 내가 받지 않은 새 커밋이 있을 때", "보호 규칙이 걸린 main에 직접 push할 때", "내 작업 브랜치에 새 커밋을 push할 때"], ans: 2, exp: "1·2번은 거절됨(먼저 pull / 브랜치 만들어 PR). 3번은 정상적으로 올라감. 이 문제는 '거절되지 않는 경우'를 고르는 문제임." },
       r: function () { return "다음 중 push가 거절되지 않는 경우는 무엇일까요?"; }, w: "거절 사유는 ① 원격이 앞서 있음 ② 보호된 브랜치 ③ 권한 없음(403) 세 가지가 대표적임.", s: ["보기 중 하나를 고름"], ok: qz("q4") },
     { t: "Q. main에서 pull하면 다른 브랜치도?", from: "질문", quiz: { id: "q5", opts: ["다른 브랜치도 전부 내 로컬 브랜치로 생김", "main에만 합쳐짐. 다른 브랜치는 origin/이름 형태로 '정보만' 받아짐", "다른 브랜치 내용이 main에 같이 섞여 들어감"], ans: 1, exp: "git pull = fetch + merge. fetch 단계에서 원격의 다른 브랜치 정보(origin/브랜치명)도 받아오지만, 합치기(merge)는 지금 있는 main에만 함. 다른 브랜치를 내 컴퓨터에서 쓰려면 그 브랜치로 체크아웃해야 로컬 브랜치가 생김. 단, git pull origin main 처럼 브랜치를 지정하면 main 정보만 받음." },
-      r: function () { return "로컬 main에서 pull 하면 원격 main 내용이 복사되잖아요. 그때 원격에 새로 생긴 다른 브랜치들도 같이 딸려오나요?"; }, w: "연습허브 VS Code 상태바 ⎇ 메뉴나 데스크톱 앱 Current branch 메뉴를 열면, 아직 로컬에 없는 원격 브랜치가 'origin/이름'으로 따로 보임. 고르면 그때 로컬 브랜치가 생김.", s: ["보기 중 하나를 고름", "확인: VS Code 상태바 ⎇ 메뉴에서 ☁ origin/... 항목 보기"], ok: qz("q5") }
+      r: function () { return "로컬 main에서 pull 하면 원격 main 내용이 복사되잖아요. 그때 원격에 새로 생긴 다른 브랜치들도 같이 딸려오나요?"; }, w: "연습허브 VS Code 상태바 ⎇ 메뉴나 데스크톱 앱 Current branch 메뉴를 열면, 아직 로컬에 없는 원격 브랜치가 'origin/이름'으로 따로 보임. 고르면 그때 로컬 브랜치가 생김.", s: ["보기 중 하나를 고름", "확인: VS Code 상태바 ⎇ 메뉴에서 ☁ origin/... 항목 보기"], ok: qz("q5") },
+    { t: "Q. 실무 작업 순서", from: "질문", quiz: { id: "q6", opts: ["로컬 브랜치 작업 → 로컬 main에 합침 → 원격 main에 push", "로컬 브랜치를 원격 main으로 바로 push (git push origin 브랜치:main)", "로컬 브랜치 작업 → 원격의 같은 이름 브랜치로 push → PR → 리뷰 후 원격 main에 머지 → 로컬 main pull"], ans: 2, exp: "협업 표준은 3번(GitHub Flow)임. 1·2번은 리뷰 없이 main이 바뀌어 실수가 그대로 들어가고, 보호 규칙이 걸린 main이면 push가 거절됨. 혼자 하는 연습 저장소라면 1번도 가능하지만, 습관은 3번으로 들이는 것이 좋음." },
+      r: function () { return "보통 어떤 순서로 하나요? 로컬 main에 합쳐서 원격 main에 push? 아니면 내 브랜치를 원격 main으로 바로 push?"; }, w: "'main은 직접 건드리지 않는다'가 원칙임. 브랜치는 브랜치로 올리고, main에 합치는 건 PR 머지로만 함.", s: ["보기 중 하나를 고름", "실습: 웹 트랙 5~9번 또는 VS Code·데스크톱 실전 요청이 이 순서임"], ok: qz("q6") }
   ];
   function prepareLocal() {
     if (!hasRepo()) return;
