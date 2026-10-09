@@ -193,6 +193,18 @@ h2.pt span { color: var(--muted); }
 .modes button.on { background: #2f9a66; font-weight: 700; }
 .modes .qa-btn { grid-column: 1 / -1; border: 1px dashed rgba(255,255,255,0.25); }
 .modes .qa-btn.on { background: #b9862a; border-color: #b9862a; }
+.locs-badges { display: flex; gap: 4px; flex-wrap: wrap; }
+.loc { font-size: 0.72rem; font-weight: 700; padding: 1px 8px; border-radius: 999px; cursor: help; }
+.loc-l { background: #2c5f8a; color: #e6f0fa; } .loc-r { background: #9a5a1c; color: #fbefe1; }
+.loc-up { background: linear-gradient(90deg, #2c5f8a, #9a5a1c); color: #fff; } .loc-down { background: linear-gradient(90deg, #9a5a1c, #2c5f8a); color: #fff; }
+.locs { font-size: 0.76rem; overflow-x: auto; }
+.locs table { width: 100%; border-collapse: collapse; }
+.locs th, .locs td { text-align: left; padding: 3px 4px; border-bottom: 1px solid rgba(255,255,255,0.08); white-space: nowrap; }
+.locs th { opacity: 0.65; font-weight: 600; }
+.locs td:nth-child(2), .locs td:nth-child(3), .locs th:nth-child(2), .locs th:nth-child(3) { text-align: center; }
+.locs td:nth-child(2) { color: #8fc0ec; } .locs td:nth-child(3) { color: #f0b47a; }
+.locs tr.head td { color: #f0c977; font-weight: 700; }
+.locs .kv2 { opacity: 0.75; margin-top: 4px; }
 .quiz { display: flex; flex-direction: column; gap: 6px; }
 .quiz .btn { text-align: left; white-space: normal; }
 .wrong { margin: 0; color: #f2a39b; font-size: 0.85rem; }
@@ -305,6 +317,8 @@ h2.pt span { color: var(--muted); }
       <div class="modes" role="group" aria-label="연습 도구"><button type="button" data-mode="web">웹 사이트</button><button type="button" data-mode="vscode">VS Code</button><button type="button" data-mode="desktop">데스크톱 앱</button><button type="button" data-mode="qa" class="qa-btn">내 질문 실습</button></div>
       <div class="prog"><span id="prog-t"></span><div class="bar"><i id="prog-b"></i></div></div>
       <div class="msg" id="req"></div>
+      <h3>로컬 ↔ 원격 현황</h3>
+      <div class="locs" id="locs"></div>
       <h3>요청 목록</h3>
       <ul class="qlist" id="qlist"></ul>
       <h3>알림</h3>
@@ -368,7 +382,19 @@ origin/feature-a  ← 다른 브랜치는 '기록'만 생김 (로컬 브랜치 �
         </tbody></table></div>
         <ul><li>정리: <b>원격 브랜치에 push → 거기서 PR로 main에 머지</b>가 정답임. 원격 브랜치에서 main으로 옮기는 단계는 push가 아니라 웹의 PR Merge 버튼으로 함</li><li>참고: 로컬 main으로 옮기는 동작은 push가 아니라 merge임. push는 항상 '내 컴퓨터 → 원격' 방향임</li><li>혼자 쓰는 연습 저장소라도 이 순서로 하면 실무 습관이 그대로 잡힘</li></ul>
       </section>
-      <section><h3>Q6. 다른 사람 저장소에 올려도 되나?</h3>
+      <section><h3>Q6. 로컬과 원격은 어떻게 구분하나?</h3>
+        <p><b>로컬</b> = 내 컴퓨터의 저장소(VS Code·데스크톱 앱으로 작업). <b>원격</b> = GitHub에 있는 저장소(웹 사이트, 이름은 보통 origin). 둘은 push·pull 할 때만 맞춰짐.</p>
+        <div class="tbl"><table><thead><tr><th>표기</th><th>뜻</th></tr></thead><tbody>
+          <tr><td>main</td><td>로컬 main 브랜치</td></tr>
+          <tr><td>origin/main</td><td>원격 main 브랜치 (마지막으로 확인한 상태)</td></tr>
+          <tr><td>[로컬]</td><td>커밋·브랜치 생성·스테이징 등. 원격엔 아무 변화 없음</td></tr>
+          <tr><td>[로컬→원격]</td><td>push / Publish: 내 커밋을 GitHub로 올림</td></tr>
+          <tr><td>[원격→로컬]</td><td>clone / pull / fetch: GitHub 내용을 내 컴퓨터로 받음</td></tr>
+          <tr><td>[원격]</td><td>PR·리뷰·머지·이슈·보호 규칙 등 웹에서만 하는 일</td></tr>
+        </tbody></table></div>
+        <ul><li>연습허브 왼쪽 '로컬 ↔ 원격 현황' 표에서 브랜치별로 어디에 있는지, 몇 개를 올리고 받아야 하는지 볼 수 있음</li><li>↑숫자 = 로컬에만 있는 커밋(push 필요), ↓숫자 = 원격에만 있는 커밋(pull 필요)</li><li><b>합치는 곳도 구분함</b>: 로컬 main 에 합치기 = <b>merge</b> (VS Code: 분기 병합 / 데스크톱: Merge into current branch). 원격 main 에 합치기 = <b>PR 머지</b> (웹). PR은 원격에만 있음</li></ul>
+      </section>
+      <section><h3>Q7. 다른 사람 저장소에 올려도 되나?</h3>
         <p>허락 없이 올리면 안 됨. 권한이 없으면 403으로 막히고, 권한이 있더라도 소유자와 협의가 먼저임. 내 작업은 내 저장소에 두고, 기여하고 싶으면 Fork 후 PR을 보내는 것이 원칙임.</p>
       </section>
     </div>
@@ -499,7 +525,7 @@ origin/feature-a  ← 다른 브랜치는 '기록'만 생김 (로컬 브랜치 �
   function bugIssue() { return R() && R().issues.filter(function (i) { return /출장비/.test(i.title) && i.labels.indexOf("bug") >= 0 && i.assignees.indexOf(ME) >= 0; })[0]; }
   function mainPR() { return R() && R().prs.filter(function (p) { return p.head === "fix/travel-expense" && p.base === "main" && p.author === ME; })[0]; }
   var M = [
-    { t: "레포 만들기", from: "팀장", r: function () { return "근태 자동화 프로젝트 시작합니다. " + REPO + " 이름으로 레포 하나 파 주세요. Private로, README 포함해서요."; },
+    { t: "레포 만들기", from: "팀장", r: function () { return "근태 자동화 프로젝트 시작합니다. " + REPO + " 이름으로 원격 레포(웹) 하나 파 주세요. Private로, README 포함해서요."; },
       w: "레포(Repository) = 프로젝트 저장소. Private은 초대받은 사람만 볼 수 있음.",
       s: ["오른쪽 사이트 상단 [+ 새 저장소] 클릭", "Repository name 에 " + REPO + " 입력", "Private 선택, Add a README file 체크", "[Create repository] 클릭"],
       ok: function () { return !!R() && R().name === REPO && R().private && br("main") && "README.md" in br("main").files; } },
@@ -507,7 +533,7 @@ origin/feature-a  ← 다른 브랜치는 '기록'만 생김 (로컬 브랜치 �
       w: "Private 레포는 Collaborator(협업자)로 초대해야 다른 사람이 접근·리뷰할 수 있음.",
       s: ["레포의 Settings 탭", "왼쪽 Collaborators 메뉴", "김주무관 선택 후 [Add people]", "잠시 뒤 초대 수락 알림 확인"],
       ok: function () { return collaborators().indexOf("김주무관") >= 0; } },
-    { t: "main에 직접 커밋", from: "팀장", r: function () { return "README에 '출퇴근 기록 자동 집계 도구' 설명 한 줄 추가해서 main에 바로 커밋해 주세요."; },
+    { t: "main에 직접 커밋", from: "팀장", r: function () { return "README에 '출퇴근 기록 자동 집계 도구' 설명 한 줄 추가해서 웹 편집기로 원격 main에 바로 커밋해 주세요."; },
       w: "웹에서도 파일을 고치고 커밋할 수 있음. 지금은 보호 규칙이 없어 main에 직접 커밋 가능함.",
       s: ["Code 탭에서 README.md 클릭", "[✎ 편집] 클릭 후 내용 한 줄 추가", "Commit changes 영역에서 'main에 바로 커밋' 선택", "[Commit changes] 클릭"],
       ok: function () { return !!R() && /출퇴근/.test(br("main").files["README.md"] || ""); } },
@@ -515,7 +541,7 @@ origin/feature-a  ← 다른 브랜치는 '기록'만 생김 (로컬 브랜치 �
       w: "이슈(Issue) = 할 일·버그·건의 게시판. 라벨로 분류하고 Assignee로 담당자를 정함.",
       s: ["Issues 탭 → [New issue]", "제목: 출장비 계산 오류", "오른쪽 Assignees 에서 나, Labels 에서 bug 체크", "[Submit new issue]"],
       ok: function () { return !!bugIssue(); } },
-    { t: "브랜치 따서 작업", from: "팀장", r: function () { return "수정은 main 말고 fix/travel-expense 브랜치 따서 하세요. 그 브랜치에 calc.py 만들어서 커밋까지요."; },
+    { t: "브랜치 따서 작업", from: "팀장", r: function () { return "수정은 main 말고 원격에 fix/travel-expense 브랜치 따서 하세요(웹에서). 그 원격 브랜치에 calc.py 만들어서 커밋까지요."; },
       w: "브랜치 = main을 건드리지 않는 별도 작업 공간. 웹에선 브랜치 선택 메뉴에서 바로 만들 수 있음.",
       s: ["Code 탭의 [⎇ main ▾] 클릭", "fix/travel-expense 입력 → [브랜치 만들기]", "그 브랜치에서 [Add file] → 파일명 calc.py, 내용 입력", "'현재 브랜치에 바로 커밋' 으로 [Commit changes]"],
       ok: function () { return !!R() && (!!br("fix/travel-expense") && "calc.py" in br("fix/travel-expense").files || !!mainPR()); } },
@@ -527,15 +553,15 @@ origin/feature-a  ← 다른 브랜치는 '기록'만 생김 (로컬 브랜치 �
       w: "리뷰어(Reviewer)는 코드를 보고 승인하거나 수정을 요청하는 사람임. 지정하면 잠시 뒤 김주무관이 리뷰를 남김.",
       s: ["PR 화면 오른쪽 Reviewers 에서 김주무관 체크", "잠시 기다리면 김주무관 리뷰가 타임라인에 올라옴"],
       ok: function () { var p = mainPR(); return !!p && p.reviewers.indexOf("김주무관") >= 0 && p.reviews.length > 0; } },
-    { t: "리뷰 반영", from: "김주무관", r: function () { return "리뷰 남겼어요. Request changes 내용대로 고쳐서 같은 브랜치에 커밋 올려 주세요. 그럼 다시 볼게요."; },
+    { t: "리뷰 반영", from: "김주무관", r: function () { return "리뷰 남겼어요. Request changes 내용대로 고쳐서 같은 원격 브랜치(fix/travel-expense)에 커밋 올려 주세요. 그럼 다시 볼게요."; },
       w: "PR이 열려 있는 동안 head 브랜치에 커밋을 더 올리면 그 PR에 자동으로 반영됨. 새 PR을 만들 필요 없음.",
       s: ["Code 탭에서 브랜치를 fix/travel-expense 로 전환", "calc.py 클릭 → [✎ 편집] → 맨 위에 # 주석 한 줄 추가", "'현재 브랜치에 바로 커밋' → [Commit changes]", "PR 화면에서 김주무관 승인(Approved) 확인"],
       ok: function () { var p = mainPR(); return !!p && latestReviews(p)["김주무관"] === "APPROVED"; } },
-    { t: "Squash 머지", from: "팀장", r: function () { return "승인 났네요. Squash and merge로 머지하고, 다 쓴 브랜치는 삭제해 주세요."; },
+    { t: "Squash 머지", from: "팀장", r: function () { return "승인 났네요. Squash and merge로 원격 main에 머지하고, 다 쓴 원격 브랜치는 삭제해 주세요."; },
       w: "Squash and merge = 브랜치의 여러 커밋을 하나로 합쳐 main에 넣음. 이력이 깔끔해짐. 머지 후 브랜치 삭제는 관례임.",
       s: ["PR 화면 아래 머지 상자에서 방식 'Squash and merge' 선택", "[Confirm merge]", "[Delete branch] 클릭", "이슈가 자동으로 닫혔는지 확인"],
       ok: function () { var p = mainPR(); return !!p && p.state === "merged" && !br("fix/travel-expense"); } },
-    { t: "브랜치 보호", from: "팀장", r: function () { return "앞으로 main엔 직접 푸시 금지입니다. main 브랜치 보호 규칙 걸어 주세요. PR 필수, 승인 1명 이상."; },
+    { t: "브랜치 보호", from: "팀장", r: function () { return "앞으로 원격 main엔 직접 푸시 금지입니다. 원격 main 브랜치 보호 규칙 걸어 주세요. PR 필수, 승인 1명 이상."; },
       w: "Branch protection rule = 중요 브랜치를 실수로부터 지키는 규칙. 걸면 main 직접 커밋이 막히고 승인 없는 머지도 막힘.",
       s: ["Settings → Branches", "Branch name pattern: main", "Require a pull request before merging 체크, 승인 수 1", "[Create]"],
       ok: function () { var r = R() && R().rules.main; return !!r && r.requirePR && r.approvals >= 1; } },
@@ -603,6 +629,7 @@ origin/feature-a  ← 다른 브랜치는 '기록'만 생김 (로컬 브랜치 �
       q.w = "초대한 사람이 수락해야 협업자가 됨. 연습허브에선 잠시 뒤 자동 수락됨.";
       q.s = ["Settings → Collaborators", "이주무관 선택 → [Add people]"];
     }
+    q.loc = ["원격"];
     S.quest = q;
   }
   function questOk(q) {
@@ -633,14 +660,14 @@ origin/feature-a  ← 다른 브랜치는 '기록'만 생김 (로컬 브랜치 �
       item = { from: "안내", r: "질문하신 내용을 모두 실습함. 아래 '자주 묻는 질문'에서 다시 정리해 볼 수 있음.", w: "새로 궁금한 점이 생기면 Claude에게 물어보면 이 트랙에 추가할 수 있음.", s: ["화면 아래 '자주 묻는 질문' 펼치기"] };
       eyebrow = TRACK_NAME.qa + " · 완료"; isDone = true; key = "qa-done";
     } else if (show >= list.length) {
-      if (isLocalTrack()) { if (!S.lq) newLocalQuest(); q = S.lq; item = { from: q.from, r: q.r, w: q.w, s: localSteps(q) }; isDone = localQuestOk(q); key = S.track + "lq" + q.n; }
-      else { if (!S.quest) newQuest(); q = S.quest; item = { from: q.from, r: q.r, w: q.w, s: q.s }; isDone = questOk(q); key = "q" + q.n; }
+      if (isLocalTrack()) { if (!S.lq) newLocalQuest(); q = S.lq; item = { from: q.from, r: q.r, w: q.w, s: localSteps(q), loc: q.loc }; isDone = localQuestOk(q); key = S.track + "lq" + q.n; }
+      else { if (!S.quest) newQuest(); q = S.quest; item = { from: q.from, r: q.r, w: q.w, s: q.s, loc: q.loc || ["원격"] }; isDone = questOk(q); key = "q" + q.n; }
       eyebrow = TRACK_NAME[S.track] + " · 실전 요청 #" + q.n;
     } else {
-      var m = list[show]; item = { from: m.from || "팀장", r: m.r(), w: m.w, s: m.s }; eyebrow = TRACK_NAME[S.track] + " · 기본 " + (show + 1) + " · " + m.t; isDone = m.ok(); key = S.track + "m" + show;
+      var m = list[show]; item = { from: m.from || "팀장", r: m.r(), w: m.w, s: m.s, loc: m.loc }; eyebrow = TRACK_NAME[S.track] + " · 기본 " + (show + 1) + " · " + m.t; isDone = m.ok(); key = S.track + "m" + show;
     }
     if (key !== ui.key) { ui.hint = ui.steps = false; ui.key = key; }
-    var h = '<span class="eyebrow">' + esc(eyebrow) + '</span><span class="who">' + esc(item.from) + '</span><p>' + esc(item.r) + '</p>';
+    var h = '<span class="eyebrow">' + esc(eyebrow) + '</span>' + locBadges(item.loc) + '<span class="who">' + esc(item.from) + '</span><p>' + esc(item.r) + '</p>';
     var mq = show < list.length ? list[show] : null;
     if (mq && mq.quiz) {
       if (isDone) h += '<p class="hint">정답: ' + esc(mq.quiz.opts[mq.quiz.ans]) + '</p><p class="hint">' + esc(mq.quiz.exp) + '</p>';
@@ -660,6 +687,7 @@ origin/feature-a  ← 다른 브랜치는 '기록'만 생김 (로컬 브랜치 �
     $("qlist").innerHTML = rows.map(function (x) {
       return '<li class="' + (x.ok ? "done" : x.i === cur ? "cur" : "") + '"><span class="mk">' + (x.ok ? "✓" : x.i < list.length ? x.i + 1 : "∞") + '</span><button type="button" data-rail="view" data-i="' + x.i + '"' + (x.i === list.length && cur < list.length ? " disabled" : "") + '>' + esc(x.t) + '</button></li>';
     }).join("");
+    renderLocTable();
     $("feed").innerHTML = S.feed.length ? S.feed.map(function (f) { return "<div><b>" + esc(f.who) + "</b> " + esc(f.text) + "</div>"; }).join("") : "<div>아직 알림 없음</div>";
   }
   document.querySelector(".rail").addEventListener("click", function (e) {
@@ -1206,6 +1234,26 @@ origin/feature-a  ← 다른 브랜치는 '기록'만 생김 (로컬 브랜치 �
     S.local.branches[n] = { commits: lHead().commits.slice(), files: clone(lHead().files), upstream: false };
     S.local.head = n; ok(from + " 에서 " + n + " 브랜치를 만들고 이동함 (아직 내 컴퓨터에만 있음)"); return true;
   }
+  function lMerge(from) {
+    var L = S.local, n = L.head, h = lHead(), f = lbr(from);
+    if (!f) return err("로컬 브랜치가 없음: " + from);
+    if (from === n) return err("자기 자신에게는 merge 할 수 없음");
+    if (lDirty()) return err("커밋하지 않은 변경이 있어 merge 할 수 없음. 먼저 커밋함.");
+    var hs = setOf(h.commits), fs = setOf(f.commits), fromOnly = f.commits.filter(function (c) { return !hs[c]; });
+    if (!fromOnly.length) return ok("이미 최신임: 로컬 " + from + " 의 커밋이 로컬 " + n + " 에 모두 들어 있음");
+    if (h.commits.every(function (c) { return fs[c]; })) { h.commits = f.commits.slice(); h.files = clone(f.files); ok("Fast-forward: 로컬 " + from + " → 로컬 " + n + " 로 merge 함 (원격은 그대로)"); }
+    else {
+      var common = null; for (var i = h.commits.length - 1; i >= 0; i--) if (fs[h.commits[i]]) { common = h.commits[i]; break; }
+      var base = (common && S.commits[common].tree) || {}, mine = h.files, theirs = f.files, res = {};
+      Object.keys(Object.assign({}, base, mine, theirs)).forEach(function (k) { var v = theirs[k] !== base[k] ? theirs[k] : mine[k]; if (v !== undefined) res[k] = v; });
+      h.commits = h.commits.concat(fromOnly);
+      var id = sha(); S.commits[id] = { id: id, msg: "Merge branch '" + from + "' into " + n, author: ME, tree: clone(res) };
+      h.commits.push(id); h.files = res;
+      ok("로컬 " + from + " 을 로컬 " + n + " 에 merge 함 (머지 커밋 생성, 원격은 그대로)");
+    }
+    L.work = clone(h.files); L.index = clone(h.files);
+    S.flags["lmerged:" + from + ">" + n] = true;
+  }
   function lNewFile(n) {
     n = (n || "").trim();
     if (!/^[\w.\-\/]+$/.test(n)) { err("파일 이름에는 영문·숫자·- _ . / 만 쓸 수 있음"); return false; }
@@ -1227,76 +1275,98 @@ origin/feature-a  ← 다른 브랜치는 '기록'만 생김 (로컬 브랜치 �
   }
 
   /* 로컬 트랙 요청 */
+  function latch(key, fn) { if (S.flags["done:" + key]) return true; if (fn()) { S.flags["done:" + key] = true; return true; } return false; }
+  function localOnlyMerge(b, msg) {
+    var t = lbr(b); if (!S.flags["lmerged:" + b + ">main"] || !t || !R()) return false;
+    var mine = t.commits.filter(function (c) { return S.commits[c].msg === msg; });
+    return mine.length > 0 && mine.every(function (c) { return lbr("main").commits.indexOf(c) >= 0 && br("main").commits.indexOf(c) < 0; });
+  }
   function hasRepo() { return !!R() && !!br("main") && br("main").commits.length > 0; }
   function inMain(id) { return !!id && !!lbr("main") && lbr("main").commits.indexOf(id) >= 0; }
   var PREP = { t: "준비: 웹에 레포", r: function () { return "이 모드는 원격 레포를 내 컴퓨터로 받아서 작업합니다. [웹 사이트] 모드에서 README 포함 레포가 없으면 먼저 만들어 주세요."; },
     w: "VS Code·데스크톱 앱은 웹의 원격 저장소(origin)를 클론해서 씀. 웹 트랙 1번을 했다면 이미 완료됨.",
     s: ["왼쪽 위 [웹 사이트] 클릭", "+ 새 저장소 → Add a README file 체크 → Create", "다시 이 모드 버튼 클릭"], ok: hasRepo };
   var MV = [PREP,
-    { t: "클론", r: function () { return "VS Code로 레포 클론 받아 주세요. 주소는 " + repoUrl() + " 입니다."; },
+    { t: "클론", r: function () { return "원격 레포를 VS Code로 로컬(내 컴퓨터)에 클론 받아 주세요. 주소는 " + repoUrl() + " 입니다."; },
       w: "클론(Clone) = 원격 저장소를 통째로 내 컴퓨터에 복사하는 것. 이후 작업은 내 컴퓨터에서 하고 Push로 올림. 데스크톱 앱에서 이미 클론했다면 같은 폴더라 자동 완료됨.",
       s: ["왼쪽 세로 막대의 탐색기(문서 모양) 아이콘", "주소 입력칸에 주소 입력 (아래 [입력칸에 넣기] 사용 가능)", "[Git 저장소 복제] 클릭"], ok: function () { return !!S.local; } },
-    { t: "브랜치 만들기", r: function () { return "작업은 feature/vscode 브랜치에서 하세요. 맨 아래 상태바에서 만들면 됩니다."; },
+    { t: "브랜치 만들기", r: function () { return "로컬에 feature/vscode 브랜치를 만들어 주세요. 원격엔 아직 안 생깁니다. 맨 아래 상태바에서 만들면 됩니다."; },
       w: "상태바 왼쪽의 브랜치 이름(⎇ main)을 누르면 브랜치 전환·생성 메뉴가 위에 뜸.",
       s: ["맨 아래 파란 상태바의 ⎇ main 클릭", "위 입력칸에 feature/vscode 입력 → Enter"], ok: function () { return !!lbr("feature/vscode"); } },
-    { t: "파일 작성·저장", r: function () { return "notes.md 새 파일 만들어서 회의 메모 한 줄 쓰고 저장하세요."; },
+    { t: "파일 작성·저장", r: function () { return "로컬 작업 폴더에 notes.md 새 파일 만들어서 회의 메모 한 줄 쓰고 저장하세요."; },
       w: "저장(Ctrl+S)해야 작업 폴더에 반영되고 소스 제어에 '변경 사항'으로 뜸. U = 새 파일(Untracked), M = 수정됨(Modified).",
       s: ["탐색기의 [+ 새 파일] → notes.md 입력 → Enter", "편집기에 내용 입력", "[저장] 또는 Ctrl+S"],
       ok: function () { var b = lbr("feature/vscode"); return !!S.local && (!!S.local.work["notes.md"] || !!(b && b.files["notes.md"])); } },
-    { t: "스테이징", r: function () { return "소스 제어 탭에서 notes.md 스테이징(+) 해 주세요."; },
+    { t: "스테이징", r: function () { return "로컬에서 notes.md 스테이징(+) 해 주세요. 소스 제어 탭에 있습니다."; },
       w: "파일 옆 + 를 누르면 '스테이징된 변경 사항'으로 올라감. 다음 커밋에 넣을 파일을 고르는 단계임.",
       s: ["왼쪽 세로 막대의 소스 제어(가지 모양) 아이콘", "변경 사항의 notes.md 오른쪽 + 클릭"], ok: function () { var b = lbr("feature/vscode"); return !!S.local && (!!S.local.index["notes.md"] || !!(b && "notes.md" in b.files)); } },
-    { t: "커밋", r: function () { return "'회의 메모 추가' 메시지로 커밋하세요."; },
+    { t: "커밋", r: function () { return "'회의 메모 추가' 메시지로 로컬 feature/vscode에 커밋하세요. 이 커밋은 아직 원격엔 없습니다."; },
       w: "커밋은 내 컴퓨터에만 기록됨. 상태바에 ☁ 또는 ↑ 표시가 생기는 걸 확인함.",
       s: ["소스 제어 맨 위 메시지 칸에 입력", "[✓ 커밋] 클릭 (또는 Ctrl+Enter)"], ok: function () { var b = lbr("feature/vscode"); return !!b && "notes.md" in b.files; } },
-    { t: "Publish Branch", r: function () { return "브랜치를 원격에 게시(Publish)해 주세요. 그래야 저도 볼 수 있어요."; },
+    { t: "Publish Branch", r: function () { return "로컬 feature/vscode를 원격에 게시(Publish)해 주세요. 원격에 origin/feature/vscode가 생겨야 저도 볼 수 있어요."; },
       w: "새 브랜치는 원격에 아직 없음. Publish Branch = 원격에 같은 이름의 브랜치를 만들고 Push 하는 것. 웹 모드 Code 탭에서 확인 가능.",
       s: ["소스 제어의 [☁ Publish Branch] 클릭"], ok: function () { return !!S.flags["pushed:feature/vscode"]; } },
-    { t: "Pull 받기", from: "김주무관", r: function () { return "제가 방금 origin/main에 회의 결과 올렸어요. main으로 체크아웃해서 Pull 받으세요."; },
+    { t: "Pull 받기", from: "김주무관", r: function () { return "제가 방금 원격 main(origin/main)에 회의 결과 올렸어요. 로컬 main으로 체크아웃해서 Pull 받으세요."; },
       w: "Pull = 원격의 새 커밋을 받아와 내 브랜치에 합침. 상태바의 ↓ 숫자가 받을 커밋 수임.",
-      s: ["상태바 ⎇ 클릭 → main 선택", "소스 제어 ··· 메뉴 → 끌어오기(Pull), 또는 상태바 ⟳ 클릭"], ok: function () { return inMain(S.flags.vTeam); } }
+      s: ["상태바 ⎇ 클릭 → main 선택", "소스 제어 ··· 메뉴 → 끌어오기(Pull), 또는 상태바 ⟳ 클릭"], ok: function () { return inMain(S.flags.vTeam); } },
+    { t: "로컬 main에 merge", r: function () { return "연습으로 로컬 feature/vscode 를 로컬 main 에 merge 해 보세요. 원격 main 에는 올리지(push) 마세요."; },
+      w: "로컬 merge 는 내 컴퓨터 안에서만 합침. 현황표에서 로컬 main 만 ↑(올릴 것)가 생기고 원격 main 은 그대로인 것을 확인함. PR은 원격 기능이라 로컬엔 없음.",
+      s: ["상태바 ⎇ 로 로컬 main 체크아웃 (이미 main 이면 생략)", "소스 제어 ··· → 분기 병합 (로컬 merge)...", "feature/vscode → main 선택", "push 하지 말고 왼쪽 현황표 확인"],
+      ok: function () { return latch("v9", function () { return localOnlyMerge("feature/vscode", "회의 메모 추가"); }); } },
+    { t: "원격 main에 PR", from: "팀장", r: function () { return "이번엔 정식 절차로 합니다. 원격 feature/vscode → 원격 main 으로 PR 올려서 웹에서 머지해 주세요. 로컬 merge 가 아니라 원격에서 합치는 겁니다."; },
+      w: "원격 main 에 넣을 때는 로컬 merge 후 push 가 아니라 PR 머지가 정석임. 보호 규칙이 걸려 있으면 리뷰어 승인을 받아야 머지 버튼이 열림.",
+      s: ["왼쪽 위 [웹 사이트] 클릭", "Pull requests → New pull request → compare: feature/vscode → Create", "(보호 규칙 있으면) Reviewers 지정 → 승인 대기", "Confirm merge", "[VS Code] 로 돌아와 현황표 확인"],
+      ok: function () { return !!R() && R().prs.some(function (p) { return p.head === "feature/vscode" && p.state === "merged"; }); } }
   ];
   var MD = [PREP,
-    { t: "클론", r: function () { return "데스크톱 앱으로 레포 클론 받아 주세요."; },
+    { t: "클론", r: function () { return "원격 레포를 데스크톱 앱으로 로컬(내 컴퓨터)에 클론 받아 주세요."; },
       w: "데스크톱 앱은 로그인한 계정의 레포 목록에서 골라 클론함. VS Code에서 이미 클론했다면 같은 폴더라 자동 완료됨.",
       s: ["메뉴 [파일] → [Clone repository...] 또는 가운데 버튼", "목록에서 레포 선택 → [Clone]"], ok: function () { return !!S.local; } },
-    { t: "새 브랜치", r: function () { return "feature/desktop 브랜치 만들어 주세요."; },
+    { t: "새 브랜치", r: function () { return "로컬에 feature/desktop 브랜치 만들어 주세요. 원격엔 아직 안 생깁니다."; },
       w: "상단 가운데 Current branch 를 누르면 브랜치 목록과 [New branch] 가 나옴.",
       s: ["상단 [Current branch ▾] 클릭", "[New branch] → feature/desktop 입력 → [Create branch]"], ok: function () { return !!lbr("feature/desktop"); } },
-    { t: "파일 작성", r: function () { return "편집기에서 todo.txt 만들어서 할 일 목록 적어 주세요."; },
+    { t: "파일 작성", r: function () { return "로컬 작업 폴더에 편집기로 todo.txt 만들어서 할 일 목록 적어 주세요."; },
       w: "데스크톱 앱은 직접 편집하지 않고 외부 편집기(VS Code·메모장 등)를 열어 고침. 저장하면 Changes 목록에 바로 뜸.",
       s: ["[Open in editor] 클릭 (또는 메뉴 [저장소] → Open in editor)", "파일 선택에서 '(새 파일)' → 이름 todo.txt, 내용 입력", "[저장]"],
       ok: function () { var b = lbr("feature/desktop"); return !!S.local && (!!S.local.work["todo.txt"] || !!(b && b.files["todo.txt"])); } },
-    { t: "커밋", r: function () { return "Changes에서 todo.txt 체크하고 Summary '할 일 목록 추가'로 커밋하세요."; },
+    { t: "커밋", r: function () { return "Changes에서 todo.txt 체크하고 Summary '할 일 목록 추가'로 로컬 feature/desktop에 커밋하세요."; },
       w: "데스크톱 앱은 스테이징 대신 체크박스로 커밋할 파일을 고름. Summary 가 커밋 메시지임.",
       s: ["왼쪽 Changes 목록의 todo.txt 체크 확인", "아래 Summary 입력 → [Commit to feature/desktop]"], ok: function () { var b = lbr("feature/desktop"); return !!b && "todo.txt" in b.files; } },
-    { t: "Publish branch", r: function () { return "브랜치 Publish 해 주세요."; },
+    { t: "Publish branch", r: function () { return "로컬 feature/desktop을 원격에 Publish 해 주세요."; },
       w: "상단 오른쪽 버튼은 상황에 따라 Publish branch / Push origin / Pull origin / Fetch origin 으로 바뀜.",
       s: ["상단 오른쪽 [Publish branch] 클릭"], ok: function () { return !!S.flags["pushed:feature/desktop"]; } },
-    { t: "PR 만들기", r: function () { return "앱에서 바로 Pull Request 만들어 주세요."; },
+    { t: "PR 만들기", r: function () { return "원격 feature/desktop → 원격 main으로 Pull Request 만들어 주세요. 앱 버튼이 웹 화면을 열어 줍니다."; },
       w: "앱의 Create Pull Request 는 웹 사이트의 PR 작성 화면을 열어 줌. 거기서 [Create pull request] 로 마무리함.",
       s: ["메뉴 [브랜치] → Create pull request, 또는 화면의 [Create Pull Request]", "웹 화면에서 [Create pull request]", "왼쪽 위 [데스크톱 앱] 으로 복귀"],
       ok: function () { return !!R() && R().prs.some(function (p) { return p.head === "feature/desktop"; }); } },
-    { t: "Pull origin", from: "김주무관", r: function () { return "origin/main에 제가 커밋 올렸어요. main으로 바꿔서 Pull origin 해 주세요."; },
+    { t: "Pull origin", from: "김주무관", r: function () { return "원격 main(origin/main)에 제가 커밋 올렸어요. 로컬 main으로 바꿔서 Pull origin 해 주세요."; },
       w: "원격이 앞서 있으면 상단 버튼이 Pull origin ↓1 로 바뀜.",
-      s: ["[Current branch ▾] → main 선택", "상단 오른쪽 [Pull origin] 클릭"], ok: function () { return inMain(S.flags.dTeam); } }
+      s: ["[Current branch ▾] → main 선택", "상단 오른쪽 [Pull origin] 클릭"], ok: function () { return inMain(S.flags.dTeam); } },
+    { t: "로컬 main에 merge", r: function () { return "로컬 feature/desktop 을 로컬 main 에 merge 해 보세요. Push origin 은 누르지 마세요."; },
+      w: "데스크톱 앱: 메뉴 [브랜치] → Merge into current branch. 내 컴퓨터 안에서만 합쳐지고, 상단 버튼이 Push origin ↑ 으로 바뀌는 것을 확인함.",
+      s: ["[Current branch ▾] → main (이미 main 이면 생략)", "메뉴 [브랜치] → Merge into current branch... (로컬)", "feature/desktop → main 클릭", "Push 하지 말고 현황표 확인"],
+      ok: function () { return latch("d9", function () { return localOnlyMerge("feature/desktop", "할 일 목록 추가"); }); } },
+    { t: "원격 PR 머지", from: "팀장", r: function () { return "아까 올린 PR(원격 feature/desktop → 원격 main)을 웹에서 머지해 주세요. 원격 main 은 PR로만 바꿉니다."; },
+      w: "로컬 main 과 원격 main 은 서로 다른 곳임. 로컬에서 합친 것과 별개로, 원격 main 은 PR 머지로 바뀜. 이후 현황표에 ↑↓가 함께 생기면 pull 로 맞추면 됨.",
+      s: ["왼쪽 위 [웹 사이트] → Pull requests → feature/desktop PR", "(보호 규칙 있으면) Reviewers 지정 → 승인 대기", "Confirm merge", "[데스크톱 앱] 으로 돌아와 현황표 확인"],
+      ok: function () { return !!R() && R().prs.some(function (p) { return p.head === "feature/desktop" && p.state === "merged"; }); } }
   ];
   /* 내 질문 실습: 사용자가 실제로 물어본 내용 */
   function qz(id) { return function () { return !!S.flags["quiz:" + id]; }; }
   var MQ = [
     { t: "Q. 브랜치째 push 되나", from: "질문", quiz: { id: "q1", opts: ["안 됨. main만 push 가능함", "됨. 원격에 같은 이름의 브랜치가 생김", "되지만 원격에선 이름이 main으로 바뀜"], ans: 1, exp: "push는 브랜치 단위로 동작함. 로컬 브랜치를 push하면 원격에 같은 이름의 브랜치가 생기고, 이미 있으면 새 커밋만 올라감." },
       r: function () { return "로컬(내 컴퓨터)에서 만든 브랜치를 그대로 push 할 수 있을까요?"; }, w: "git push -u origin 브랜치명. VS Code는 Publish Branch, 데스크톱 앱은 Publish branch 버튼이 같은 일을 함.", s: ["보기 중 하나를 고름"], ok: qz("q1") },
-    { t: "직접 확인: 브랜치 push", from: "팀장", r: function () { return "직접 해 봅시다. VS Code나 데스크톱 앱에서 qa/push-test 브랜치를 만들고 qa.txt 를 커밋한 뒤 Publish(push) 해 주세요."; },
+    { t: "직접 확인: 브랜치 push", from: "팀장", r: function () { return "직접 해 봅시다. VS Code나 데스크톱 앱에서 로컬 qa/push-test 브랜치를 만들고 qa.txt 를 로컬 커밋한 뒤, 원격으로 Publish(push) 해 주세요."; },
       w: "아직 클론하지 않았다면 VS Code 또는 데스크톱 앱 모드에서 먼저 클론해야 함. 이 트랙은 화면 모드와 상관없이 진행됨.",
       s: ["왼쪽 위 [VS Code] 또는 [데스크톱 앱]으로 화면 전환 후 [내 질문]을 다시 눌러 요청 유지", "브랜치 qa/push-test 만들기", "qa.txt 만들고 저장 → 커밋", "Publish Branch / Publish branch 클릭"],
       ok: function () { return !!S.flags["pushed:qa/push-test"]; } },
     { t: "Q. 브랜치 push가 main에 반영되나", from: "질문", quiz: { id: "q2", opts: ["바로 main에도 반영됨", "반영 안 됨. PR을 머지해야 main에 들어감", "main이 그 브랜치로 바뀜"], ans: 1, exp: "브랜치에 push하면 원격의 같은 이름 브랜치에만 올라감. main은 그대로이며, PR을 만들어 Merge 해야 main에 합쳐짐." },
       r: function () { return "그럼 제가 브랜치에서 수정한 걸 push하면 main에도 바로 들어가나요?"; }, w: "브랜치 = main과 분리된 작업 공간. 합치는 건 PR → 리뷰 → Merge 단계에서 일어남.", s: ["보기 중 하나를 고름"], ok: qz("q2") },
-    { t: "직접 확인: main은 그대로", from: "팀장", r: function () { return "웹 사이트 Code 탭에서 브랜치를 qa/push-test 로 바꿔 qa.txt 가 있는 걸 보고, 다시 main 으로 바꿔 qa.txt 가 없는 걸 확인해 주세요."; },
+    { t: "직접 확인: main은 그대로", from: "팀장", r: function () { return "웹 사이트(원격) Code 탭에서 원격 qa/push-test 에 qa.txt 가 있는 걸 보고, 원격 main 에는 qa.txt 가 없는 걸 확인해 주세요."; },
       w: "같은 저장소라도 브랜치마다 파일 내용이 다름. 브랜치 선택 메뉴로 오가며 비교할 수 있음.",
       s: ["왼쪽 위 [웹 사이트]로 화면 전환 후 [내 질문] 다시 클릭", "Code 탭 [⎇ ▾] → qa/push-test 선택 (qa.txt 확인)", "[⎇ ▾] → main 선택 (qa.txt 없음 확인)"],
       ok: function () { return !!S.flags.qaMain; } },
-    { t: "직접 확인: 추가 push가 PR에 붙음", from: "팀장", r: function () { return "qa/push-test 로 PR을 만든 다음, 같은 브랜치에 커밋을 하나 더 push 해서 그 PR에 자동으로 붙는지 확인해 주세요."; },
+    { t: "직접 확인: 추가 push가 PR에 붙음", from: "팀장", r: function () { return "원격 qa/push-test → 원격 main 으로 PR을 만든 다음, 로컬 qa/push-test 에서 커밋을 하나 더 해 원격으로 push 하고 그 PR에 자동으로 붙는지 확인해 주세요."; },
       w: "PR이 열려 있는 동안 head 브랜치에 push한 커밋은 PR에 자동으로 추가됨. 새 PR을 만들 필요 없음.",
       s: ["웹: Pull requests → New pull request → compare: qa/push-test → Create", "VS Code 또는 데스크톱 앱: qa/push-test 에서 qa.txt 수정 → 커밋 → Push", "웹: PR 화면 타임라인에 새 커밋이 붙었는지 확인"],
       ok: function () { return !!R() && R().prs.some(function (p) { return p.head === "qa/push-test" && p.timeline.slice(p.init || 0).some(function (t) { return t.k === "commit"; }); }); } },
@@ -1307,39 +1377,90 @@ origin/feature-a  ← 다른 브랜치는 '기록'만 생김 (로컬 브랜치 �
     { t: "Q. main에서 pull하면 다른 브랜치도?", from: "질문", quiz: { id: "q5", opts: ["다른 브랜치도 전부 내 로컬 브랜치로 생김", "main에만 합쳐짐. 다른 브랜치는 origin/이름 형태로 '정보만' 받아짐", "다른 브랜치 내용이 main에 같이 섞여 들어감"], ans: 1, exp: "git pull = fetch + merge. fetch 단계에서 원격의 다른 브랜치 정보(origin/브랜치명)도 받아오지만, 합치기(merge)는 지금 있는 main에만 함. 다른 브랜치를 내 컴퓨터에서 쓰려면 그 브랜치로 체크아웃해야 로컬 브랜치가 생김. 단, git pull origin main 처럼 브랜치를 지정하면 main 정보만 받음." },
       r: function () { return "로컬 main에서 pull 하면 원격 main 내용이 복사되잖아요. 그때 원격에 새로 생긴 다른 브랜치들도 같이 딸려오나요?"; }, w: "연습허브 VS Code 상태바 ⎇ 메뉴나 데스크톱 앱 Current branch 메뉴를 열면, 아직 로컬에 없는 원격 브랜치가 'origin/이름'으로 따로 보임. 고르면 그때 로컬 브랜치가 생김.", s: ["보기 중 하나를 고름", "확인: VS Code 상태바 ⎇ 메뉴에서 ☁ origin/... 항목 보기"], ok: qz("q5") },
     { t: "Q. 실무 작업 순서", from: "질문", quiz: { id: "q6", opts: ["로컬 브랜치 작업 → 로컬 main에 합침 → 원격 main에 push", "로컬 브랜치를 원격 main으로 바로 push (git push origin 브랜치:main)", "로컬 브랜치 작업 → 원격의 같은 이름 브랜치로 push → PR → 리뷰 후 원격 main에 머지 → 로컬 main pull"], ans: 2, exp: "협업 표준은 3번(GitHub Flow)임. 1·2번은 리뷰 없이 main이 바뀌어 실수가 그대로 들어가고, 보호 규칙이 걸린 main이면 push가 거절됨. 혼자 하는 연습 저장소라면 1번도 가능하지만, 습관은 3번으로 들이는 것이 좋음." },
-      r: function () { return "보통 어떤 순서로 하나요? 로컬 main에 합쳐서 원격 main에 push? 아니면 내 브랜치를 원격 main으로 바로 push?"; }, w: "'main은 직접 건드리지 않는다'가 원칙임. 브랜치는 브랜치로 올리고, main에 합치는 건 PR 머지로만 함.", s: ["보기 중 하나를 고름", "실습: 웹 트랙 5~9번 또는 VS Code·데스크톱 실전 요청이 이 순서임"], ok: qz("q6") }
+      r: function () { return "보통 어떤 순서로 하나요? 로컬 main에 합쳐서 원격 main에 push? 아니면 내 브랜치를 원격 main으로 바로 push?"; }, w: "'main은 직접 건드리지 않는다'가 원칙임. 브랜치는 브랜치로 올리고, main에 합치는 건 PR 머지로만 함.", s: ["보기 중 하나를 고름", "실습: 웹 트랙 5~9번 또는 VS Code·데스크톱 실전 요청이 이 순서임"], ok: qz("q6") },
+    { t: "Q. 로컬 main에 PR?", from: "질문", quiz: { id: "q7", opts: ["로컬 main 에도 PR을 만들 수 있음", "PR은 원격(GitHub) 기능임. 로컬에서 합치는 건 merge 임", "PR과 merge는 같은 말임"], ans: 1, exp: "PR(Pull Request)은 GitHub 같은 원격 서비스에만 있는 '합쳐 달라는 요청서'임. 로컬에서는 git merge 로 직접 합침. 그래서 지시는 '로컬 main에 merge' 또는 '원격 main에 PR' 둘 중 하나가 됨." },
+      r: function () { return "로컬 main 에 PR 할지, 원격 main 에 PR 할지 고르려면… 로컬 main 에도 PR이 되나요?"; }, w: "VS Code·데스크톱 트랙 9~10번과 실전 요청에서 '로컬 merge' 와 '원격 PR' 을 구분해 연습할 수 있음.", s: ["보기 중 하나를 고름"], ok: qz("q7") }
   ];
+  function setLoc(list, arr) { list.forEach(function (m, i) { if (!m.loc) m.loc = arr[i]; }); }
+  setLoc(M, M.map(function () { return ["원격"]; }));
+  setLoc(MV, [["원격"], ["원격→로컬"], ["로컬"], ["로컬"], ["로컬"], ["로컬"], ["로컬→원격"], ["원격→로컬"], ["로컬"], ["원격"]]);
+  setLoc(MD, [["원격"], ["원격→로컬"], ["로컬"], ["로컬"], ["로컬"], ["로컬→원격"], ["원격"], ["원격→로컬"], ["로컬"], ["원격"]]);
+  setLoc(MQ, [null, ["로컬", "로컬→원격"], null, ["원격"], ["원격", "로컬→원격"], null, null, null, null, null]);
+  var LOC_TIP = { "로컬": "내 컴퓨터에서만 일어남 (원격엔 변화 없음)", "원격": "GitHub(웹)에서 일어남", "로컬→원격": "내 컴퓨터 → GitHub 로 올림 (push·Publish)", "원격→로컬": "GitHub → 내 컴퓨터로 받음 (clone·pull)" };
+  function locBadges(loc) { return loc ? '<div class="locs-badges">' + loc.map(function (l) { return '<span class="loc loc-' + (l === "로컬" ? "l" : l === "원격" ? "r" : l === "로컬→원격" ? "up" : "down") + '" title="' + LOC_TIP[l] + '">' + l + '</span>'; }).join("") + '</div>' : ""; }
+  function renderLocTable() {
+    var box = $("locs"); if (!box) return;
+    if (!R()) { box.innerHTML = '<div class="kv2">원격 레포가 아직 없음</div>'; return; }
+    var names = Object.keys(R().branches); if (S.local) Object.keys(S.local.branches).forEach(function (n) { if (names.indexOf(n) < 0) names.push(n); });
+    var h = '<table><thead><tr><th>브랜치</th><th>로컬</th><th>원격</th><th>상태</th></tr></thead><tbody>';
+    names.forEach(function (n) {
+      var l = S.local && S.local.branches[n], r = R().branches[n], st;
+      if (!S.local) st = "클론 전";
+      else if (l && !r) st = l.upstream ? "원격 삭제됨" : "로컬에만 있음";
+      else if (!l) st = "원격에만 있음";
+      else if (!l.upstream) st = "로컬에만 있음";
+      else { var x = lSync(n); st = !x.ahead && !x.behind ? "같음" : (x.ahead ? "↑" + x.ahead + " 올릴 것 " : "") + (x.behind ? "↓" + x.behind + " 받을 것" : ""); }
+      var head = S.local && S.local.head === n;
+      h += '<tr' + (head ? ' class="head"' : "") + '><td>' + (head ? "▶ " : "") + esc(n) + '</td><td>' + (l ? "●" : "–") + '</td><td>' + (r ? "●" : "–") + '</td><td>' + st + '</td></tr>';
+    });
+    h += '</tbody></table>';
+    if (S.local) { var c = lAll().length; h += '<div class="kv2">로컬 작업 폴더: ' + (c ? '커밋 안 한 변경 ' + c + '개' : '변경 없음') + ' · 현재 로컬 브랜치 ' + esc(S.local.head) + '</div>'; }
+    else h += '<div class="kv2">로컬: 아직 클론하지 않음 (VS Code·데스크톱 모드에서 클론)</div>';
+    box.innerHTML = h;
+  }
   function prepareLocal() {
     if (!hasRepo()) return;
     if (current(MV) === 7 && !S.flags.vTeam) S.flags.vTeam = teamPushMain("김주무관");
     if (current(MD) === 7 && !S.flags.dTeam) S.flags.dTeam = teamPushMain("김주무관");
   }
   function newLocalQuest() {
-    var types = ["feat", "pull", "pr"], last = S.lq && S.lq.type;
+    var types = ["feat", "pull", "pr", "lmerge", "rpr"], last = S.lq && S.lq.type;
     var type = pick(types.filter(function (t) { return t !== last; })), q = { type: type, n: S.lqDone + 1, from: "팀장" };
+    if (type === "lmerge" || type === "rpr") {
+      var cands = FEATS.filter(function (f) { var b = "feature/" + f[0] + (type === "lmerge" ? "-draft" : "-pr"); return !lbr(b) && !br(b); }), g = cands.length ? pick(cands) : [pick(FEATS)[0] + (S.seqL = (S.seqL || 0) + 1), "추가"];
+      q.br = "feature/" + g[0] + (type === "lmerge" ? "-draft" : "-pr"); q.file = g[0] + "-" + type + ".md";
+      var mb = type === "rpr" ? br("main") : lbr("main"), nb = { commits: mb.commits.slice(), files: clone(mb.files), upstream: false }; nb.files[q.file] = g[1] + " 초안";
+      var cid = sha(); S.commits[cid] = { id: cid, msg: g[1] + " 초안 작성", author: ME, tree: clone(nb.files) }; nb.commits.push(cid);
+      S.local.branches[q.br] = nb; q.tip = cid; q.from = "팀장";
+      if (type === "lmerge") {
+        q.r = "어제 로컬에 만들어 둔 " + q.br + " 브랜치가 있습니다. 이건 아직 공유하지 않을 거라, 로컬 main 에만 merge 해 주세요. 원격 main 엔 올리지 마세요.";
+        q.w = "로컬 merge = 내 컴퓨터 안에서만 합치기. PR은 원격 기능이라 로컬엔 없음. 끝나면 현황표에서 로컬 main 만 ↑ 가 생겼는지 확인함.";
+        q.loc = ["로컬"];
+      } else {
+        q.r = "원격 main(origin/main) 기준으로 로컬에 " + q.br + " 브랜치를 만들어 커밋해 뒀습니다. 이건 원격 main 에 PR로 합쳐 주세요. 로컬 main 에 직접 merge 하면 안 됩니다.";
+        q.w = "순서: 로컬 브랜치 Publish(로컬→원격) → 웹에서 PR(원격) → 머지(원격). 로컬 main 은 나중에 pull 로 맞춤.";
+        q.loc = ["로컬→원격", "원격"];
+      }
+      S.lq = q; return;
+    }
     if (type === "pull") {
       var who = collaborators().length ? pick(collaborators()) : "김주무관";
       q.id = teamPushMain(who); q.from = who;
-      q.r = "origin/main에 새 커밋 올렸어요. 로컬 main 으로 Pull 받아서 최신으로 맞춰 주세요.";
+      q.r = "원격 main(origin/main)에 새 커밋 올렸어요. 로컬 main 으로 Pull 받아서 최신으로 맞춰 주세요."; q.loc = ["원격→로컬"];
       q.w = "Pull 전에 내 변경은 커밋해 둬야 함. 받을 커밋 수는 ↓ 숫자로 보임.";
     } else {
       var c = FEATS.filter(function (f) { var b = "feature/" + f[0] + "-local"; return !lbr(b) && !br(b); }), f = c.length ? pick(c) : [pick(FEATS)[0] + S.seqL, "추가"];
       S.seqL = (S.seqL || 0) + 1;
       q.br = "feature/" + f[0] + "-local"; q.file = f[0] + ".md";
-      q.r = type === "feat" ? f[1] + " 기능 메모 작업입니다. " + q.br + " 브랜치 만들어서 " + q.file + " 작성·커밋하고 Publish까지 해 주세요."
-        : f[1] + " 작업입니다. " + q.br + " 브랜치에 " + q.file + " 커밋하고 Publish한 뒤 Pull Request까지 만들어 주세요.";
+      q.r = type === "feat" ? f[1] + " 기능 메모 작업입니다. 로컬에 " + q.br + " 브랜치 만들어서 " + q.file + " 작성·로컬 커밋하고, 원격으로 Publish까지 해 주세요."
+        : f[1] + " 작업입니다. 로컬 " + q.br + " 브랜치에 " + q.file + " 커밋하고 원격으로 Publish한 뒤, 원격에서 Pull Request까지 만들어 주세요.";
+      q.loc = type === "feat" ? ["로컬", "로컬→원격"] : ["로컬", "로컬→원격", "원격"];
       q.w = type === "feat" ? "내 컴퓨터 작업의 기본 순서: 브랜치 → 편집·저장 → 커밋 → Publish(Push)." : "Publish 후 PR을 만들어야 팀원이 리뷰할 수 있음.";
     }
     S.lq = q;
   }
   function localQuestOk(q) {
     if (q.type === "pull") return inMain(q.id);
+    if (q.type === "lmerge") return latch("lq" + q.n + q.br, function () { return !!S.flags["lmerged:" + q.br + ">main"] && br("main").commits.indexOf(q.tip) < 0; });
+    if (q.type === "rpr") return !S.flags["lmerged:" + q.br + ">main"] && R().prs.some(function (p) { return p.head === q.br && p.state === "merged"; });
     var pushed = !!S.flags["pushed:" + q.br] && (!br(q.br) || q.file in br(q.br).files);
     if (q.type === "feat") return pushed;
     return pushed && R().prs.some(function (p) { return p.head === q.br; });
   }
   function localSteps(q) {
     var vs = S.track === "vscode";
+    if (q.type === "lmerge") return vs ? ["상태바 ⎇ → 로컬 main 체크아웃", "소스 제어 ··· → 분기 병합 (로컬 merge)... → " + q.br, "push 하지 않음"] : ["[Current branch ▾] → main", "메뉴 [브랜치] → Merge into current branch... → " + q.br, "Push origin 누르지 않음"];
+    if (q.type === "rpr") return vs ? ["상태바 ⎇ → " + q.br + " 체크아웃", "소스 제어 [☁ Publish Branch] (로컬→원격)", "웹: New pull request → compare: " + q.br + " → Create", "웹: (필요 시 리뷰어 승인) → Confirm merge"] : ["[Current branch ▾] → " + q.br, "[Publish branch] (로컬→원격)", "[Create Pull Request] → 웹에서 Create", "웹: (필요 시 리뷰어 승인) → Confirm merge"];
     if (q.type === "pull") return vs ? ["상태바 ⎇ 클릭 → main 선택", "소스 제어 ··· → 끌어오기(Pull), 또는 상태바 ⟳ 클릭"] : ["[Current branch ▾] → main", "상단 [Pull origin] 클릭"];
     var s = vs ? ["상태바 ⎇ → " + q.br + " 입력 후 Enter", "탐색기 [+ 새 파일] → " + q.file + " → 내용 입력 → 저장", "소스 제어: + 로 스테이징 → 메시지 입력 → ✓ 커밋", "[☁ Publish Branch]"]
       : ["[Current branch ▾] → [New branch] → " + q.br, "[Open in editor] → 새 파일 " + q.file + " 작성 → 저장", "Summary 입력 → [Commit to " + q.br + "]", "상단 [Publish branch]"];
@@ -1387,7 +1508,7 @@ origin/feature-a  ← 다른 브랜치는 '기록'만 생김 (로컬 브랜치 �
   function vsSCM() {
     var L = S.local, h = '<div class="vs-h"><span>소스 제어</span>';
     if (L) h += '<details class="dd vs-more"><summary title="추가 작업" aria-label="추가 작업">···</summary><div class="menu">' +
-      [["pull", "끌어오기 (Pull)"], ["push", "밀어넣기 (Push)"], ["fetch", "가져오기 (Fetch)"], ["vs-pick", "분기 만들기 / 체크아웃"], ["open-pr-web", "Pull Request 만들기 (웹에서 열기)"]].map(function (x) { return '<button type="button" class="mi" data-l="' + x[0] + '">' + x[1] + '</button>'; }).join("") + '</div></details>';
+      [["pull", "끌어오기 (Pull)"], ["push", "밀어넣기 (Push)"], ["fetch", "가져오기 (Fetch)"], ["vs-pick", "분기 만들기 / 체크아웃"], ["vs-mergepick", "분기 병합 (로컬 merge)..."], ["open-pr-web", "Pull Request 만들기 (웹에서 열기)"]].map(function (x) { return '<button type="button" class="mi" data-l="' + x[0] + '">' + x[1] + '</button>'; }).join("") + '</div></details>';
     h += '</div>';
     if (!L) return h + '<div class="vs-pad vs-dim">열린 Git 저장소가 없음. 탐색기에서 먼저 복제함.</div>';
     var st = lStaged(), un = lUnstaged(), s = lSync();
@@ -1409,7 +1530,14 @@ origin/feature-a  ← 다른 브랜치는 '기록'만 생김 (로컬 브랜치 �
     return '<div class="vs-tabs"><span class="vs-tab" id="vs-tabname">' + esc(v.file) + (dirty ? " ●" : "") + '</span><span style="flex:1"></span><button type="button" class="vs-btn sm" data-l="vs-save">저장 (Ctrl+S)</button></div><textarea id="vs-ed" class="vs-ed" spellcheck="false" aria-label="파일 내용">' + esc(buf) + '</textarea>';
   }
   function vsPicker() {
-    var L = S.local, rem = Object.keys(S.repo.branches).filter(function (n) { return !lbr(n); });
+    var L = S.local;
+    if (vsState().pick === "merge") {
+      var others = Object.keys(L.branches).filter(function (n) { return n !== L.head; });
+      return '<div class="vs-pick"><div class="vs-pi-h"><b>로컬 merge</b>: 고른 로컬 브랜치를 현재 로컬 브랜치 <b>' + esc(L.head) + '</b> 에 합침 (원격은 그대로)</div>' +
+        (others.length ? others.map(function (n) { return '<button type="button" class="vs-pi" data-l="merge" data-arg="' + esc(n) + '">⎇ ' + esc(n) + ' → ' + esc(L.head) + '</button>'; }).join("") : '<div class="vs-pi-h vs-dim">합칠 다른 로컬 브랜치가 없음</div>') +
+        '<button type="button" class="vs-pi vs-dim" data-l="vs-pick">닫기 (Esc)</button></div>';
+    }
+    var rem = Object.keys(S.repo.branches).filter(function (n) { return !lbr(n); });
     return '<div class="vs-pick"><form data-lform="vs-newbr"><input class="vs-inp" id="vs-brname" placeholder="새 분기 이름 입력 후 Enter (예: feature/abc)" spellcheck="false"></form>' +
       '<div class="vs-dim vs-pi-h">+ 새 분기 만들기: 위 칸에 이름 입력 · 아래에서 고르면 체크아웃</div>' +
       Object.keys(L.branches).map(function (n) { return '<button type="button" class="vs-pi" data-l="switch" data-arg="' + esc(n) + '">⎇ ' + esc(n) + (n === L.head ? "  (현재)" : "") + '</button>'; }).join("") +
@@ -1426,7 +1554,7 @@ origin/feature-a  ← 다른 브랜치는 '기록'만 생김 (로컬 브랜치 �
     var L = S.local, d = dkState(), noL = !L;
     var h = '<div class="dk"><div class="dk-menu">' + dkMenu("파일", [["dk-clone", "Clone repository..."]]) +
       dkMenu("저장소", [["dk-editor", "Open in editor", noL], ["push", "Push", noL], ["pull", "Pull", noL], ["fetch", "Fetch", noL]]) +
-      dkMenu("브랜치", [["dk-newbr", "New branch...", noL], ["open-pr-web", "Create pull request", noL]]) + '</div>';
+      dkMenu("브랜치", [["dk-newbr", "New branch...", noL], ["dk-merge", "Merge into current branch... (로컬)", noL], ["open-pr-web", "Create pull request (원격)", noL]]) + '</div>';
     h += '<div class="dk-bar"><div class="dk-seg"><small>Current repository</small><b>' + (L ? esc(R().name) : "없음") + '</b></div>';
     if (L) {
       var rem = Object.keys(S.repo.branches).filter(function (n) { return !lbr(n); }), s = lSync();
@@ -1454,7 +1582,12 @@ origin/feature-a  ← 다른 브랜치는 '기록'만 생김 (로컬 브랜치 �
       h += '<div class="dk-list">' + lHead().commits.slice().reverse().map(function (c) { var o = S.commits[c]; return '<div class="dk-hist"><b>' + esc(o.msg) + '</b><span class="kv">' + esc(o.author) + ' · <span class="mono">' + c + '</span>' + (rs[c] ? "" : ' · <span class="st-closed">↑ Push 안 됨</span>') + '</span></div>'; }).join("") + '</div>';
     }
     h += '</div><div class="dk-right">';
-    if (d.editor) h += dkEditor();
+    if (d.mergeOpen) {
+      var oth = Object.keys(L.branches).filter(function (n) { return n !== L.head; });
+      h += '<div class="dk-dialog"><h3>Merge into ' + esc(L.head) + ' (로컬)</h3><p class="kv">고른 <b>로컬</b> 브랜치를 현재 <b>로컬</b> 브랜치 <b class="mono">' + esc(L.head) + '</b> 에 합침. 원격에는 Push 해야 반영됨.</p>' +
+        (oth.length ? oth.map(function (n) { return '<button type="button" class="btn" data-l="merge" data-arg="' + esc(n) + '">' + esc(n) + ' → ' + esc(L.head) + '</button>'; }).join("") : '<p class="kv">합칠 다른 로컬 브랜치가 없음</p>') +
+        '<div><button type="button" class="btn" data-l="dk-merge">Cancel</button></div></div>';
+    } else if (d.editor) h += dkEditor();
     else if (d.newbr) h += '<form data-lform="dk-newbr" class="dk-dialog"><h3>Create a branch</h3><div class="field"><label for="dk-brname">Name</label><input class="inp mono" id="dk-brname" placeholder="예: feature/abc"></div><p class="kv">현재 브랜치 <b class="mono">' + esc(L.head) + '</b> 를 기준으로 만듦</p><div class="row"><button class="btn go" type="submit">Create branch</button><button class="btn" type="button" data-l="dk-newbr">Cancel</button></div></form>';
     else if (d.sel && ch.some(function (c) { return c[0] === d.sel; })) {
       var a = {}, b = {}; if (d.sel in lHead().files) a[d.sel] = lHead().files[d.sel]; if (d.sel in L.work) b[d.sel] = L.work[d.sel];
@@ -1499,7 +1632,10 @@ origin/feature-a  ← 다른 브랜치는 '기록'만 생김 (로컬 브랜치 �
     else if (a === "vs-newfile") v.newFile = !v.newFile;
     else if (a === "vs-open") { if (L.work[arg] === undefined) return; if (v.file !== arg) { vsSaveBuf(); flash = null; } v.file = arg; v.buf = null; }
     else if (a === "vs-save") vsSaveBuf();
-    else if (a === "vs-pick") v.pick = !v.pick;
+    else if (a === "vs-pick") v.pick = v.pick ? false : true;
+    else if (a === "vs-mergepick") v.pick = "merge";
+    else if (a === "merge") { lMerge(arg); v.pick = false; d.mergeOpen = false; d.sel = null; }
+    else if (a === "dk-merge") { d.mergeOpen = !d.mergeOpen; d.editor = d.newbr = false; }
     else if (a === "stage") { if (arg in L.work) L.index[arg] = L.work[arg]; else delete L.index[arg]; }
     else if (a === "unstage") { var hf = lHead().files; if (arg in hf) L.index[arg] = hf[arg]; else delete L.index[arg]; }
     else if (a === "stage-all") lUnstaged().forEach(function (x) { if (x[0] in L.work) L.index[x[0]] = L.work[x[0]]; else delete L.index[x[0]]; });
