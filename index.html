@@ -2014,6 +2014,24 @@ origin/feature-a  ← 다른 브랜치는 '기록'만 생김 (로컬 브랜치 �
     }
     afterChange();
   });
+  /* 드롭다운 메뉴: 하나만 열리고, 바깥 클릭·Esc 로 닫힘 */
+  function closeMenus(except) { Array.prototype.forEach.call(document.querySelectorAll("details.dd[open]"), function (d) { if (d !== except) d.open = false; }); }
+  document.addEventListener("toggle", function (e) { var t = e.target; if (t && t.matches && t.matches("details.dd") && t.open) closeMenus(t); }, true);
+  document.addEventListener("click", function (e) { Array.prototype.forEach.call(document.querySelectorAll("details.dd[open]"), function (d) { if (!d.contains(e.target)) d.open = false; }); });
+  document.addEventListener("keydown", function (e) { if (e.key === "Escape") closeMenus(null); });
+  /* 드롭다운 메뉴: 하나만 열림, 메뉴 막대에선 커서를 옮기면 옆 메뉴로 전환, 바깥 클릭·Esc 로 닫힘 */
+  function closeMenus(except) { Array.prototype.forEach.call(document.querySelectorAll("details.dd[open]"), function (d) { if (d !== except) d.open = false; }); }
+  document.addEventListener("toggle", function (e) { var t = e.target; if (t && t.matches && t.matches("details.dd") && t.open) closeMenus(t); }, true);
+  document.addEventListener("click", function (e) { Array.prototype.forEach.call(document.querySelectorAll("details.dd[open]"), function (d) { if (!d.contains(e.target)) d.open = false; }); });
+  document.addEventListener("keydown", function (e) { if (e.key === "Escape") closeMenus(null); });
+  document.addEventListener("mouseover", function (e) {
+    var sm = e.target.closest && e.target.closest(".dk-menu > details > summary, .dk-bar details > summary");
+    if (!sm) return;
+    var d = sm.parentElement, bar = d.parentElement;
+    if (d.open) return;
+    var anyOpen = Array.prototype.some.call(bar.querySelectorAll(":scope > details"), function (x) { return x.open; });
+    if (anyOpen) d.open = true;
+  });
   document.addEventListener("keydown", function (e) {
     if (S.mode !== "vscode") return;
     if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "s") { e.preventDefault(); if (S.local) { vsSaveBuf(); afterChange(); } }
