@@ -188,11 +188,27 @@ textarea.inp { min-height: 110px; resize: vertical; font-family: var(--f-mono); 
 h2.pt { font-size: 1.35rem; font-weight: 500; margin: 0 0 6px; overflow-wrap: anywhere; }
 h2.pt span { color: var(--muted); }
 .kv { color: var(--muted); font-size: 0.85rem; }
-.modes { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 4px; background: rgba(255,255,255,0.06); padding: 4px; border-radius: 8px; }
+.modes { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 4px; background: rgba(255,255,255,0.06); padding: 4px; border-radius: 8px; }
 .modes button { background: none; border: 0; color: var(--rail-ink); padding: 7px 4px; border-radius: 6px; cursor: pointer; font-size: 0.82rem; }
 .modes button.on { background: #2f9a66; font-weight: 700; }
-.modes .qa-btn { grid-column: 1 / -1; border: 1px dashed rgba(255,255,255,0.25); }
+.modes button { grid-column: span 2; }
+.modes .qa-btn { grid-column: span 3; border: 1px dashed rgba(255,255,255,0.25); }
+.modes .cf-btn.on { background: #a8423a; border-color: #a8423a; }
 .modes .qa-btn.on { background: #b9862a; border-color: #b9862a; }
+.conf-box { border: 1px solid var(--closed); background: var(--err-soft); border-radius: 8px; padding: 10px 12px; display: flex; flex-direction: column; gap: 6px; font-size: 0.86rem; }
+.vs-merge { margin: 6px 12px; padding: 8px 10px; border-radius: 4px; background: #3a2a1a; border-left: 3px solid var(--g-M); font-size: 12.5px; line-height: 1.6; }
+.vs-btn.warn { background: #8a3b33; margin-top: 4px; }
+.g-C { color: #ff8f6b; font-weight: 700; }
+.vs-conf { background: var(--vs-side); border-bottom: 1px solid var(--vs-line); padding: 8px 12px; display: flex; flex-direction: column; gap: 8px; max-height: 280px; overflow: auto; }
+.vs-legend { display: flex; gap: 12px; font-size: 12px; flex-wrap: wrap; }
+.vs-legend .cur { color: #6cc48f; } .vs-legend .inc { color: #7fb2ec; }
+.vs-hunk { border: 1px solid var(--vs-line); border-radius: 4px; overflow: hidden; font-family: var(--f-mono); font-size: 12.5px; }
+.vs-cbar { padding: 3px 8px; font-size: 12px; color: var(--vs-dim); font-family: var(--f-body); }
+.vs-cbar button { background: none; border: 0; color: #8fb8e8; cursor: pointer; padding: 0 2px; font-size: 12px; }
+.vs-cbar button:hover { text-decoration: underline; }
+.vs-hunk .cur, .vs-hunk .inc { padding: 4px 8px; display: flex; flex-direction: column; }
+.vs-hunk .cur { background: rgba(70,160,110,0.22); } .vs-hunk .inc { background: rgba(70,130,210,0.22); }
+.vs-hunk small { opacity: 0.6; font-size: 11px; }
 .locs-badges { display: flex; gap: 4px; flex-wrap: wrap; }
 .loc { font-size: 0.72rem; font-weight: 700; padding: 1px 8px; border-radius: 999px; cursor: help; }
 .loc-l { background: #2c5f8a; color: #e6f0fa; } .loc-r { background: #9a5a1c; color: #fbefe1; }
@@ -314,7 +330,7 @@ h2.pt span { color: var(--muted); }
   </div>
   <div class="grid">
     <aside class="rail" aria-label="업무 요청">
-      <div class="modes" role="group" aria-label="연습 도구"><button type="button" data-mode="web">웹 사이트</button><button type="button" data-mode="vscode">VS Code</button><button type="button" data-mode="desktop">데스크톱 앱</button><button type="button" data-mode="qa" class="qa-btn">내 질문 실습</button></div>
+      <div class="modes" role="group" aria-label="연습 도구"><button type="button" data-mode="web">웹 사이트</button><button type="button" data-mode="vscode">VS Code</button><button type="button" data-mode="desktop">데스크톱 앱</button><button type="button" data-mode="qa" class="qa-btn">내 질문 실습</button><button type="button" data-mode="conflict" class="qa-btn cf-btn">컨플릭트 실습</button></div>
       <div class="prog"><span id="prog-t"></span><div class="bar"><i id="prog-b"></i></div></div>
       <div class="msg" id="req"></div>
       <h3>로컬 ↔ 원격 현황</h3>
@@ -394,7 +410,23 @@ origin/feature-a  ← 다른 브랜치는 '기록'만 생김 (로컬 브랜치 �
         </tbody></table></div>
         <ul><li>연습허브 왼쪽 '로컬 ↔ 원격 현황' 표에서 브랜치별로 어디에 있는지, 몇 개를 올리고 받아야 하는지 볼 수 있음</li><li>↑숫자 = 로컬에만 있는 커밋(push 필요), ↓숫자 = 원격에만 있는 커밋(pull 필요)</li><li><b>합치는 곳도 구분함</b>: 로컬 main 에 합치기 = <b>merge</b> (VS Code: 분기 병합 / 데스크톱: Merge into current branch). 원격 main 에 합치기 = <b>PR 머지</b> (웹). PR은 원격에만 있음</li></ul>
       </section>
-      <section><h3>Q7. 다른 사람 저장소에 올려도 되나?</h3>
+      <section><h3>Q7. 컨플릭트(충돌)는 언제 나고 어떻게 푸나?</h3>
+        <p>같은 파일의 <b>같은 줄</b>을 양쪽이 다르게 고쳤을 때 남. 다른 파일이나 다른 줄이면 자동으로 합쳐짐.</p>
+        <pre>&lt;&lt;&lt;&lt;&lt;&lt;&lt; main (현재 변경: 내 쪽)
+알림 시간=10:00
+=======
+알림 시간=08:30
+&gt;&gt;&gt;&gt;&gt;&gt;&gt; feature/c-alarm (수신 변경: 들어오는 쪽)</pre>
+        <div class="tbl"><table><thead><tr><th>상황</th><th>위치</th><th>해결 순서</th></tr></thead><tbody>
+          <tr><td>로컬 브랜치끼리 merge</td><td>로컬</td><td>충돌 정리 → 스테이징 → 커밋 (원격 반영은 push)</td></tr>
+          <tr><td>push 거절 후 pull</td><td>원격→로컬</td><td>pull → 충돌 정리 → 커밋 → push</td></tr>
+          <tr><td>PR 충돌 (간단)</td><td>원격</td><td>웹 Resolve conflicts → Commit merge → PR 머지</td></tr>
+          <tr><td>PR 충돌 (복잡)</td><td>로컬→원격</td><td>로컬 head 브랜치에 origin/main merge → 정리 → 커밋 → push</td></tr>
+          <tr><td>해결이 어려울 때</td><td>로컬</td><td>병합 중단(git merge --abort) → 상의 후 다시</td></tr>
+        </tbody></table></div>
+        <ul><li>VS Code: 충돌 부분 위에 [현재 변경 수락 / 수신 변경 수락 / 두 변경 모두 수락] 버튼이 뜸</li><li>데스크톱 앱: 충돌 창에서 파일별로 편집기 열기·한쪽 선택 후 [Continue merge]</li><li>예방: 작업 전 pull, 브랜치는 작게 자주 머지, 같은 파일을 여럿이 동시에 고칠 땐 미리 말하기</li><li>연습: 왼쪽 [컨플릭트 실습] 트랙</li></ul>
+      </section>
+      <section><h3>Q8. 다른 사람 저장소에 올려도 되나?</h3>
         <p>허락 없이 올리면 안 됨. 권한이 없으면 403으로 막히고, 권한이 있더라도 소유자와 협의가 먼저임. 내 작업은 내 저장소에 두고, 기여하고 싶으면 Fork 후 PR을 보내는 것이 원칙임.</p>
       </section>
     </div>
@@ -426,7 +458,7 @@ origin/feature-a  ← 다른 브랜치는 '기록'만 생김 (로컬 브랜치 �
 
   /* ---------- 저장소 모델 ---------- */
   var R = function () { return S.repo; };
-  function br(n) { return S.repo.branches[n]; }
+  function br(n) { return S.repo ? S.repo.branches[n] : undefined; }
   function aheadOf(head, base) { if (!br(head) || !br(base)) return []; var b = {}; br(base).commits.forEach(function (c) { b[c] = 1; }); return br(head).commits.filter(function (c) { return !b[c]; }); }
   function addCommit(branch, msg, files, author) {
     var id = sha(); S.commits[id] = { id: id, msg: msg, author: author || ME, tree: clone(files) };
@@ -443,10 +475,72 @@ origin/feature-a  ← 다른 브랜치는 '기록'만 생김 (로컬 브랜치 �
   function latestReviews(p) { var m = {}; p.reviews.forEach(function (r) { if (r.state !== "COMMENTED") m[r.who] = r.state; }); return m; }
   function approvals(p) { var m = latestReviews(p), n = 0; for (var k in m) if (m[k] === "APPROVED" && k !== p.author) n++; return n; }
   function changesReq(p) { var m = latestReviews(p); for (var k in m) if (m[k] === "CHANGES_REQUESTED") return k; return null; }
+  /* ---------- 3방향 병합과 충돌 ---------- */
+  function merge3(b, m, t, la, lb) {
+    if (m === t) return { text: m, conflict: false };
+    if (m === b) return { text: t, conflict: false };
+    if (t === b) return { text: m, conflict: false };
+    var del = m === undefined || t === undefined;
+    var bl = (b || "").split("\n"), ml = (m || "").split("\n"), tl = (t || "").split("\n");
+    if (!del && b !== undefined && bl.length === ml.length && ml.length === tl.length) {
+      var out = [], hunk = null, any = false;
+      var flush = function () { if (hunk) { out.push("<<<<<<< " + la); out = out.concat(hunk.m, ["======="], hunk.t, [">>>>>>> " + lb]); hunk = null; } };
+      for (var i = 0; i < bl.length; i++) {
+        var x = bl[i], y = ml[i], z = tl[i];
+        if (y === z || z === x) { flush(); out.push(y); }
+        else if (y === x) { flush(); out.push(z); }
+        else { any = true; hunk = hunk || { m: [], t: [] }; hunk.m.push(y); hunk.t.push(z); }
+      }
+      flush();
+      return { text: out.join("\n"), conflict: any, auto: !any };
+    }
+    return { text: ["<<<<<<< " + la].concat(m === undefined ? ["(이쪽에서 파일을 삭제함)"] : ml, ["======="], t === undefined ? ["(저쪽에서 파일을 삭제함)"] : tl, [">>>>>>> " + lb]).join("\n"), conflict: true };
+  }
+  function mergeTrees(base, mine, theirs, la, lb) {
+    var files = {}, conflicts = [], auto = [];
+    Object.keys(Object.assign({}, base, mine, theirs)).sort().forEach(function (k) {
+      var r = merge3(base[k], mine[k], theirs[k], la, lb);
+      if (r.text !== undefined) files[k] = r.text;
+      if (r.conflict) conflicts.push(k);
+      if (r.auto) auto.push(k);
+    });
+    return { files: files, conflicts: conflicts, auto: auto };
+  }
+  function hasMarkers(t) { return /^(<<<<<<<|>>>>>>>) /m.test(t || "") || /^=======$/m.test(t || ""); }
+  function commonTree(aCommits, bCommits) {
+    var bs = {}; bCommits.forEach(function (c) { bs[c] = 1; });
+    for (var i = aCommits.length - 1; i >= 0; i--) if (bs[aCommits[i]]) return (S.commits[aCommits[i]] && S.commits[aCommits[i]].tree) || {};
+    return {};
+  }
+  function prMergeResult(p) { var h = br(p.head), b = br(p.base); return mergeTrees(commonTree(h.commits, b.commits), h.files, b.files, p.head, p.base); }
+  function prConflicts(p) { if (!br(p.head) || !br(p.base)) return []; return prMergeResult(p).conflicts; }
+  function hunks(text) {
+    var segs = [], cur = null, mode = 0;
+    (text || "").split("\n").forEach(function (l) {
+      if (mode === 0 && /^<<<<<<< /.test(l)) { cur = { c: true, la: l.slice(8), m: [], t: [] }; mode = 1; }
+      else if (mode === 1 && l === "=======") mode = 2;
+      else if (mode === 2 && /^>>>>>>> /.test(l)) { cur.lb = l.slice(8); segs.push(cur); cur = null; mode = 0; }
+      else if (mode === 1) cur.m.push(l);
+      else if (mode === 2) cur.t.push(l);
+      else segs.push({ c: false, l: l });
+    });
+    return segs;
+  }
+  function resolveHunk(text, idx, how) {
+    var n = -1, out = [];
+    hunks(text).forEach(function (sg) {
+      if (!sg.c) { out.push(sg.l); return; }
+      n++;
+      if (idx !== "all" && n !== idx) { out.push("<<<<<<< " + sg.la); out = out.concat(sg.m, ["======="], sg.t, [">>>>>>> " + sg.lb]); return; }
+      out = out.concat(how === "ours" ? sg.m : how === "theirs" ? sg.t : sg.m.concat(sg.t));
+    });
+    return out.join("\n");
+  }
   function mergeBlock(p) {
     var out = [], rule = S.repo.rules[p.base];
     if (!br(p.head)) out.push("head 브랜치가 삭제됨");
     else if (!aheadOf(p.head, p.base).length) out.push("합칠 새 커밋이 없음");
+    else if (prConflicts(p).length) out.push("충돌이 있음: " + prConflicts(p).join(", ") + " → [Resolve conflicts] 또는 로컬에서 해결 필요");
     if (rule && rule.requirePR) {
       if (approvals(p) < rule.approvals) out.push("승인 리뷰 " + rule.approvals + "개 필요 (현재 " + approvals(p) + "개)");
       if (changesReq(p)) out.push(changesReq(p) + "님이 변경을 요청함 (Changes requested)");
@@ -456,7 +550,7 @@ origin/feature-a  ← 다른 브랜치는 '기록'만 생김 (로컬 브랜치 �
   function closingRefs(text) { var out = [], re = /\b(close[sd]?|fix(?:e[sd])?|resolve[sd]?)\s+#(\d+)/gi, m; while ((m = re.exec(text || ""))) out.push(+m[2]); return out; }
   function doMerge(p, method) {
     var base = br(p.base), head = br(p.head), ah = aheadOf(p.head, p.base);
-    var files = Object.assign({}, base.files, head.files);
+    var files = prMergeResult(p).files;
     if (method === "merge") { ah.forEach(function (c) { base.commits.push(c); }); addCommit(p.base, "Merge pull request #" + p.num + " from " + OWNER + "/" + p.head, files); }
     else if (method === "squash") addCommit(p.base, p.title + " (#" + p.num + ")", files);
     else { ah.forEach(function (c) { var id = sha(); S.commits[id] = clone(S.commits[c]); S.commits[id].id = id; base.commits.push(id); }); base.files = files; }
@@ -646,25 +740,27 @@ origin/feature-a  ← 다른 브랜치는 '기록'만 생김 (로컬 브랜치 �
 
   /* ---------- 요청 레일 렌더 ---------- */
   var ui = { hint: false, steps: false, key: null, view: null };
-  var TRACK_NAME = { web: "웹 사이트", vscode: "VS Code", desktop: "데스크톱 앱", qa: "내 질문 실습" };
-  function trackList(t) { t = t || S.track; return t === "vscode" ? MV : t === "desktop" ? MD : t === "qa" ? MQ : M; }
+  var TRACK_NAME = { web: "웹 사이트", vscode: "VS Code", desktop: "데스크톱 앱", qa: "내 질문 실습", conflict: "컨플릭트 실습" };
+  function isStudyTrack() { return S.track === "qa" || S.track === "conflict"; }
+  function trackList(t) { t = t || S.track; return t === "vscode" ? MV : t === "desktop" ? MD : t === "qa" ? MQ : t === "conflict" ? MC : M; }
   function isLocalTrack() { return S.track === "vscode" || S.track === "desktop"; }
   function renderRail() {
-    Array.prototype.forEach.call(document.querySelectorAll("[data-mode]"), function (b) { var on = b.dataset.mode === "qa" ? S.track === "qa" : b.dataset.mode === S.mode; b.classList.toggle("on", on); b.setAttribute("aria-pressed", on ? "true" : "false"); });
+    Array.prototype.forEach.call(document.querySelectorAll("[data-mode]"), function (b) { var on = b.dataset.mode === "qa" || b.dataset.mode === "conflict" ? S.track === b.dataset.mode : b.dataset.mode === S.mode; b.classList.toggle("on", on); b.setAttribute("aria-pressed", on ? "true" : "false"); });
     var list = trackList(), cur = current(list), done = list.filter(function (m) { return m.ok(); }).length;
     var extra = isLocalTrack() ? S.lqDone : S.questDone;
-    $("prog-t").textContent = TRACK_NAME[S.track] + (S.track === "qa" ? " " : " 기본 ") + done + "/" + list.length + (extra ? " · 실전 " + extra + "건" : "");
+    $("prog-t").textContent = TRACK_NAME[S.track] + (isStudyTrack() ? " " : " 기본 ") + done + "/" + list.length + (extra ? " · 실전 " + extra + "건" : "");
     $("prog-b").style.width = (done / list.length * 100) + "%";
     var show = ui.view !== null ? ui.view : cur, item, eyebrow, isDone, key, q;
-    if (show >= list.length && S.track === "qa") {
-      item = { from: "안내", r: "질문하신 내용을 모두 실습함. 아래 '자주 묻는 질문'에서 다시 정리해 볼 수 있음.", w: "새로 궁금한 점이 생기면 Claude에게 물어보면 이 트랙에 추가할 수 있음.", s: ["화면 아래 '자주 묻는 질문' 펼치기"] };
-      eyebrow = TRACK_NAME.qa + " · 완료"; isDone = true; key = "qa-done";
+    if (show >= list.length && isStudyTrack()) {
+      item = S.track === "qa" ? { from: "안내", r: "질문하신 내용을 모두 실습함. 아래 '자주 묻는 질문'에서 다시 정리해 볼 수 있음.", w: "새로 궁금한 점이 생기면 Claude에게 물어보면 이 트랙에 추가할 수 있음.", s: ["화면 아래 '자주 묻는 질문' 펼치기"] }
+        : { from: "안내", r: "컨플릭트 상황을 모두 겪어 봄. 요청 목록에서 항목을 눌러 [다시 해보기]로 몇 번이든 반복할 수 있음.", w: "실무 요령: 작업 전 pull, 브랜치는 작게 자주 머지, 충돌이 나면 당황하지 말고 Abort 후 상의.", s: ["요청 목록에서 다시 해볼 항목 클릭 → [다시 해보기]"] };
+      eyebrow = TRACK_NAME[S.track] + " · 완료"; isDone = true; key = S.track + "-done";
     } else if (show >= list.length) {
       if (isLocalTrack()) { if (!S.lq) newLocalQuest(); q = S.lq; item = { from: q.from, r: q.r, w: q.w, s: localSteps(q), loc: q.loc }; isDone = localQuestOk(q); key = S.track + "lq" + q.n; }
       else { if (!S.quest) newQuest(); q = S.quest; item = { from: q.from, r: q.r, w: q.w, s: q.s, loc: q.loc || ["원격"] }; isDone = questOk(q); key = "q" + q.n; }
       eyebrow = TRACK_NAME[S.track] + " · 실전 요청 #" + q.n;
     } else {
-      var m = list[show]; item = { from: m.from || "팀장", r: m.r(), w: m.w, s: m.s, loc: m.loc }; eyebrow = TRACK_NAME[S.track] + " · 기본 " + (show + 1) + " · " + m.t; isDone = m.ok(); key = S.track + "m" + show;
+      var m = list[show]; item = { from: m.from || "팀장", r: m.r(), w: m.w, s: typeof m.s === "function" ? m.s() : m.s, loc: m.loc }; eyebrow = TRACK_NAME[S.track] + " · 기본 " + (show + 1) + " · " + m.t; isDone = m.ok(); key = S.track + "m" + show;
     }
     if (key !== ui.key) { ui.hint = ui.steps = false; ui.key = key; }
     var h = '<span class="eyebrow">' + esc(eyebrow) + '</span>' + locBadges(item.loc) + '<span class="who">' + esc(item.from) + '</span><p>' + esc(item.r) + '</p>';
@@ -677,13 +773,14 @@ origin/feature-a  ← 다른 브랜치는 '기록'만 생김 (로컬 브랜치 �
       }
     }
     h += '<div class="row"><button type="button" class="btn sm" data-rail="hint">' + (ui.hint ? "힌트 닫기" : "힌트 보기") + '</button><button type="button" class="btn sm" data-rail="steps">' + (ui.steps ? "클릭 경로 닫기" : "클릭 경로 보기") + '</button></div>';
+    if (mq && mq.setup) h += '<div class="row"><button type="button" class="btn go sm" data-rail="setup">' + (isDone ? "다시 해보기" : "상황 만들기") + '</button><span class="hint" style="font-size:.78rem">' + (mq.mode === "web" ? "웹 화면에서 진행" : "VS Code 또는 데스크톱 앱 화면에서 진행") + '</span></div>';
     if (ui.hint) h += '<p class="hint">' + esc(item.w) + '</p>';
     if (ui.steps) h += '<ol>' + item.s.map(function (s) { return "<li>" + esc(s) + "</li>"; }).join("") + '</ol>';
     if (show >= list.length && S.track !== "qa") h += '<div class="row">' + (isDone ? '<span class="done-tag">처리 완료</span><button type="button" class="btn go sm" data-rail="next">다음 요청 받기</button>' : '<button type="button" class="btn sm" data-rail="skip">다른 요청으로 바꾸기</button>') + '</div>';
     else if (isDone) h += '<span class="done-tag">처리 완료</span>';
-    if (S.mode !== S.track && S.track !== "qa") h += '<p class="hint">지금 오른쪽 화면은 ' + TRACK_NAME[S.mode] + ' 모드임. 요청은 ' + TRACK_NAME[S.track] + ' 기준이며, 위 버튼으로 돌아갈 수 있음.</p>';
+    if (S.mode !== S.track && !isStudyTrack()) h += '<p class="hint">지금 오른쪽 화면은 ' + TRACK_NAME[S.mode] + ' 모드임. 요청은 ' + TRACK_NAME[S.track] + ' 기준이며, 위 버튼으로 돌아갈 수 있음.</p>';
     $("req").innerHTML = h;
-    var rows = list.map(function (m, i) { return { t: m.t, ok: m.ok(), i: i }; }).concat(S.track === "qa" ? [] : [{ t: "실전 요청 (무작위·무제한)", ok: false, i: list.length }]);
+    var rows = list.map(function (m, i) { return { t: m.t, ok: m.ok(), i: i }; }).concat(isStudyTrack() ? [] : [{ t: "실전 요청 (무작위·무제한)", ok: false, i: list.length }]);
     $("qlist").innerHTML = rows.map(function (x) {
       return '<li class="' + (x.ok ? "done" : x.i === cur ? "cur" : "") + '"><span class="mk">' + (x.ok ? "✓" : x.i < list.length ? x.i + 1 : "∞") + '</span><button type="button" data-rail="view" data-i="' + x.i + '"' + (x.i === list.length && cur < list.length ? " disabled" : "") + '>' + esc(x.t) + '</button></li>';
     }).join("");
@@ -692,13 +789,23 @@ origin/feature-a  ← 다른 브랜치는 '기록'만 생김 (로컬 브랜치 �
   }
   document.querySelector(".rail").addEventListener("click", function (e) {
     var md = e.target.closest("[data-mode]");
-    if (md) { if (md.dataset.mode === "qa") S.track = "qa"; else S.mode = S.track = md.dataset.mode; ui.view = null; flash = null; return afterChange(); }
+    if (md) { if (md.dataset.mode === "qa" || md.dataset.mode === "conflict") S.track = md.dataset.mode; else S.mode = S.track = md.dataset.mode; ui.view = null; flash = null; return afterChange(); }
     var b = e.target.closest("[data-rail]"); if (!b) return;
     var a = b.dataset.rail, loc = isLocalTrack();
     if (a === "hint") ui.hint = !ui.hint;
     else if (a === "steps") ui.steps = !ui.steps;
     else if (a === "next") { if (loc) { S.lqDone++; newLocalQuest(); } else { S.questDone++; newQuest(); } }
     else if (a === "skip") { if (loc) { var ln = S.lq.n; newLocalQuest(); S.lq.n = ln; } else { var n = S.quest.n; newQuest(); S.quest.n = n; } }
+    else if (a === "setup") {
+      var ms = trackList()[ui.view !== null ? ui.view : current(trackList())];
+      if (ms && ms.setup) {
+        delete S.flags["done:" + ms.key];
+        if (ms.mode === "local" && S.mode === "web") S.mode = "vscode";
+        var msg = ms.setup(); flash = null; ok("상황을 만들었음: " + msg);
+        if (S.mode === "vscode") { var vv = vsState(); vv.pick = false; vv.view = "scm"; }
+        if (S.mode === "desktop") { var dd2 = dkState(); dd2.editor = dd2.newbr = dd2.mergeOpen = false; dd2.sel = null; }
+      }
+    }
     else if (a === "quiz") { var mqz = trackList()[current(trackList())]; if (ui.view !== null) mqz = trackList()[ui.view]; if (mqz && mqz.quiz) { if (+b.dataset.i === mqz.quiz.ans) { S.flags["quiz:" + mqz.quiz.id] = true; ui.wrong = null; } else ui.wrong = ui.key; } }
     else if (a === "view") { var i = +b.dataset.i, L = trackList().length; ui.view = (i === current(trackList()) || i === L) ? null : i; }
     afterChange();
@@ -917,8 +1024,20 @@ origin/feature-a  ← 다른 브랜치는 '기록'만 생김 (로컬 브랜치 �
     }
     return h;
   }
+  function resolverView(p) {
+    var mr = prMergeResult(p);
+    if (!mr.conflicts.length) { V().sub.resolve = false; return prView(p, false); }
+    var h = '<h2 class="pt">Resolve conflicts <span>#' + p.num + '</span></h2><p class="kv">' + esc(p.head) + ' ← ' + esc(p.base) + ' 의 변경을 합치는 중 충돌이 난 파일임. <b>&lt;&lt;&lt;&lt;&lt;&lt;&lt;</b>~<b>=======</b> 는 ' + esc(p.head) + ' 쪽, <b>=======</b>~<b>&gt;&gt;&gt;&gt;&gt;&gt;&gt;</b> 는 ' + esc(p.base) + ' 쪽 내용임. 표시 줄을 지우고 최종 내용만 남김.</p>';
+    h += '<form data-form="resolve">';
+    mr.conflicts.forEach(function (k, i) {
+      h += '<div class="box" style="margin-bottom:12px"><div class="box-head"><span class="mono">' + esc(k) + '</span><span class="kv">충돌 ' + hunks(mr.files[k]).filter(function (x) { return x.c; }).length + '곳</span></div><textarea class="inp" id="rc-' + i + '" data-file="' + esc(k) + '" rows="8" style="border:0;border-radius:0">' + esc(mr.files[k]) + '</textarea></div>';
+    });
+    h += '<div class="row"><button class="btn go" type="submit">Mark as resolved · Commit merge</button><button class="btn" type="button" data-act="resolve-cancel">Cancel</button></div><p class="kv">커밋하면 ' + esc(p.base) + ' 의 변경이 ' + esc(p.head) + ' 브랜치에 합쳐짐 (원격 head 브랜치에 머지 커밋 생성)</p></form>';
+    return h;
+  }
   function prView(p, filesTab) {
     if (!p) { V().sub = null; return tabPulls(); }
+    if (V().sub.resolve && p.state === "open" && br(p.head)) return resolverView(p);
     var stc = p.state === "open" ? "open" : p.state === "merged" ? "merged" : "closed", ah = br(p.head) ? aheadOf(p.head, p.base) : [];
     var h = '<h2 class="pt">' + esc(p.title) + ' <span>#' + p.num + '</span></h2><div class="row" style="margin-bottom:6px"><span class="state ' + stc + '">' + { open: "Open", merged: "Merged", closed: "Closed" }[stc] + '</span><span class="kv"><b>' + esc(p.author) + '</b> 님이 <span class="mono">' + esc(p.head) + '</span> → <span class="mono">' + esc(p.base) + '</span> ' + (p.state === "merged" ? "머지 완료" : "머지 요청") + '</span></div>';
     h += '<div class="subtabs"><button type="button" class="tab' + (filesTab ? "" : " on") + '" data-act="pr-tab" data-arg="conv">Conversation</button><button type="button" class="tab' + (filesTab ? " on" : "") + '" data-act="pr-tab" data-arg="files">Files changed</button></div>';
@@ -942,7 +1061,9 @@ origin/feature-a  ← 다른 브랜치는 '기록'만 생김 (로컬 브랜치 �
       var blocks = mergeBlock(p), rule = R().rules[p.base];
       h += '<div class="mergebox">';
       if (rule && rule.requirePR) h += '<div class="check">' + (approvals(p) >= rule.approvals && !changesReq(p) ? '<span class="ok">✓</span> 리뷰 승인 조건 충족' : '<span class="no">✕</span> 리뷰 승인 필요 (보호 규칙: 승인 ' + rule.approvals + '명)') + '</div>';
-      h += '<div class="check">' + (ah.length ? '<span class="ok">✓</span> 충돌 없음 · ' + ah.length + '개 커밋' : '<span class="no">✕</span> 합칠 커밋 없음') + '</div>';
+      var cfs = ah.length ? prConflicts(p) : [];
+      if (cfs.length) h += '<div class="conf-box"><b>⚠ 이 브랜치에 충돌이 있어 머지할 수 없음 (This branch has conflicts that must be resolved)</b><div class="kv">충돌 파일: ' + cfs.map(esc).join(", ") + '</div><div class="row"><button type="button" class="btn" data-act="resolve-pr">Resolve conflicts (웹에서 해결)</button><span class="kv">또는 로컬에서 ' + esc(p.base) + ' 를 ' + esc(p.head) + ' 에 merge → 해결 → push</span></div></div>';
+      else h += '<div class="check">' + (ah.length ? '<span class="ok">✓</span> 충돌 없음 · ' + ah.length + '개 커밋' : '<span class="no">✕</span> 합칠 커밋 없음') + '</div>';
       blocks.forEach(function (b) { h += '<div class="check kv">· ' + esc(b) + '</div>'; });
       h += '<form data-form="merge" class="row"><select class="inp" id="mg-method" style="width:auto"><option value="merge">Create a merge commit</option><option value="squash">Squash and merge</option><option value="rebase">Rebase and merge</option></select><button class="btn go" type="submit"' + (blocks.length ? " disabled" : "") + '>Confirm merge</button><button type="button" class="btn" data-act="close-pr">Close pull request</button></form></div>';
     } else if (p.state === "merged" && br(p.head)) {
@@ -1024,6 +1145,8 @@ origin/feature-a  ← 다른 브랜치는 '기록'만 생김 (로컬 브랜치 �
       else { i.state = "open"; i.reason = null; i.timeline.push({ k: "ev", who: ME, text: "이슈를 다시 엶" }); }
     }
     else if (a === "open-pr") go({ tab: "pulls", sub: { type: "pr", num: +arg } });
+    else if (a === "resolve-pr") { v.sub.resolve = true; v.sub.files = false; flash = null; }
+    else if (a === "resolve-cancel") { v.sub.resolve = false; flash = null; }
     else if (a === "pr-tab") { v.sub.files = arg === "files"; flash = null; }
     else if (a === "edit-pr-body") ui.editBody = ui.editBody === v.sub.num ? null : v.sub.num;
     else if (a === "close-pr") { var p = pr(v.sub.num); p.state = "closed"; p.timeline.push({ k: "ev", who: ME, text: "PR을 머지하지 않고 닫음" }); }
@@ -1112,6 +1235,14 @@ origin/feature-a  ← 다른 브랜치는 '기록'만 생김 (로컬 브랜치 �
       var s = v.sub, np = makePR({ title: $("pr-title").value.trim(), body: $("pr-body").value, base: $("cmp-base").value, head: $("cmp-head").value, reviewers: picked("pr-rv"), wantChanges: $("cmp-head").value === "fix/travel-expense" });
       np.reviewers.forEach(function (x) { np.timeline.push({ k: "ev", who: ME, text: x + " 님에게 리뷰를 요청함" }); });
       go({ sub: { type: "pr", num: np.num } }); ok("PR #" + np.num + " 생성됨"); void s;
+    } else if (k === "resolve") {
+      var rp = pr(v.sub.num), mr = prMergeResult(rp), files2 = clone(mr.files), bad = [];
+      Array.prototype.forEach.call(f.querySelectorAll("textarea[data-file]"), function (ta) { files2[ta.dataset.file] = ta.value; if (hasMarkers(ta.value)) bad.push(ta.dataset.file); });
+      if (bad.length) { err("아직 충돌 표시(<<<<<<< ======= >>>>>>>)가 남아 있음: " + bad.join(", ")); return afterChange(); }
+      var hb = br(rp.head), hs = setOf(hb.commits);
+      br(rp.base).commits.forEach(function (c) { if (!hs[c]) hb.commits.push(c); });
+      addCommit(rp.head, "Merge branch '" + rp.base + "' into " + rp.head, files2);
+      S.flags["webresolved:" + rp.num] = true; v.sub.resolve = false; ok("충돌을 해결해 원격 " + rp.head + " 에 머지 커밋을 만듦. 이제 PR을 머지할 수 있음");
     } else if (k === "pr-body") {
       pr(v.sub.num).body = $("pb-text").value; ui.editBody = null;
     } else if (k === "pr-comment") {
@@ -1178,6 +1309,17 @@ origin/feature-a  ← 다른 브랜치는 '기록'만 생김 (로컬 브랜치 �
   function lCommit(msg, pickFiles) {
     var L = S.local;
     if (pickFiles) pickFiles.forEach(function (f) { if (f in L.work) L.index[f] = L.work[f]; else delete L.index[f]; });
+    if (L.merging) {
+      var mg = L.merging, left = mg.conflicts.filter(function (k) { return hasMarkers(L.work[k]) || L.index[k] !== L.work[k]; });
+      if (left.length) { err("아직 해결 안 된 충돌 파일: " + left.join(", ") + " → 충돌 표시를 정리하고 스테이징(+)해야 커밋할 수 있음"); return false; }
+      var mb = lHead(), mid = sha();
+      S.commits[mid] = { id: mid, msg: msg || mg.msg, author: ME, tree: clone(L.index) };
+      mb.commits = mb.commits.concat(mg.add); mb.commits.push(mid); mb.files = clone(L.index);
+      S.flags["lmerged:" + mg.from + ">" + L.head] = true; S.flags["resolvedc:" + mg.from + ">" + L.head] = true;
+      L.merging = null;
+      ok("충돌을 해결하고 머지 커밋을 만듦 (" + mid + "). 아직 로컬에만 있음 → 원격에 반영하려면 Push");
+      return true;
+    }
     if (!lStaged().length) { err("커밋할 변경이 없음" + (pickFiles ? " (체크된 파일이 없음)" : "")); return false; }
     if (!msg) { err("커밋 메시지를 입력해야 함"); return false; }
     var id = sha(); S.commits[id] = { id: id, msg: msg, author: ME, tree: clone(L.index) };
@@ -1186,6 +1328,7 @@ origin/feature-a  ← 다른 브랜치는 '기록'만 생김 (로컬 브랜치 �
     return true;
   }
   function lPush() {
+    if (inMerge()) return false;
     var L = S.local, n = L.head, l = lbr(n), s = lSync(n), rule = S.repo.rules[n];
     if (s.pub) {
       S.repo.branches[n] = { files: clone(l.files), commits: l.commits.slice() }; l.upstream = true; S.repo.recent[n] = 1; S.flags["pushed:" + n] = true;
@@ -1201,6 +1344,7 @@ origin/feature-a  ← 다른 브랜치는 '기록'만 생김 (로컬 브랜치 �
   }
   function lPull() {
     var L = S.local, n = L.head, l = lbr(n), r = S.repo.branches[n];
+    if (inMerge()) return false;
     if (!l.upstream || !r) { err("원격에 " + n + " 브랜치가 없음. 먼저 Publish 해야 함."); return false; }
     if (lDirty()) { err("커밋하지 않은 변경이 있어 Pull 할 수 없음. 먼저 커밋함."); return false; }
     var s = lSync(n);
@@ -1208,9 +1352,9 @@ origin/feature-a  ← 다른 브랜치는 '기록'만 생김 (로컬 브랜치 �
     var rs = setOf(r.commits), ls = setOf(l.commits), remoteOnly = r.commits.filter(function (c) { return !ls[c]; });
     if (!s.ahead) { l.commits = r.commits.slice(); l.files = clone(r.files); }
     else {
-      var common = null; for (var i = l.commits.length - 1; i >= 0; i--) if (rs[l.commits[i]]) { common = l.commits[i]; break; }
-      var base = (common && S.commits[common].tree) || {}, mine = l.files, theirs = r.files, res = {};
-      Object.keys(Object.assign({}, base, mine, theirs)).forEach(function (f) { var v = mine[f] !== base[f] ? mine[f] : theirs[f]; if (v !== undefined) res[f] = v; });
+      var pr2 = mergeTrees(commonTree(l.commits, r.commits), l.files, r.files, n + " (현재 변경: 로컬)", "origin/" + n + " (수신 변경: 원격)");
+      if (startMerge(pr2, remoteOnly, "Merge branch '" + n + "' of origin", "origin/" + n, "pull")) return false;
+      var res = pr2.files;
       l.commits = l.commits.concat(remoteOnly);
       var id = sha(); S.commits[id] = { id: id, msg: "Merge branch '" + n + "' of origin", author: ME, tree: clone(res) };
       l.commits.push(id); l.files = res;
@@ -1222,6 +1366,7 @@ origin/feature-a  ← 다른 브랜치는 '기록'만 생김 (로컬 브랜치 �
   function lSwitch(n) {
     var L = S.local;
     if (n === L.head) return;
+    if (inMerge()) return;
     if (lDirty()) return err("커밋하지 않은 변경이 있어 브랜치를 바꿀 수 없음. 먼저 커밋함.");
     if (!lbr(n)) { var r = S.repo.branches[n]; if (!r) return err("브랜치가 없음: " + n); L.branches[n] = { commits: r.commits.slice(), files: clone(r.files), upstream: true }; }
     L.head = n; L.work = clone(lbr(n).files); L.index = clone(lbr(n).files); ok(n + " 브랜치로 체크아웃함");
@@ -1230,26 +1375,43 @@ origin/feature-a  ← 다른 브랜치는 '기록'만 생김 (로컬 브랜치 �
     n = (n || "").trim();
     if (!/^[\w.\-\/]+$/.test(n)) { err("브랜치 이름에는 영문·숫자·- _ . / 만 쓸 수 있음"); return false; }
     if (lbr(n)) { err("이미 있는 브랜치임: " + n); return false; }
+    if (inMerge()) return false;
     var from = S.local.head;
     S.local.branches[n] = { commits: lHead().commits.slice(), files: clone(lHead().files), upstream: false };
     S.local.head = n; ok(from + " 에서 " + n + " 브랜치를 만들고 이동함 (아직 내 컴퓨터에만 있음)"); return true;
   }
+  function startMerge(r, add, msg, from, kind) {
+    if (!r.conflicts.length) return false;
+    var L = S.local, hf = lHead().files;
+    L.merging = { from: from, add: add, msg: msg, conflicts: r.conflicts.slice(), kind: kind };
+    L.work = clone(r.files); L.index = clone(r.files);
+    r.conflicts.forEach(function (k) { if (k in hf) L.index[k] = hf[k]; else delete L.index[k]; });
+    err("충돌 발생! " + r.conflicts.join(", ") + " 에서 같은 줄을 양쪽이 다르게 고쳤음. 파일을 열어 충돌을 정리 → 스테이징 → 커밋하면 병합이 끝남. 되돌리려면 '병합 중단'.");
+    return true;
+  }
+  function inMerge() { if (S.local && S.local.merging) { err("병합(merge) 진행 중임. 충돌을 해결해 커밋하거나 '병합 중단'을 먼저 해야 함."); return true; } return false; }
+  function lAbort(silent) {
+    var L = S.local; if (!L || !L.merging) return silent ? null : err("진행 중인 병합이 없음");
+    var f = L.merging.from; L.work = clone(lHead().files); L.index = clone(lHead().files); L.merging = null;
+    if (!silent) { S.flags["aborted:" + f + ">" + L.head] = true; ok("병합을 중단(Abort)하고 병합 전 상태로 되돌림"); }
+  }
   function lMerge(from) {
-    var L = S.local, n = L.head, h = lHead(), f = lbr(from);
-    if (!f) return err("로컬 브랜치가 없음: " + from);
+    var L = S.local, n = L.head, h = lHead(), isR = /^origin\//.test(from), f = isR ? S.repo.branches[from.slice(7)] : lbr(from);
+    if (inMerge()) return;
+    if (!f) return err("브랜치가 없음: " + from);
     if (from === n) return err("자기 자신에게는 merge 할 수 없음");
     if (lDirty()) return err("커밋하지 않은 변경이 있어 merge 할 수 없음. 먼저 커밋함.");
     var hs = setOf(h.commits), fs = setOf(f.commits), fromOnly = f.commits.filter(function (c) { return !hs[c]; });
     if (!fromOnly.length) return ok("이미 최신임: 로컬 " + from + " 의 커밋이 로컬 " + n + " 에 모두 들어 있음");
     if (h.commits.every(function (c) { return fs[c]; })) { h.commits = f.commits.slice(); h.files = clone(f.files); ok("Fast-forward: 로컬 " + from + " → 로컬 " + n + " 로 merge 함 (원격은 그대로)"); }
     else {
-      var common = null; for (var i = h.commits.length - 1; i >= 0; i--) if (fs[h.commits[i]]) { common = h.commits[i]; break; }
-      var base = (common && S.commits[common].tree) || {}, mine = h.files, theirs = f.files, res = {};
-      Object.keys(Object.assign({}, base, mine, theirs)).forEach(function (k) { var v = theirs[k] !== base[k] ? theirs[k] : mine[k]; if (v !== undefined) res[k] = v; });
+      var mr = mergeTrees(commonTree(h.commits, f.commits), h.files, f.files, n + " (현재 변경)", from + " (수신 변경)");
+      if (startMerge(mr, fromOnly, "Merge branch '" + from + "' into " + n, from, "merge")) return;
+      var res = mr.files;
       h.commits = h.commits.concat(fromOnly);
       var id = sha(); S.commits[id] = { id: id, msg: "Merge branch '" + from + "' into " + n, author: ME, tree: clone(res) };
       h.commits.push(id); h.files = res;
-      ok("로컬 " + from + " 을 로컬 " + n + " 에 merge 함 (머지 커밋 생성, 원격은 그대로)");
+      ok("로컬 " + from + " 을 로컬 " + n + " 에 merge 함 (머지 커밋 생성, 원격은 그대로)" + (mr.auto.length ? ". " + mr.auto.join(", ") + " 은 양쪽이 고쳤지만 다른 줄이라 자동으로 합쳐짐" : ""));
     }
     L.work = clone(h.files); L.index = clone(h.files);
     S.flags["lmerged:" + from + ">" + n] = true;
@@ -1408,6 +1570,134 @@ origin/feature-a  ← 다른 브랜치는 '기록'만 생김 (로컬 브랜치 �
     else h += '<div class="kv2">로컬: 아직 클론하지 않음 (VS Code·데스크톱 모드에서 클론)</div>';
     box.innerHTML = h;
   }
+  /* ---------- 컨플릭트 실습 ---------- */
+  function ensureBase(needLocal) {
+    if (!R()) {
+      S.repo = { name: REPO, desc: "", private: true, branches: { main: { files: {}, commits: [] } }, issues: [], prs: [], releases: [], collabs: [{ who: "김주무관", ok: true }], rules: {}, num: 0, starred: false, recent: {} };
+      addCommit("main", "Initial commit", { "README.md": "# " + REPO });
+      feed(ME, "연습용 원격 레포를 자동으로 만듦");
+    } else if (!br("main").commits.length) addCommit("main", "Initial commit", { "README.md": "# " + R().name });
+    if (!R().collabs.some(function (c) { return c.who === "김주무관"; })) R().collabs.push({ who: "김주무관", ok: true });
+    if (needLocal) {
+      if (!S.local) { var m = br("main"); S.local = { head: "main", branches: { main: { commits: m.commits.slice(), files: clone(m.files), upstream: true } }, work: clone(m.files), index: clone(m.files) }; feed(ME, "저장소를 내 컴퓨터로 클론함"); }
+      lAbort(true);
+      S.local.work = clone(lHead().files); S.local.index = clone(lHead().files);
+    }
+  }
+  function withFile(files, f, text) { var o = clone(files); o[f] = text; return o; }
+  function remoteFrom(bn, from) { S.repo.branches[bn] = { files: clone(br(from).files), commits: br(from).commits.slice() }; }
+  function localFrom(bn, src, upstream) { S.local.branches[bn] = { commits: src.commits.slice(), files: clone(src.files), upstream: !!upstream }; }
+  function localCommit(bn, f, text, msg) {
+    var l = lbr(bn), files = withFile(l.files, f, text), id = sha();
+    S.commits[id] = { id: id, msg: msg, author: ME, tree: clone(files) }; l.commits.push(id); l.files = files;
+    if (S.local.head === bn) { S.local.work = clone(files); S.local.index = clone(files); }
+    return id;
+  }
+  function setHead(bn) { S.local.head = bn; S.local.work = clone(lbr(bn).files); S.local.index = clone(lbr(bn).files); vsState().file = null; vsState().buf = null; }
+  function syncLocalMain() { var m = br("main"); localFrom("main", m, true); if (S.local.head === "main") setHead("main"); }
+  function closeOpenPRs(head) { S.repo.prs.forEach(function (p) { if (p.state === "open" && p.head === head) { p.state = "closed"; p.timeline.push({ k: "ev", who: ME, text: "연습 상황을 새로 만들며 닫힘" }); } }); }
+  function clearFlags(keys) { keys.forEach(function (k) { delete S.flags[k]; }); }
+  function vsOrDk(vs, dk) { return function () { return S.mode === "desktop" ? dk : vs; }; }
+  var MC = [
+    { t: "Q. 충돌은 언제 나나", from: "질문", quiz: { id: "c1", opts: ["두 브랜치가 서로 다른 파일을 고쳤을 때", "두 브랜치가 같은 파일의 같은 줄을 서로 다르게 고쳤을 때", "한쪽 브랜치만 파일을 고쳤을 때"], ans: 1, exp: "Git은 줄 단위로 합침. 다른 파일이거나 같은 파일의 다른 줄이면 자동으로 합쳐지고, 같은 줄을 양쪽이 다르게 고치면 어느 쪽이 맞는지 몰라 충돌(conflict)로 사람에게 묻게 됨. 한쪽은 수정, 한쪽은 삭제한 경우에도 충돌이 남." },
+      r: function () { return "컨플릭트(충돌)는 정확히 언제 날까요?"; }, w: "충돌 = Git이 자동으로 고를 수 없는 상황. 오류가 아니라 '사람이 정해 달라'는 신호임.", s: ["보기 중 하나를 고름"], ok: function () { return !!S.flags["quiz:c1"]; } },
+    { t: "같은 파일·다른 줄 = 자동 병합", key: "c0", mode: "local", r: function () { return "로컬 feature/c-auto 와 로컬 main 이 같은 파일(안내.txt)의 서로 다른 줄을 고쳐 두었습니다. 로컬 main 에 merge 해서 충돌 없이 자동으로 합쳐지는 것을 확인하세요."; },
+      w: "줄이 겹치지 않으면 Git이 알아서 합침. 충돌이 나는 건 '같은 줄'을 양쪽이 다르게 고쳤을 때뿐임.",
+      setup: function () {
+        ensureBase(true); syncLocalMain(); setHead("main");
+        var base = "제목: 시스템 안내\n운영 시간: 09:00~18:00\n문의: 내선 1234";
+        localCommit("main", "안내.txt", base, "안내문 추가");
+        localFrom("feature/c-auto", lbr("main"), false);
+        localCommit("feature/c-auto", "안내.txt", base.replace("09:00~18:00", "08:00~20:00"), "운영 시간 연장");
+        localCommit("main", "안내.txt", base.replace("내선 1234", "내선 5678"), "문의 번호 변경");
+        clearFlags(["lmerged:feature/c-auto>main"]);
+        return "로컬 main 과 로컬 feature/c-auto 가 안내.txt 의 서로 다른 줄(문의 번호 / 운영 시간)을 고친 상태로 준비함";
+      },
+      s: vsOrDk(["상태바가 ⎇ main 인지 확인", "소스 제어 ··· → 분기 병합 → ⎇ feature/c-auto", "충돌 없이 머지 커밋이 생김 → 탐색기에서 안내.txt 열어 두 변경이 모두 들어간 것 확인"], ["Current branch 가 main 인지 확인", "메뉴 [브랜치] → Merge into current branch → feature/c-auto", "충돌 없이 합쳐짐 → [Open in editor] 로 안내.txt 확인"]),
+      ok: function () { return latch("c0", function () { var f = lbr("main") && lbr("main").files["안내.txt"]; return !!S.flags["lmerged:feature/c-auto>main"] && !!f && f.indexOf("08:00~20:00") >= 0 && f.indexOf("5678") >= 0; }); } },
+    { t: "로컬 merge 충돌 해결", key: "c2", mode: "local", r: function () { return "로컬 feature/c-alarm 을 로컬 main 에 merge 하세요. 두 브랜치가 '알림 시간' 같은 줄을 다르게 고쳐 충돌이 납니다. 수신 변경(feature/c-alarm 쪽, 08:30)으로 해결하고 병합을 마무리하세요. 원격엔 올리지 않습니다."; },
+      w: "현재 변경 = 지금 있는 브랜치(main) 쪽, 수신 변경 = 합쳐 들어오는 브랜치 쪽. 고른 뒤 스테이징 → 커밋해야 병합이 끝남.",
+      setup: function () {
+        ensureBase(true); syncLocalMain(); setHead("main");
+        var base = "알림 시간=09:00\n알림 방법=메일";
+        localCommit("main", "설정.txt", base, "알림 설정 추가");
+        localFrom("feature/c-alarm", lbr("main"), false);
+        localCommit("feature/c-alarm", "설정.txt", base.replace("09:00", "08:30"), "알림 시간 앞당김");
+        localCommit("main", "설정.txt", base.replace("09:00", "10:00"), "알림 시간 늦춤");
+        clearFlags(["resolvedc:feature/c-alarm>main", "lmerged:feature/c-alarm>main"]);
+        return "로컬 main(10:00)과 로컬 feature/c-alarm(08:30)이 같은 줄을 다르게 고친 상태로 준비함";
+      },
+      s: vsOrDk(["상태바가 ⎇ main 인지 확인", "소스 제어 ··· → 분기 병합 → ⎇ feature/c-alarm → 충돌 발생", "탐색기에서 설정.txt(C) 열기 → [수신 변경 수락]", "소스 제어: 병합 변경 사항의 설정.txt + 스테이징", "✓ 커밋 (병합 완료)"], ["Current branch 가 main 인지 확인", "메뉴 [브랜치] → Merge into current branch → feature/c-alarm", "충돌 창에서 설정.txt [수신 쪽 사용 (feature/c-alarm)]", "[Continue merge]"]),
+      ok: function () { return latch("c2", function () { var f = lbr("main") && lbr("main").files["설정.txt"]; return !!S.flags["resolvedc:feature/c-alarm>main"] && f === "알림 시간=08:30\n알림 방법=메일"; }); } },
+    { t: "Q. 충돌 표시 읽기", from: "질문", quiz: { id: "c2", opts: ["현재 브랜치(내 쪽) 내용", "합쳐 들어오는 브랜치(상대 쪽) 내용", "Git이 자동으로 합친 최종 결과"], ans: 0, exp: "<<<<<<< 부터 ======= 까지 = 현재 변경(HEAD, 내 쪽). ======= 부터 >>>>>>> 까지 = 수신 변경(들어오는 쪽). 해결할 때는 세 표시 줄을 모두 지우고 최종 내용만 남겨야 함." },
+      r: function () { return "충돌 난 파일에서 <<<<<<< 와 ======= 사이에 있는 내용은 무엇일까요?"; }, w: "<<<<<<< 현재 / ======= 구분선 / >>>>>>> 수신", s: ["보기 중 하나를 고름"], ok: function () { return !!S.flags["quiz:c2"]; } },
+    { t: "push 거절 → pull 충돌", key: "c1", mode: "local", r: function () { return "공용 브랜치 team/notice 에서 제가(나) '담당' 줄을 고쳐 로컬 커밋해 뒀는데, 그 사이 김주무관이 같은 줄을 고쳐 원격에 push 했습니다. 로컬 team/notice 를 push 해 보고, 거절되면 Pull → 충돌을 두 사람 이름 모두 남기는 쪽으로 해결 → 커밋 → 다시 push 하세요."; },
+      w: "실무에서 가장 흔한 충돌임. 원격이 앞서 있으면 push 가 거절되고, pull 하면 같은 줄 충돌이 남. '두 변경 모두 수락' 후 한 줄로 다듬어도 됨. 해결 커밋까지 push 해야 원격에 반영됨.",
+      setup: function () {
+        ensureBase(true);
+        var bn = "team/notice", f = "공지.txt", base = "제목: 10월 정기 점검 안내\n담당: 미정\n일시: 10월 20일";
+        remoteFrom(bn, "main"); addCommit(bn, "공지 초안", withFile(br(bn).files, f, base), "팀장");
+        localFrom(bn, br(bn), true); setHead(bn);
+        localCommit(bn, f, base.replace("담당: 미정", "담당: 나 (정보화팀)"), "담당자 지정 (내 작업)");
+        addCommit(bn, "담당자 지정 (김주무관)", withFile(br(bn).files, f, base.replace("담당: 미정", "담당: 김주무관 (총무팀)")), "김주무관");
+        feed("김주무관", "origin/team/notice 에 커밋을 Push 함");
+        clearFlags(["resolvedc:origin/team/notice>team/notice"]);
+        return "로컬 team/notice(담당: 나)와 원격 team/notice(담당: 김주무관)가 같은 줄을 다르게 고친 상태로 준비함. 현재 로컬 브랜치는 team/notice";
+      },
+      s: vsOrDk(["소스 제어 ··· → 밀어넣기(Push) → 거절 메시지 확인", "··· → 끌어오기(Pull) → 충돌 발생", "공지.txt 열기 → [두 변경 모두 수락] (필요하면 한 줄로 다듬고 저장)", "소스 제어: + 스테이징 → ✓ 커밋 (병합 완료)", "··· → 밀어넣기(Push)"], ["메뉴 [저장소] → Push → 거절 메시지 확인", "상단 [Pull origin] → 충돌 창", "공지.txt [Open in editor] → 충돌 표시 지우고 두 이름 모두 남겨 저장", "[Continue merge]", "상단 [Push origin]"]),
+      ok: function () { return latch("c1", function () { var r = br("team/notice"), f = r && r.files["공지.txt"]; return !!S.flags["resolvedc:origin/team/notice>team/notice"] && !!f && f.indexOf("정보화팀") >= 0 && f.indexOf("총무팀") >= 0 && !hasMarkers(f); }); } },
+    { t: "병합 중단 (Abort)", key: "c5", mode: "local", r: function () { return "충돌 해결이 어렵거나 merge 를 잘못 시작했다면 병합을 중단(Abort)해 원래대로 되돌릴 수 있습니다. 로컬 feature/c-abort 를 로컬 main 에 merge 해서 충돌을 낸 뒤, 병합 중단으로 되돌리세요."; },
+      w: "Abort 하면 merge 시작 전 상태로 돌아감(git merge --abort). 아무것도 잃지 않으니 당황하면 일단 중단하고 동료와 상의하면 됨.",
+      setup: function () {
+        ensureBase(true); syncLocalMain(); setHead("main");
+        var base = "점심: 12시\n장소: 구내식당";
+        localCommit("main", "메모.txt", base, "점심 메모 추가");
+        localFrom("feature/c-abort", lbr("main"), false);
+        localCommit("feature/c-abort", "메모.txt", base.replace("12시", "11시 30분"), "점심 시간 앞당김");
+        localCommit("main", "메모.txt", base.replace("12시", "12시 30분"), "점심 시간 늦춤");
+        clearFlags(["aborted:feature/c-abort>main"]);
+        return "로컬 main 과 로컬 feature/c-abort 가 같은 줄(점심 시간)을 다르게 고친 상태로 준비함";
+      },
+      s: vsOrDk(["소스 제어 ··· → 분기 병합 → ⎇ feature/c-abort → 충돌 발생 확인", "소스 제어 위쪽 [병합 중단] (또는 ··· → 병합 중단)", "메모.txt 가 merge 전 내용(12시 30분)으로 돌아왔는지 확인"], ["메뉴 [브랜치] → Merge into current branch → feature/c-abort", "충돌 창에서 [Abort merge]", "[Open in editor] 로 메모.txt 가 원래대로인지 확인"]),
+      ok: function () { return latch("c5", function () { return !!S.flags["aborted:feature/c-abort>main"] && !!S.local && !S.local.merging; }); } },
+    { t: "PR 충돌: 웹에서 해결", key: "c3", mode: "web", r: function () { var p = S.flags.c3pr && pr(S.flags.c3pr); return "PR #" + (p ? p.num : "?") + " (원격 feature/c-web → 원격 main)이 충돌 때문에 머지 버튼이 막혔습니다. 웹에서 [Resolve conflicts] 로 '작성자: 나, 김주무관' 처럼 둘 다 남기고 해결한 뒤 머지해 주세요."; },
+      w: "PR 충돌은 PR을 연 뒤 base(main)가 같은 줄을 바꿨을 때 생김. 웹 해결 = 원격 head 브랜치에 'main 을 합친 머지 커밋'을 만드는 것. 그 뒤 승인되면 머지 가능.",
+      setup: function () {
+        ensureBase(false);
+        var f = "보고서.md", base = "# 월간 보고\n작성자: 미정\n제출일: 10월 31일";
+        addCommit("main", "보고서 양식 추가", withFile(br("main").files, f, base), "팀장");
+        closeOpenPRs("feature/c-web"); remoteFrom("feature/c-web", "main");
+        addCommit("feature/c-web", "작성자 지정", withFile(br("feature/c-web").files, f, base.replace("미정", "나")));
+        addCommit("main", "작성자 지정 (김주무관)", withFile(br("main").files, f, base.replace("미정", "김주무관")), "김주무관");
+        var p = makePR({ title: "월간 보고 작성자 지정", body: "보고서 작성자를 지정합니다.", base: "main", head: "feature/c-web", reviewers: ["김주무관"] });
+        p.timeline.push({ k: "ev", who: ME, text: "김주무관 님에게 리뷰를 요청함" });
+        S.flags.c3pr = p.num; clearFlags(["webresolved:" + p.num]);
+        S.mode = "web"; go({ page: "repo", tab: "pulls", sub: { type: "pr", num: p.num } });
+        return "PR #" + p.num + " 을 만들었음. 그 사이 김주무관이 원격 main 의 같은 줄을 고쳐 충돌 상태임";
+      },
+      s: ["PR 화면 아래 '충돌이 있어 머지할 수 없음' 확인", "[Resolve conflicts (웹에서 해결)] 클릭", "편집 칸에서 <<<<<<< ======= >>>>>>> 세 줄을 지우고 '작성자: 나, 김주무관' 한 줄로 정리", "[Mark as resolved · Commit merge]", "김주무관 승인 확인 → [Confirm merge]"],
+      ok: function () { return latch("c3", function () { var p = !!R() && S.flags.c3pr && pr(S.flags.c3pr), f = p ? br("main").files["보고서.md"] || "" : ""; return !!p && p.state === "merged" && !!S.flags["webresolved:" + p.num] && f.indexOf("김주무관") >= 0 && /작성자:.*나/.test(f); }); } },
+    { t: "PR 충돌: 로컬에서 해결", key: "c4", mode: "local", r: function () { var p = S.flags.c4pr && pr(S.flags.c4pr); return "PR #" + (p ? p.num : "?") + " (원격 feature/c-local → 원격 main)도 충돌입니다. 이번엔 웹 말고 로컬에서 해결하세요: 로컬 feature/c-local 에 origin/main 을 merge → 충돌을 수신 변경(수요일)으로 해결 → 커밋 → push. 그러면 원격 PR 의 충돌이 사라집니다."; },
+      w: "로컬 해결 순서: (원격→로컬) origin/main 받아 합치기 → (로컬) 충돌 해결·커밋 → (로컬→원격) push. 복잡한 충돌은 웹보다 로컬 편집기에서 푸는 경우가 많음.",
+      setup: function () {
+        ensureBase(true);
+        var f = "일정.md", base = "주간 회의: 월요일 10시\n장소: 3층 회의실";
+        addCommit("main", "회의 일정 추가", withFile(br("main").files, f, base), "팀장");
+        closeOpenPRs("feature/c-local"); remoteFrom("feature/c-local", "main");
+        addCommit("feature/c-local", "회의 요일 변경 (화)", withFile(br("feature/c-local").files, f, base.replace("월요일", "화요일")));
+        localFrom("feature/c-local", br("feature/c-local"), true); setHead("feature/c-local");
+        S.flags.c4team = addCommit("main", "회의 요일 변경 (수)", withFile(br("main").files, f, base.replace("월요일", "수요일")), "김주무관");
+        var p = makePR({ title: "주간 회의 요일 변경", body: "회의를 화요일로 옮깁니다.", base: "main", head: "feature/c-local", reviewers: ["김주무관"] });
+        S.flags.c4pr = p.num; clearFlags(["resolvedc:origin/main>feature/c-local"]);
+        if (S.mode === "web") S.mode = "vscode";
+        return "PR #" + p.num + " 을 만들고 김주무관이 원격 main 을 수요일로 고쳐 충돌 상태로 준비함. 현재 로컬 브랜치는 feature/c-local";
+      },
+      s: vsOrDk(["상태바가 ⎇ feature/c-local 인지 확인", "소스 제어 ··· → 분기 병합 → ☁ origin/main → 충돌", "일정.md 열기 → [수신 변경 수락]", "+ 스테이징 → ✓ 커밋 (병합 완료)", "··· → 밀어넣기(Push)", "[웹 사이트] 에서 PR 충돌이 사라졌는지 확인"], ["Current branch 가 feature/c-local 인지 확인", "메뉴 [브랜치] → Merge into current branch → origin/main", "충돌 창에서 일정.md [수신 쪽 사용 (origin/main)]", "[Continue merge]", "상단 [Push origin]", "[웹 사이트] 에서 PR 확인"]),
+      ok: function () { return latch("c4", function () { var p = S.flags.c4pr && pr(S.flags.c4pr), r = br("feature/c-local"); return !!p && !!r && !!S.flags["resolvedc:origin/main>feature/c-local"] && r.commits.indexOf(S.flags.c4team) >= 0 && (r.files["일정.md"] || "").indexOf("수요일") >= 0 && !prConflicts(p).length; }); } },
+    { t: "Q. PR 충돌 해결 방법", from: "질문", quiz: { id: "c3", opts: ["웹의 Resolve conflicts, 또는 로컬에서 base(main)를 merge 해 해결 후 push", "PR을 닫았다가 다시 열기", "브랜치 보호 규칙을 끄기"], ans: 0, exp: "PR 충돌은 head 브랜치에 base 의 변경을 합쳐서 풀어야 함. 간단하면 웹 Resolve conflicts, 복잡하면 로컬에서 git merge origin/main(또는 pull) → 해결 → push. 닫았다 열거나 규칙을 꺼도 충돌은 그대로임." },
+      r: function () { return "PR 에 충돌이 났을 때 해결하는 방법으로 맞는 것은?"; }, w: "이번 트랙에서 두 방법을 모두 직접 해 봤음.", s: ["보기 중 하나를 고름"], ok: function () { return !!S.flags["quiz:c3"]; } }
+  ];
+  setLoc(MC, [null, ["로컬"], ["로컬"], null, ["로컬→원격", "원격→로컬", "로컬"], ["로컬"], ["원격"], ["원격→로컬", "로컬", "로컬→원격"], null]);
   function prepareLocal() {
     if (!hasRepo()) return;
     if (current(MV) === 7 && !S.flags.vTeam) S.flags.vTeam = teamPushMain("김주무관");
@@ -1482,7 +1772,7 @@ origin/feature-a  ← 다른 브랜치는 '기록'만 생김 (로컬 브랜치 �
     h += '<div class="vs-side">' + (v.view === "scm" ? vsSCM() : vsExplorer()) + '</div>';
     h += '<div class="vs-main">' + (v.pick && L ? vsPicker() : "") + vsEditor() + (flash ? '<div class="vs-toast ' + flash.t + '" role="status">' + esc(flash.m) + '</div>' : "") + '</div>';
     h += '<div class="vs-status">';
-    if (L) { var s = lSync(); h += '<button type="button" data-l="vs-pick" title="브랜치 전환·만들기">⎇ ' + esc(L.head) + (lDirty() ? "*" : "") + '</button><button type="button" data-l="sync" title="변경 내용 동기화">' + (s.pub ? "☁ 게시 필요" : "⟳ " + s.behind + "↓ " + s.ahead + "↑") + '</button>'; }
+    if (L) { var s = lSync(); h += '<button type="button" data-l="vs-pick" title="브랜치 전환·만들기">⎇ ' + esc(L.head) + (lDirty() ? "*" : "") + (L.merging ? " (병합 중)" : "") + '</button><button type="button" data-l="sync" title="변경 내용 동기화">' + (s.pub ? "☁ 게시 필요" : "⟳ " + s.behind + "↓ " + s.ahead + "↑") + '</button>'; }
     else h += '<span>Git 저장소 없음</span>';
     return h + '<span style="flex:1"></span><span>UTF-8 · 연습용 편집기</span></div></div>';
   }
@@ -1497,6 +1787,7 @@ origin/feature-a  ← 다른 브랜치는 '기록'만 생김 (로컬 브랜치 �
     h += '<div class="vs-sub"><span>' + esc(R().name.toUpperCase()) + '</span><button type="button" class="vs-mini" data-l="vs-newfile" title="새 파일">+ 새 파일</button></div>';
     if (v.newFile) h += '<form data-lform="vs-newfile" class="vs-pad"><input class="vs-inp" id="vs-fname" placeholder="파일 이름 입력 후 Enter (예: notes.md)" spellcheck="false"></form>';
     var stat = {}; lAll().forEach(function (d) { stat[d[0]] = d[1]; });
+    if (L.merging) L.merging.conflicts.forEach(function (k) { if (hasMarkers(L.work[k])) stat[k] = "C"; });
     Object.keys(L.work).sort().forEach(function (f) {
       h += '<button type="button" class="vs-file' + (v.file === f ? " on" : "") + '" data-l="vs-open" data-arg="' + esc(f) + '"><span>' + esc(f) + '</span>' + (stat[f] ? '<b class="g-' + stat[f] + '">' + stat[f] + '</b>' : "") + '</button>';
     });
@@ -1508,33 +1799,48 @@ origin/feature-a  ← 다른 브랜치는 '기록'만 생김 (로컬 브랜치 �
   function vsSCM() {
     var L = S.local, h = '<div class="vs-h"><span>소스 제어</span>';
     if (L) h += '<details class="dd vs-more"><summary title="추가 작업" aria-label="추가 작업">···</summary><div class="menu">' +
-      [["pull", "끌어오기 (Pull)"], ["push", "밀어넣기 (Push)"], ["fetch", "가져오기 (Fetch)"], ["vs-pick", "분기 만들기 / 체크아웃"], ["vs-mergepick", "분기 병합 (로컬 merge)..."], ["open-pr-web", "Pull Request 만들기 (웹에서 열기)"]].map(function (x) { return '<button type="button" class="mi" data-l="' + x[0] + '">' + x[1] + '</button>'; }).join("") + '</div></details>';
+      [["pull", "끌어오기 (Pull)"], ["push", "밀어넣기 (Push)"], ["fetch", "가져오기 (Fetch)"], ["vs-pick", "분기 만들기 / 체크아웃"], ["vs-mergepick", "분기 병합 (merge)..."], ["abort", "병합 중단 (Merge Abort)"], ["open-pr-web", "Pull Request 만들기 (웹에서 열기)"]].map(function (x) { return '<button type="button" class="mi" data-l="' + x[0] + '">' + x[1] + '</button>'; }).join("") + '</div></details>';
     h += '</div>';
     if (!L) return h + '<div class="vs-pad vs-dim">열린 Git 저장소가 없음. 탐색기에서 먼저 복제함.</div>';
-    var st = lStaged(), un = lUnstaged(), s = lSync();
-    h += '<form data-lform="vs-commit" class="vs-pad vs-col"><textarea class="vs-inp" id="vs-msg" rows="2" placeholder="메시지 (Ctrl+Enter로 \'' + esc(L.head) + '\'에 커밋)"></textarea>';
-    if (st.length || un.length) h += '<button class="vs-btn" type="submit">✓ 커밋</button>';
+    var st = lStaged(), un = lUnstaged(), s = lSync(), mg = L.merging, cleft = [];
+    if (mg) {
+      cleft = mg.conflicts.filter(function (k) { return hasMarkers(L.work[k]) || L.index[k] !== L.work[k]; });
+      h += '<div class="vs-merge"><b>병합 중</b>: ' + esc(mg.from) + ' → ' + esc(L.head) + '<br>' + (cleft.length ? '해결·스테이징 남은 충돌 파일 ' + cleft.length + '개' : '충돌 정리 완료 → 커밋하면 병합 끝') + '<br><button type="button" class="vs-btn sm warn" data-l="abort">병합 중단</button></div>';
+      un = un.filter(function (d) { return mg.conflicts.indexOf(d[0]) < 0; });
+    }
+    h += '<form data-lform="vs-commit" class="vs-pad vs-col"><textarea class="vs-inp" id="vs-msg" rows="2" placeholder="메시지 (Ctrl+Enter로 \'' + esc(L.head) + '\'에 커밋)">' + (mg ? esc(mg.msg) : "") + '</textarea>';
+    if (mg) h += '<button class="vs-btn" type="submit">✓ 커밋 (병합 완료)</button>';
+    else if (st.length || un.length) h += '<button class="vs-btn" type="submit">✓ 커밋</button>';
     else if (s.pub) h += '<button class="vs-btn" type="button" data-l="push">☁ Publish Branch</button>';
     else if (s.ahead || s.behind) h += '<button class="vs-btn" type="button" data-l="sync">⟳ 변경 내용 동기화 ' + s.behind + '↓ ' + s.ahead + '↑</button>';
     else h += '<button class="vs-btn" type="submit" disabled>✓ 커밋</button>';
     h += '</form>';
+    if (mg && cleft.length) h += '<div class="vs-sub"><span>병합 변경 사항 (충돌) ' + cleft.length + '</span></div>' + cleft.map(function (k) { return vsRow([k, "C"], "stage", "+", "충돌 해결 후 스테이징"); }).join("");
     if (st.length) h += '<div class="vs-sub"><span>스테이징된 변경 사항 ' + st.length + '</span><button type="button" class="vs-mini" data-l="unstage-all" title="모두 스테이징 취소">−</button></div>' + st.map(function (d) { return vsRow(d, "unstage", "−", "스테이징 취소"); }).join("");
     h += '<div class="vs-sub"><span>변경 사항 ' + un.length + '</span>' + (un.length ? '<button type="button" class="vs-mini" data-l="stage-all" title="모든 변경 내용 스테이징">+</button>' : "") + '</div>' + un.map(function (d) { return vsRow(d, "stage", "+", "변경 내용 스테이징"); }).join("");
-    if (!un.length && !st.length) h += '<div class="vs-pad vs-dim">변경 사항 없음</div>';
+    if (!un.length && !st.length && !cleft.length) h += '<div class="vs-pad vs-dim">변경 사항 없음</div>';
     return h;
   }
   function vsEditor() {
     var v = vsState(), L = S.local;
     if (!L || !v.file || !(v.file in L.work)) return '<div class="vs-welcome"><b>연습용 코드 편집기</b><p>왼쪽 탐색기에서 파일을 열거나 새 파일을 만듦.</p><p class="vs-dim">Ctrl+S 저장 · 소스 제어 메시지 칸에서 Ctrl+Enter 커밋 · Esc 메뉴 닫기</p></div>';
-    var buf = v.buf != null ? v.buf : L.work[v.file], dirty = v.buf != null && v.buf !== L.work[v.file];
-    return '<div class="vs-tabs"><span class="vs-tab" id="vs-tabname">' + esc(v.file) + (dirty ? " ●" : "") + '</span><span style="flex:1"></span><button type="button" class="vs-btn sm" data-l="vs-save">저장 (Ctrl+S)</button></div><textarea id="vs-ed" class="vs-ed" spellcheck="false" aria-label="파일 내용">' + esc(buf) + '</textarea>';
+    var buf = v.buf != null ? v.buf : L.work[v.file], dirty = v.buf != null && v.buf !== L.work[v.file], conf = "";
+    if (hasMarkers(buf)) {
+      var segs = hunks(buf), ci = -1;
+      conf = '<div class="vs-conf"><div class="vs-legend"><span class="cur">■ 현재 변경 (내 쪽 · ' + esc(L.head) + ')</span><span class="inc">■ 수신 변경 (들어오는 쪽)</span></div>' + segs.filter(function (x) { return x.c; }).map(function (sg) {
+        ci++;
+        return '<div class="vs-hunk"><div class="vs-cbar">충돌 ' + (ci + 1) + ': <button type="button" data-l="vs-res" data-arg="' + ci + '|ours">현재 변경 수락</button> | <button type="button" data-l="vs-res" data-arg="' + ci + '|theirs">수신 변경 수락</button> | <button type="button" data-l="vs-res" data-arg="' + ci + '|both">두 변경 모두 수락</button></div>' +
+          '<div class="cur">' + sg.m.map(esc).join("<br>") + '<small>' + esc(sg.la) + '</small></div><div class="inc">' + sg.t.map(esc).join("<br>") + '<small>' + esc(sg.lb) + '</small></div></div>';
+      }).join("") + '<div class="vs-dim" style="font-size:12px">버튼으로 고르거나, 아래 편집기에서 &lt;&lt;&lt;&lt;&lt;&lt;&lt; ======= &gt;&gt;&gt;&gt;&gt;&gt;&gt; 줄을 직접 지우고 저장해도 됨</div></div>';
+    }
+    return conf + '<div class="vs-tabs"><span class="vs-tab" id="vs-tabname">' + esc(v.file) + (dirty ? " ●" : "") + '</span><span style="flex:1"></span><button type="button" class="vs-btn sm" data-l="vs-save">저장 (Ctrl+S)</button></div><textarea id="vs-ed" class="vs-ed" spellcheck="false" aria-label="파일 내용">' + esc(buf) + '</textarea>';
   }
   function vsPicker() {
     var L = S.local;
     if (vsState().pick === "merge") {
-      var others = Object.keys(L.branches).filter(function (n) { return n !== L.head; });
-      return '<div class="vs-pick"><div class="vs-pi-h"><b>로컬 merge</b>: 고른 로컬 브랜치를 현재 로컬 브랜치 <b>' + esc(L.head) + '</b> 에 합침 (원격은 그대로)</div>' +
-        (others.length ? others.map(function (n) { return '<button type="button" class="vs-pi" data-l="merge" data-arg="' + esc(n) + '">⎇ ' + esc(n) + ' → ' + esc(L.head) + '</button>'; }).join("") : '<div class="vs-pi-h vs-dim">합칠 다른 로컬 브랜치가 없음</div>') +
+      var others = Object.keys(L.branches).filter(function (n) { return n !== L.head; }).concat(Object.keys(S.repo.branches).map(function (n) { return "origin/" + n; }));
+      return '<div class="vs-pick"><div class="vs-pi-h"><b>merge</b>: 고른 브랜치를 현재 로컬 브랜치 <b>' + esc(L.head) + '</b> 에 합침 (⎇ 로컬 브랜치 · ☁ 원격 브랜치 origin/…). 결과는 로컬에만 생김</div>' +
+        (others.length ? others.map(function (n) { return '<button type="button" class="vs-pi" data-l="merge" data-arg="' + esc(n) + '">' + (/^origin\//.test(n) ? "☁ " : "⎇ ") + esc(n) + ' → ' + esc(L.head) + '</button>'; }).join("") : '<div class="vs-pi-h vs-dim">합칠 다른 로컬 브랜치가 없음</div>') +
         '<button type="button" class="vs-pi vs-dim" data-l="vs-pick">닫기 (Esc)</button></div>';
     }
     var rem = Object.keys(S.repo.branches).filter(function (n) { return !lbr(n); });
@@ -1553,7 +1859,7 @@ origin/feature-a  ← 다른 브랜치는 '기록'만 생김 (로컬 브랜치 �
   function renderDesk() {
     var L = S.local, d = dkState(), noL = !L;
     var h = '<div class="dk"><div class="dk-menu">' + dkMenu("파일", [["dk-clone", "Clone repository..."]]) +
-      dkMenu("저장소", [["dk-editor", "Open in editor", noL], ["push", "Push", noL], ["pull", "Pull", noL], ["fetch", "Fetch", noL]]) +
+      dkMenu("저장소", [["dk-editor", "Open in editor", noL], ["push", "Push", noL], ["pull", "Pull", noL], ["fetch", "Fetch", noL], ["abort", "Abort merge", noL || !S.local.merging]]) +
       dkMenu("브랜치", [["dk-newbr", "New branch...", noL], ["dk-merge", "Merge into current branch... (로컬)", noL], ["open-pr-web", "Create pull request (원격)", noL]]) + '</div>';
     h += '<div class="dk-bar"><div class="dk-seg"><small>Current repository</small><b>' + (L ? esc(R().name) : "없음") + '</b></div>';
     if (L) {
@@ -1561,7 +1867,7 @@ origin/feature-a  ← 다른 브랜치는 '기록'만 생김 (로컬 브랜치 �
       h += '<details class="dd"><summary class="dk-seg"><small>Current branch</small><b>⎇ ' + esc(L.head) + ' ▾</b></summary><div class="menu"><button type="button" class="btn go sm" data-l="dk-newbr">New branch</button>' +
         Object.keys(L.branches).map(function (n) { return '<button type="button" class="mi" data-l="switch" data-arg="' + esc(n) + '">' + (n === L.head ? "✓ " : "   ") + esc(n) + '</button>'; }).join("") +
         (rem.length ? '<span class="kv" style="font-size:.75rem">원격 브랜치</span>' + rem.map(function (n) { return '<button type="button" class="mi" data-l="switch" data-arg="' + esc(n) + '">origin/' + esc(n) + '</button>'; }).join("") : "") + '</div></details>';
-      var act = s.pub ? ["push", "Publish branch", "이 브랜치를 원격에 게시"] : s.behind ? ["pull", "Pull origin ↓" + s.behind, "원격의 새 커밋 받기"] : s.ahead ? ["push", "Push origin ↑" + s.ahead, "내 커밋 올리기"] : ["fetch", "Fetch origin", "원격 변경 확인"];
+      var act = L.merging ? ["noop", "병합 중…", "충돌을 먼저 해결함"] : s.pub ? ["push", "Publish branch", "이 브랜치를 원격에 게시"] : s.behind ? ["pull", "Pull origin ↓" + s.behind, "원격의 새 커밋 받기"] : s.ahead ? ["push", "Push origin ↑" + s.ahead, "내 커밋 올리기"] : ["fetch", "Fetch origin", "원격 변경 확인"];
       h += '<button type="button" class="dk-seg" data-l="' + act[0] + '"><small>' + act[2] + '</small><b>' + act[1] + '</b></button>';
     } else h += '<div class="dk-seg"><small>Current branch</small><b>-</b></div>';
     h += '</div>';
@@ -1576,15 +1882,24 @@ origin/feature-a  ← 다른 브랜치는 '기록'만 생김 (로컬 브랜치 �
       h += '<div class="dk-list">' + (ch.length ? ch.map(function (c) {
         return '<div class="dk-row' + (d.sel === c[0] ? " on" : "") + '"><input type="checkbox" data-lpick="' + esc(c[0]) + '"' + (d.off[c[0]] ? "" : " checked") + ' aria-label="' + esc(c[0]) + ' 커밋에 포함"><button type="button" class="dk-fn" data-l="dk-sel" data-arg="' + esc(c[0]) + '">' + esc(c[0]) + '</button><b class="g-' + c[1] + '">' + { U: "+", M: "•", D: "−" }[c[1]] + '</b></div>';
       }).join("") : '<div class="kv" style="padding:12px">변경 없음</div>') + '</div>';
-      h += '<form data-lform="dk-commit" class="dk-commit"><input class="inp" id="dk-sum" placeholder="Summary (필수)"><textarea class="inp" id="dk-desc" rows="2" placeholder="Description" style="min-height:52px"></textarea><button class="btn go" type="submit"' + (ch.length ? "" : " disabled") + '>Commit to <b>' + esc(L.head) + '</b></button></form>';
+      h += '<form data-lform="dk-commit" class="dk-commit"><input class="inp" id="dk-sum" placeholder="Summary (필수)"><textarea class="inp" id="dk-desc" rows="2" placeholder="Description" style="min-height:52px"></textarea><button class="btn go" type="submit"' + (ch.length && !L.merging ? "" : " disabled") + '>Commit to <b>' + esc(L.head) + '</b></button>' + (L.merging ? '<span class="kv">병합 중에는 오른쪽 충돌 창에서 [Continue merge] 로 커밋함</span>' : "") + '</form>';
     } else {
       var rb = S.repo.branches[L.head], rs = rb ? setOf(rb.commits) : {};
       h += '<div class="dk-list">' + lHead().commits.slice().reverse().map(function (c) { var o = S.commits[c]; return '<div class="dk-hist"><b>' + esc(o.msg) + '</b><span class="kv">' + esc(o.author) + ' · <span class="mono">' + c + '</span>' + (rs[c] ? "" : ' · <span class="st-closed">↑ Push 안 됨</span>') + '</span></div>'; }).join("") + '</div>';
     }
     h += '</div><div class="dk-right">';
-    if (d.mergeOpen) {
-      var oth = Object.keys(L.branches).filter(function (n) { return n !== L.head; });
-      h += '<div class="dk-dialog"><h3>Merge into ' + esc(L.head) + ' (로컬)</h3><p class="kv">고른 <b>로컬</b> 브랜치를 현재 <b>로컬</b> 브랜치 <b class="mono">' + esc(L.head) + '</b> 에 합침. 원격에는 Push 해야 반영됨.</p>' +
+    if (L.merging && !d.editor) {
+      var mg2 = L.merging, left2 = mg2.conflicts.filter(function (k) { return hasMarkers(L.work[k]); });
+      h += '<div class="dk-dialog wide"><h3>충돌을 해결한 뒤 병합 계속 (Resolve conflicts before merging)</h3><p class="kv"><b class="mono">' + esc(mg2.from) + '</b> → <b class="mono">' + esc(L.head) + '</b> 병합 중 충돌 파일 ' + mg2.conflicts.length + '개</p>' +
+        mg2.conflicts.map(function (k) {
+          var n2 = hunks(L.work[k]).filter(function (x) { return x.c; }).length;
+          return '<div class="dk-card"><span><b class="mono">' + esc(k) + '</b> · ' + (n2 ? '<span class="st-closed">충돌 ' + n2 + '곳 남음</span>' : '<span class="st-open">해결됨 ✓</span>') + '</span><span class="row">' +
+            (n2 ? '<button type="button" class="btn sm" data-l="dk-open-c" data-arg="' + esc(k) + '">Open in editor</button><button type="button" class="btn sm" data-l="dk-use" data-arg="' + esc(k) + '|ours">현재 쪽 사용 (' + esc(L.head) + ')</button><button type="button" class="btn sm" data-l="dk-use" data-arg="' + esc(k) + '|theirs">수신 쪽 사용 (' + esc(mg2.from) + ')</button>' : "") + '</span></div>';
+        }).join("") +
+        '<div class="row"><button type="button" class="btn go" data-l="dk-continue"' + (left2.length ? " disabled" : "") + '>Continue merge</button><button type="button" class="btn danger" data-l="abort">Abort merge</button></div></div>';
+    } else if (d.mergeOpen) {
+      var oth = Object.keys(L.branches).filter(function (n) { return n !== L.head; }).concat(Object.keys(S.repo.branches).map(function (n) { return "origin/" + n; }));
+      h += '<div class="dk-dialog"><h3>Merge into ' + esc(L.head) + ' (로컬)</h3><p class="kv">고른 브랜치(로컬 또는 origin/… 원격)를 현재 <b>로컬</b> 브랜치 <b class="mono">' + esc(L.head) + '</b> 에 합침. 원격에는 Push 해야 반영됨.</p>' +
         (oth.length ? oth.map(function (n) { return '<button type="button" class="btn" data-l="merge" data-arg="' + esc(n) + '">' + esc(n) + ' → ' + esc(L.head) + '</button>'; }).join("") : '<p class="kv">합칠 다른 로컬 브랜치가 없음</p>') +
         '<div><button type="button" class="btn" data-l="dk-merge">Cancel</button></div></div>';
     } else if (d.editor) h += dkEditor();
@@ -1636,9 +1951,15 @@ origin/feature-a  ← 다른 브랜치는 '기록'만 생김 (로컬 브랜치 �
     else if (a === "vs-mergepick") v.pick = "merge";
     else if (a === "merge") { lMerge(arg); v.pick = false; d.mergeOpen = false; d.sel = null; }
     else if (a === "dk-merge") { d.mergeOpen = !d.mergeOpen; d.editor = d.newbr = false; }
-    else if (a === "stage") { if (arg in L.work) L.index[arg] = L.work[arg]; else delete L.index[arg]; }
+    else if (a === "stage") { if (L.merging && hasMarkers(L.work[arg])) err(arg + " 에 충돌 표시(<<<<<<< ======= >>>>>>>)가 남아 있어 스테이징할 수 없음. 먼저 충돌을 정리함."); else if (arg in L.work) L.index[arg] = L.work[arg]; else delete L.index[arg]; }
+    else if (a === "abort") lAbort();
+    else if (a === "noop") return;
+    else if (a === "vs-res") { var pr3 = arg.split("|"), cur3 = v.buf != null ? v.buf : L.work[v.file]; L.work[v.file] = resolveHunk(cur3, +pr3[0], pr3[1]); v.buf = null; ok(({ ours: "현재 변경", theirs: "수신 변경", both: "두 변경 모두" })[pr3[1]] + " 수락 → 저장됨." + (hasMarkers(L.work[v.file]) ? " 남은 충돌도 정리함." : " 이 파일의 충돌이 모두 정리됨 → 소스 제어에서 스테이징(+)")); }
+    else if (a === "dk-use") { var pu = arg.split("|"); L.work[pu[0]] = resolveHunk(L.work[pu[0]], "all", pu[1]); ok(pu[0] + " : " + (pu[1] === "ours" ? "현재 쪽" : "수신 쪽") + " 내용으로 정리함"); }
+    else if (a === "dk-open-c") { d.editor = true; d.efile = arg; }
+    else if (a === "dk-continue") { L.merging.conflicts.forEach(function (k) { if (k in L.work) L.index[k] = L.work[k]; else delete L.index[k]; }); lCommit(L.merging.msg); }
     else if (a === "unstage") { var hf = lHead().files; if (arg in hf) L.index[arg] = hf[arg]; else delete L.index[arg]; }
-    else if (a === "stage-all") lUnstaged().forEach(function (x) { if (x[0] in L.work) L.index[x[0]] = L.work[x[0]]; else delete L.index[x[0]]; });
+    else if (a === "stage-all") lUnstaged().forEach(function (x) { if (L.merging && hasMarkers(L.work[x[0]])) return; if (x[0] in L.work) L.index[x[0]] = L.work[x[0]]; else delete L.index[x[0]]; });
     else if (a === "unstage-all") L.index = clone(lHead().files);
     else if (a === "switch") { vsSaveBuf(); lSwitch(arg); v.pick = false; d.sel = null; }
     else if (a === "push") lPush();
@@ -1675,7 +1996,7 @@ origin/feature-a  ← 다른 브랜치는 '기록'만 생김 (로컬 브랜치 �
     else if (k === "vs-newbr") { vsSaveBuf(); if (lNewBranch($("vs-brname").value)) v.pick = false; }
     else if (k === "vs-commit") {
       vsSaveBuf(); flash = null;
-      var msg = $("vs-msg").value.trim(), smart = !lStaged().length && lUnstaged().length;
+      var msg = $("vs-msg").value.trim(), smart = !S.local.merging && !lStaged().length && lUnstaged().length;
       if (smart && msg) lUnstaged().forEach(function (x) { if (x[0] in S.local.work) S.local.index[x[0]] = S.local.work[x[0]]; else delete S.local.index[x[0]]; });
       if (lCommit(msg) && smart) flash.m += " (스테이징된 항목이 없어 모든 변경을 스테이징 후 커밋함)";
     }
