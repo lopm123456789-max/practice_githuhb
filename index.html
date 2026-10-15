@@ -440,6 +440,17 @@ origin/feature-a  ← 다른 브랜치는 '기록'만 생김 (로컬 브랜치 �
           <li><b>이 안내를 안 보고 싶다면</b>: 끄는 설정은 없음. ① push 해서 올리거나 ② 필요 없는 커밋이면 History 의 <b>Undo</b>(커밋 취소) → Changes 의 <b>Discard</b>(변경 버리기)로 원격과 같게 만들면 사라짐. ③ 다른 브랜치로 옮기면 그 브랜치 기준으로 다시 표시됨</li>
           <li>주의: 이미 push 한 커밋은 Undo 가 안 됨. 그때는 되돌리는 새 커밋(revert)을 만들어 push 함</li></ul>
       </section>
+      <section><h3>Q10. 팀이 바뀌어 다른 팀원 코드·새 저장소로 바꾸려면? (파일 이름은 같음)</h3>
+        <p><b>새 저장소를 새 폴더로 클론</b>하는 것이 가장 안전함. 예전 폴더는 확인 후 보관하거나 지움.</p>
+        <div class="tbl"><table><thead><tr><th>도구</th><th>방법</th></tr></thead><tbody>
+          <tr><td>데스크톱 앱</td><td>File → Clone repository → 새 저장소 선택 → Local path 를 기존과 다른 폴더로</td></tr>
+          <tr><td>VS Code</td><td>Ctrl+Shift+P → Git: Clone → 새 주소 → 새 폴더</td></tr>
+          <tr><td>명령어</td><td>git clone 새주소 새폴더이름</td></tr>
+        </tbody></table></div>
+        <ul><li>하지 말 것: 예전 파일을 새 폴더에 복사해 덮기 (이름이 같아 팀원 코드가 내 옛 코드로 바뀜), 예전 폴더에서 새 저장소 pull (unrelated histories), 예전 코드를 새 저장소에 push</li>
+          <li>예전 폴더를 계속 쓰려면 (고급): git branch backup-old → git remote set-url origin 새주소 → git fetch origin → git switch -C main origin/main</li>
+          <li>옛 작업 중 살릴 것은 새 저장소에서 브랜치를 따 손으로 옮겨 PR</li></ul>
+      </section>
     </div>
   </details>
 </div>
@@ -633,7 +644,7 @@ origin/feature-a  ← 다른 브랜치는 '기록'만 생김 (로컬 브랜치 �
     { t: "레포 만들기", from: "팀장", r: function () { return "근태 자동화 프로젝트 시작합니다. " + REPO + " 이름으로 원격 레포(웹) 하나 파 주세요. Private로, README 포함해서요."; },
       w: "레포(Repository) = 프로젝트 저장소. Private은 초대받은 사람만 볼 수 있음.",
       s: ["오른쪽 사이트 상단 [+ 새 저장소] 클릭", "Repository name 에 " + REPO + " 입력", "Private 선택, Add a README file 체크", "[Create repository] 클릭"],
-      ok: function () { return !!R() && R().name === REPO && R().private && br("main") && "README.md" in br("main").files; } },
+      ok: function () { return latch("w1", function () { return !!R() && R().name === REPO && R().private && br("main") && "README.md" in br("main").files; }); } },
     { t: "협업자 초대", from: "팀장", r: function () { return "김주무관도 같이 개발할 거라 레포에 Collaborator로 초대해 주세요."; },
       w: "Private 레포는 Collaborator(협업자)로 초대해야 다른 사람이 접근·리뷰할 수 있음.",
       s: ["레포의 Settings 탭", "왼쪽 Collaborators 메뉴", "김주무관 선택 후 [Add people]", "잠시 뒤 초대 수락 알림 확인"],
@@ -1313,10 +1324,13 @@ origin/feature-a  ← 다른 브랜치는 '기록'만 생김 (로컬 브랜치 �
     if (!R() || !br("main") || !br("main").commits.length) return err("복제할 저장소가 없거나 비어 있음. [웹 사이트] 모드에서 README 포함 레포를 먼저 만들어야 함.");
     var u = (url || "").trim().replace(/\/+$/, "");
     if (!new RegExp("/" + R().name.replace(/[.]/g, "\\.") + "(\\.git)?$").test(u)) return err("저장소를 찾을 수 없음: " + (u || "(빈 주소)") + " → 주소 끝이 /" + R().name + ".git 이어야 함");
-    var m = br("main");
-    S.local = { head: "main", branches: { main: { commits: m.commits.slice(), files: clone(m.files), upstream: true } }, work: clone(m.files), index: clone(m.files) };
-    ok("클론 완료 → 내 컴퓨터의 ~/Documents/" + R().name + " 폴더에 복사됨"); feed(ME, "저장소를 내 컴퓨터로 클론함");
+    var m = br("main"), had = S.local && lStale() ? S.local.url : null;
+    S.local = { head: "main", branches: { main: { commits: m.commits.slice(), files: clone(m.files), upstream: true } }, work: clone(m.files), index: clone(m.files), url: repoUrl() };
+    var v0 = vsState(); v0.file = null; v0.buf = null; v0.reclone = false;
+    ok("클론 완료 → 내 컴퓨터의 ~/Documents/" + R().name + " 폴더에 복사됨" + (had ? ". 예전 저장소 폴더는 더 이상 쓰지 않음 (확인 후 보관·삭제)" : "")); feed(ME, "저장소를 내 컴퓨터로 클론함");
   }
+  function lStale() { return !!(S.local && S.local.url && R() && S.local.url !== repoUrl()); }
+  function staleBlock() { if (lStale()) { err("이 폴더는 예전 저장소(" + S.local.url + ")에 연결돼 있음. 저장소가 바뀌었으니 pull·push 하지 말고, 새 주소로 새 폴더에 클론해야 함."); return true; } return false; }
   function lCommit(msg, pickFiles) {
     var L = S.local;
     if (pickFiles) pickFiles.forEach(function (f) { if (f in L.work) L.index[f] = L.work[f]; else delete L.index[f]; });
@@ -1339,7 +1353,7 @@ origin/feature-a  ← 다른 브랜치는 '기록'만 생김 (로컬 브랜치 �
     return true;
   }
   function lPush() {
-    if (inMerge()) return false;
+    if (inMerge() || staleBlock()) return false;
     var L = S.local, n = L.head, l = lbr(n), s = lSync(n), rule = S.repo.rules[n];
     if (s.pub) {
       S.repo.branches[n] = { files: clone(l.files), commits: l.commits.slice() }; l.upstream = true; S.repo.recent[n] = 1; S.flags["pushed:" + n] = true;
@@ -1354,6 +1368,7 @@ origin/feature-a  ← 다른 브랜치는 '기록'만 생김 (로컬 브랜치 �
     ok(newc.length + "개 커밋을 origin/" + n + " 에 Push 함"); feed(ME, "origin/" + n + " 에 Push 함"); return true;
   }
   function lPull() {
+    if (staleBlock()) return false;
     var L = S.local, n = L.head, l = lbr(n), r = S.repo.branches[n];
     if (inMerge()) return false;
     if (!l.upstream || !r) { err("원격에 " + n + " 브랜치가 없음. 먼저 Publish 해야 함."); return false; }
@@ -1361,6 +1376,7 @@ origin/feature-a  ← 다른 브랜치는 '기록'만 생김 (로컬 브랜치 �
     var s = lSync(n);
     if (!s.behind) { ok("이미 최신 상태임 (받을 커밋 없음)"); return true; }
     var rs = setOf(r.commits), ls = setOf(l.commits), remoteOnly = r.commits.filter(function (c) { return !ls[c]; });
+    if (s.ahead && !l.commits.some(function (c) { return rs[c]; })) { err("fatal: refusing to merge unrelated histories → 기록이 전혀 다른 저장소라 합칠 수 없음. 새로 클론해야 함."); return false; }
     if (!s.ahead) { l.commits = r.commits.slice(); l.files = clone(r.files); }
     else {
       var pr2 = mergeTrees(commonTree(l.commits, r.commits), l.files, r.files, n + " (현재 변경: 로컬)", "origin/" + n + " (수신 변경: 원격)");
@@ -1373,7 +1389,7 @@ origin/feature-a  ← 다른 브랜치는 '기록'만 생김 (로컬 브랜치 �
     L.work = clone(l.files); L.index = clone(l.files);
     ok("원격 커밋 " + remoteOnly.length + "개를 받아옴 (Pull)" + (s.ahead ? ". 내 커밋과 합쳐 머지 커밋이 생김" : "")); return true;
   }
-  function lFetch() { var s = lSync(); ok(s.pub ? "이 브랜치는 아직 원격에 없음 (Publish 필요)" : "Fetch 완료: 받을 커밋 " + s.behind + "개, 올릴 커밋 " + s.ahead + "개"); }
+  function lFetch() { if (staleBlock()) return; var s = lSync(); ok(s.pub ? "이 브랜치는 아직 원격에 없음 (Publish 필요)" : "Fetch 완료: 받을 커밋 " + s.behind + "개, 올릴 커밋 " + s.ahead + "개"); }
   function lSwitch(n) {
     var L = S.local;
     if (n === L.head) return;
@@ -1574,13 +1590,17 @@ origin/feature-a  ← 다른 브랜치는 '기록'만 생김 (로컬 브랜치 �
     { t: "Q. 로컬 main에 PR?", from: "질문", quiz: { id: "q7", opts: ["로컬 main 에도 PR을 만들 수 있음", "PR은 원격(GitHub) 기능임. 로컬에서 합치는 건 merge 임", "PR과 merge는 같은 말임"], ans: 1, exp: "PR(Pull Request)은 GitHub 같은 원격 서비스에만 있는 '합쳐 달라는 요청서'임. 로컬에서는 git merge 로 직접 합침. 그래서 지시는 '로컬 main에 merge' 또는 '원격 main에 PR' 둘 중 하나가 됨." },
       r: function () { return "로컬 main 에 PR 할지, 원격 main 에 PR 할지 고르려면… 로컬 main 에도 PR이 되나요?"; }, w: "VS Code·데스크톱 트랙 9~10번과 실전 요청에서 '로컬 merge' 와 '원격 PR' 을 구분해 연습할 수 있음.", s: ["보기 중 하나를 고름"], ok: qz("q7") },
     { t: "Q. 'Push origin' 안내가 뜨면?", from: "질문", quiz: { id: "q8", opts: ["무조건 바로 눌러야 함. 안 누르면 커밋이 사라짐", "현재 브랜치와 커밋 내용을 확인하고 정함. 내 작업 브랜치면 push, 팀 저장소 main 이면 새 브랜치로 옮겨 PR", "누르면 원격 main 에 자동으로 PR 이 생김"], ans: 1, exp: "'No local changes … You have 3 local commits waiting to be pushed' 는 커밋은 했지만 아직 로컬에만 있다는 뜻임(현황표의 ↑3). 꼭 지금 눌러야 하는 건 아니고, 커밋이 사라지지도 않음. 단, 컴퓨터에만 있으니 공유·백업하려면 push 해야 함. 팀 저장소의 main 이라면 바로 push 하지 말고 브랜치 → PR 로 올림." },
-      r: function () { return "데스크톱 앱에 'No local changes … 3 local commits waiting to be pushed · Push origin' 이 떴어요. 이거 꼭 해야 하나요?"; }, w: "확인 순서: ① 상단 Current branch ② History 탭의 커밋 내용 ③ 저장소 주인. Ctrl+P 는 Push origin 단축키임.", s: ["보기 중 하나를 고름", "실습: 데스크톱 앱에서 커밋 후 현황표의 ↑ 숫자와 Push origin 버튼 확인"], ok: qz("q8") }
+      r: function () { return "데스크톱 앱에 'No local changes … 3 local commits waiting to be pushed · Push origin' 이 떴어요. 이거 꼭 해야 하나요?"; }, w: "확인 순서: ① 상단 Current branch ② History 탭의 커밋 내용 ③ 저장소 주인. Ctrl+P 는 Push origin 단축키임.", s: ["보기 중 하나를 고름", "실습: 데스크톱 앱에서 커밋 후 현황표의 ↑ 숫자와 Push origin 버튼 확인"], ok: qz("q8") },
+    { t: "Q. 팀·저장소가 통째로 바뀌면?", from: "질문", quiz: { id: "q9", opts: ["예전 폴더에서 새 저장소를 pull 해서 합침", "새 저장소를 새 폴더로 클론함. 예전 파일을 복사해 덮지 않음", "예전 폴더 파일을 새 저장소에 그대로 push 함"], ans: 1, exp: "기록이 다른 저장소라 pull 은 'refusing to merge unrelated histories' 로 막히고, 파일 이름이 같아 덮어쓰면 팀원 코드가 내 옛 코드로 바뀜. 새 폴더로 클론하는 게 가장 안전함. 살릴 작업은 새 저장소에서 브랜치를 따 손으로 옮겨 PR." },
+      r: function () { return "팀이 바뀌어 다른 팀원 코드로 진행하기로 했어요. 저장소도 바뀌었고 파일 이름은 같아요. 어떻게 바꿔야 하나요?"; }, w: "VS Code·데스크톱 실전 요청에 '저장소 교체' 상황으로 나옴.", s: ["보기 중 하나를 고름"], ok: qz("q9") }
   ];
+  function keepDone(list, key) { list.forEach(function (m, i) { var raw = m.ok; m.ok = function () { return latch(key + i, raw); }; }); }
+  keepDone(M, "M"); keepDone(MV, "MV"); keepDone(MD, "MD");
   function setLoc(list, arr) { list.forEach(function (m, i) { if (!m.loc) m.loc = arr[i]; }); }
   setLoc(M, M.map(function () { return ["원격"]; }));
   setLoc(MV, [["원격"], ["원격→로컬"], ["로컬"], ["로컬"], ["로컬"], ["로컬"], ["로컬→원격"], ["원격→로컬"], ["로컬"], ["원격"]]);
   setLoc(MD, [["원격"], ["원격→로컬"], ["로컬"], ["로컬"], ["로컬"], ["로컬→원격"], ["원격"], ["원격→로컬"], ["로컬"], ["원격"]]);
-  setLoc(MQ, [null, ["로컬", "로컬→원격"], null, ["원격"], ["원격", "로컬→원격"], null, null, null, null, null, ["로컬→원격"]]);
+  setLoc(MQ, [null, ["로컬", "로컬→원격"], null, ["원격"], ["원격", "로컬→원격"], null, null, null, null, null, ["로컬→원격"], ["원격→로컬"]]);
   var LOC_TIP = { "로컬": "내 컴퓨터에서만 일어남 (원격엔 변화 없음)", "원격": "GitHub(웹)에서 일어남", "로컬→원격": "내 컴퓨터 → GitHub 로 올림 (push·Publish)", "원격→로컬": "GitHub → 내 컴퓨터로 받음 (clone·pull)" };
   function locBadges(loc) { return loc ? '<div class="locs-badges">' + loc.map(function (l) { return '<span class="loc loc-' + (l === "로컬" ? "l" : l === "원격" ? "r" : l === "로컬→원격" ? "up" : "down") + '" title="' + LOC_TIP[l] + '">' + l + '</span>'; }).join("") + '</div>' : ""; }
   function renderLocTable() {
@@ -1612,7 +1632,7 @@ origin/feature-a  ← 다른 브랜치는 '기록'만 생김 (로컬 브랜치 �
     } else if (!br("main").commits.length) addCommit("main", "Initial commit", { "README.md": "# " + R().name });
     if (!R().collabs.some(function (c) { return c.who === "김주무관"; })) R().collabs.push({ who: "김주무관", ok: true });
     if (needLocal) {
-      if (!S.local) { var m = br("main"); S.local = { head: "main", branches: { main: { commits: m.commits.slice(), files: clone(m.files), upstream: true } }, work: clone(m.files), index: clone(m.files) }; feed(ME, "저장소를 내 컴퓨터로 클론함"); }
+      if (!S.local || lStale()) { var m = br("main"); S.local = { head: "main", branches: { main: { commits: m.commits.slice(), files: clone(m.files), upstream: true } }, work: clone(m.files), index: clone(m.files), url: repoUrl() }; feed(ME, "저장소를 내 컴퓨터로 클론함"); }
       lAbort(true);
       S.local.work = clone(lHead().files); S.local.index = clone(lHead().files);
     }
@@ -1737,9 +1757,9 @@ origin/feature-a  ← 다른 브랜치는 '기록'만 생김 (로컬 브랜치 �
     if (current(MD) === 7 && !S.flags.dTeam) S.flags.dTeam = teamPushMain("김주무관");
   }
   function newLocalQuest() {
-    var types = ["feat", "pull", "pr", "lmerge", "rpr", "pushok", "pushhold", "prupdate", "pushhide"], last = S.lq && S.lq.type;
+    var types = ["feat", "pull", "pr", "lmerge", "rpr", "pushok", "pushhold", "prupdate", "pushhide", "switchrepo"], last = S.lq && S.lq.type;
     var type = pick(types.filter(function (t) { return t !== last; })), q = { type: type, n: S.lqDone + 1, from: "팀장" };
-    if (type === "pushok" || type === "pushhold" || type === "prupdate" || type === "pushhide") { genAskQuest(q); S.lq = q; return; }
+    if (type === "pushok" || type === "pushhold" || type === "prupdate" || type === "pushhide" || type === "switchrepo") { genAskQuest(q); S.lq = q; return; }
     if (type === "lmerge" || type === "rpr") {
       var cands = FEATS.filter(function (f) { var b = "feature/" + f[0] + (type === "lmerge" ? "-draft" : "-pr"); return !lbr(b) && !br(b); }), g = cands.length ? pick(cands) : [pick(FEATS)[0] + (S.seqL = (S.seqL || 0) + 1), "추가"];
       q.br = "feature/" + g[0] + (type === "lmerge" ? "-draft" : "-pr"); q.file = g[0] + "-" + type + ".md";
@@ -1794,6 +1814,21 @@ origin/feature-a  ← 다른 브랜치는 '기록'만 생김 (로컬 브랜치 �
       q.r = "팀 저장소 main 에 실수로 커밋 2개를 했네요(↑2, Push origin 안내). main 엔 바로 push 하지 말고, 새 브랜치 " + q.br + " 를 만들어 그 브랜치를 원격에 Publish 해 주세요.";
       q.w = "지금 커밋이 있는 상태에서 새 브랜치를 만들면 그 커밋을 그대로 가져감. 그 브랜치를 Publish 하면 원격 main 은 건드리지 않음. (실제 데스크톱 앱은 이때 main 의 커밋을 옮길지 물어봄)";
       q.loc = ["로컬", "로컬→원격"];
+    } else if (q.type === "switchrepo") {
+      syncLocalMain(); setHead("main");
+      localCommit("main", "README.md", (lbr("main").files["README.md"] || "") + "\n내 작업 메모", "내 작업 메모 추가");
+      var oldUrl = S.local.url || repoUrl(), base0 = R().name.replace(/-team\d+$/, ""), nn = base0 + "-team" + ((S.teamSwitch = (S.teamSwitch || 1) + 1));
+      S.repo.prs.forEach(function (p) { if (p.state === "open") { p.state = "closed"; p.timeline.push({ k: "ev", who: "팀장", text: "팀 변경으로 닫힘" }); } });
+      var nf = {}; Object.keys(br("main").files).forEach(function (k) { nf[k] = "[김주무관 팀 버전] " + k + " 새 코드"; });
+      nf["README.md"] = "# " + nn + "\n김주무관 팀 코드 (새 저장소)";
+      R().name = nn; R().branches = { main: { files: {}, commits: [] } }; R().recent = {};
+      addCommit("main", "Initial commit (김주무관 팀 코드)", nf, "김주무관");
+      addCommit("main", "기능 정리", withFile(br("main").files, "README.md", nf["README.md"] + "\n- 정리 완료"), "김주무관");
+      S.local.url = oldUrl; q.newUrl = repoUrl(); q.from = "팀장";
+      feed("김주무관", "새 저장소 " + nn + " 를 만들고 팀 코드를 올림");
+      q.r = "팀이 바뀌어 김주무관 팀 코드로 진행합니다. 저장소도 새 주소(" + repoUrl() + ")로 바뀌었고, 파일 이름은 같지만 내용은 전부 다릅니다. 내 옛 폴더에 pull 하거나 덮어쓰지 말고, 새 저장소를 새 폴더로 클론해 주세요.";
+      q.w = "기록이 전혀 다른 저장소라 옛 폴더에서 pull 하면 'unrelated histories' 로 막히고, 파일을 복사해 덮으면 이름이 같아 팀원 코드가 내 옛 코드로 바뀜. 새 폴더로 클론하는 게 가장 안전함. 옛 작업 중 살릴 게 있으면 새 저장소에서 브랜치를 따 손으로 옮겨 PR.";
+      q.loc = ["원격→로컬"];
     } else if (q.type === "prupdate") {
       g = uniqFeat("feature/", "-review"); q.br = "feature/" + g[0] + "-review"; q.file = g[0] + ".py";
       closeOpenPRs(q.br); remoteFrom(q.br, "main");
@@ -1815,6 +1850,7 @@ origin/feature-a  ← 다른 브랜치는 '기록'만 생김 (로컬 브랜치 �
     }
   }
   function localQuestOk(q) {
+    if (q.type === "switchrepo") return latch("lq" + q.n + "sw", function () { var m = lbr("main"), r = br("main"); return !lStale() && S.local.url === q.newUrl && !!m && !!r && m.commits.length === r.commits.length && r.commits.every(function (c) { return m.commits.indexOf(c) >= 0; }) && !lDirty(); });
     if (q.type === "pushok") return !!br(q.br) && q.ids.every(function (c) { return br(q.br).commits.indexOf(c) >= 0; });
     if (q.type === "pushhold") return !!br(q.br) && q.ids.every(function (c) { return br(q.br).commits.indexOf(c) >= 0 && br("main").commits.indexOf(c) < 0; });
     if (q.type === "prupdate") { var pp = pr(q.pr); return !!pp && pp.timeline.slice(q.init).some(function (t) { return t.k === "commit" && t.who === ME; }) && R().prs.filter(function (x) { return x.head === q.br; }).length === 1; }
@@ -1828,6 +1864,7 @@ origin/feature-a  ← 다른 브랜치는 '기록'만 생김 (로컬 브랜치 �
   }
   function localSteps(q) {
     var vs = S.track === "vscode";
+    if (q.type === "switchrepo") return vs ? ["(확인) 소스 제어 ··· → 끌어오기(Pull) → 예전 저장소라 막히는 것 확인", "탐색기의 [새 폴더로 복제] (또는 ··· → Git 저장소 복제 (새 폴더)…)", "[입력칸에 넣기] → 새 주소 확인 → [Git 저장소 복제]", "탐색기 파일이 '[김주무관 팀 버전]' 내용인지 확인"] : ["(확인) 상단 버튼으로 Pull 해 보면 막히는 것 확인", "메뉴 [파일] → Clone repository... (또는 노란 안내의 버튼)", "목록의 새 저장소 선택 → [Clone]", "History 가 김주무관 커밋으로 바뀌었는지 확인"];
     if (q.type === "pushok") return vs ? ["상태바 ⎇ 가 " + q.br + " 이고 ↑3 인지 확인", "상태바 ⟳ 클릭 또는 소스 제어 ··· → 밀어넣기(Push)"] : ["Current branch 가 " + q.br + " 인지 확인", "상단 [Push origin ↑3] (또는 Ctrl+P 대신 메뉴 [저장소] → Push)"];
     if (q.type === "pushhold") return vs ? ["상태바 ⎇ → 새 분기 이름 " + q.br + " 입력 후 Enter", "소스 제어 [☁ Publish Branch]", "main 으로는 push 하지 않음 → 현황표에서 원격 main 이 그대로인지 확인"] : ["[Current branch ▾] → [New branch] → " + q.br + " → Create branch", "상단 [Publish branch]", "main 으로는 Push origin 하지 않음"];
     if (q.type === "prupdate") return vs ? ["상태바 ⎇ 가 " + q.br + " 인지 확인", "탐색기에서 " + q.file + " 열기 → 맨 위에 # 주석 추가 → 저장", "소스 제어: + 스테이징 → ✓ 커밋", "··· → 밀어넣기(Push)", "[웹 사이트] 에서 PR #" + q.pr + " 타임라인 확인 (새 PR 만들지 않음)"] : ["Current branch 가 " + q.br + " 인지 확인", "[Open in editor] → " + q.file + " 에 주석 추가 → 저장", "Summary 입력 → Commit", "[Push origin]", "[웹 사이트] 에서 PR #" + q.pr + " 확인"];
@@ -1861,13 +1898,14 @@ origin/feature-a  ← 다른 브랜치는 '기록'만 생김 (로컬 브랜치 �
   }
   function vsExplorer() {
     var L = S.local, v = vsState(), h = '<div class="vs-h">탐색기</div>';
-    if (!L) {
-      h += '<div class="vs-pad"><p>열린 폴더가 없음.</p><p class="vs-dim">원격 저장소를 내 컴퓨터로 복제(Clone)해서 시작함.</p>' +
+    if (!L || v.reclone) {
+      h += '<div class="vs-pad">' + (L ? '<p><b>새 폴더로 복제</b></p><p class="vs-dim">지금 폴더는 그대로 두고, 새 저장소를 새 폴더로 받음. <button type="button" class="vs-link" data-l="vs-reclone">취소</button></p>' : '<p>열린 폴더가 없음.</p><p class="vs-dim">원격 저장소를 내 컴퓨터로 복제(Clone)해서 시작함.</p>') +
         '<form data-lform="clone" class="vs-col"><input class="vs-inp" id="vs-url" placeholder="저장소 URL 입력" spellcheck="false"><button class="vs-btn" type="submit">Git 저장소 복제</button></form>';
       if (R()) h += '<p class="vs-dim">웹 레포 주소<br><span class="mono">' + esc(repoUrl()) + '</span><br><button type="button" class="vs-link" data-l="fill-url">입력칸에 넣기</button></p>';
       return h + '</div>';
     }
-    h += '<div class="vs-sub"><span>' + esc(R().name.toUpperCase()) + '</span><button type="button" class="vs-mini" data-l="vs-newfile" title="새 파일">+ 새 파일</button></div>';
+    if (lStale()) h += '<div class="vs-merge">이 폴더는 <b>예전 저장소</b>에 연결돼 있음<br><span class="mono">' + esc(L.url) + '</span><br>새 저장소: <span class="mono">' + esc(repoUrl()) + '</span><br><button type="button" class="vs-btn sm" data-l="vs-reclone">새 폴더로 복제</button></div>';
+    h += '<div class="vs-sub"><span>' + esc((lStale() ? (L.url.split("/").pop() || "").replace(/\.git$/, "") : R().name).toUpperCase()) + '</span><button type="button" class="vs-mini" data-l="vs-newfile" title="새 파일">+ 새 파일</button></div>';
     if (v.newFile) h += '<form data-lform="vs-newfile" class="vs-pad"><input class="vs-inp" id="vs-fname" placeholder="파일 이름 입력 후 Enter (예: notes.md)" spellcheck="false"></form>';
     var stat = {}; lAll().forEach(function (d) { stat[d[0]] = d[1]; });
     if (L.merging) L.merging.conflicts.forEach(function (k) { if (hasMarkers(L.work[k])) stat[k] = "C"; });
@@ -1882,7 +1920,7 @@ origin/feature-a  ← 다른 브랜치는 '기록'만 생김 (로컬 브랜치 �
   function vsSCM() {
     var L = S.local, h = '<div class="vs-h"><span>소스 제어</span>';
     if (L) h += '<details class="dd vs-more"><summary title="추가 작업" aria-label="추가 작업">···</summary><div class="menu">' +
-      [["pull", "끌어오기 (Pull)"], ["push", "밀어넣기 (Push)"], ["fetch", "가져오기 (Fetch)"], ["vs-pick", "분기 만들기 / 체크아웃"], ["vs-mergepick", "분기 병합 (merge)..."], ["abort", "병합 중단 (Merge Abort)"], ["undo", "마지막 커밋 실행 취소 (Undo Last Commit)"], ["discard-all", "모든 변경 내용 취소 (Discard All)"], ["open-pr-web", "Pull Request 만들기 (웹에서 열기)"]].map(function (x) { return '<button type="button" class="mi" data-l="' + x[0] + '">' + x[1] + '</button>'; }).join("") + '</div></details>';
+      [["pull", "끌어오기 (Pull)"], ["push", "밀어넣기 (Push)"], ["fetch", "가져오기 (Fetch)"], ["vs-pick", "분기 만들기 / 체크아웃"], ["vs-mergepick", "분기 병합 (merge)..."], ["abort", "병합 중단 (Merge Abort)"], ["undo", "마지막 커밋 실행 취소 (Undo Last Commit)"], ["vs-reclone", "Git 저장소 복제 (새 폴더)…"], ["discard-all", "모든 변경 내용 취소 (Discard All)"], ["open-pr-web", "Pull Request 만들기 (웹에서 열기)"]].map(function (x) { return '<button type="button" class="mi" data-l="' + x[0] + '">' + x[1] + '</button>'; }).join("") + '</div></details>';
     h += '</div>';
     if (!L) return h + '<div class="vs-pad vs-dim">열린 Git 저장소가 없음. 탐색기에서 먼저 복제함.</div>';
     var st = lStaged(), un = lUnstaged(), s = lSync(), mg = L.merging, cleft = [];
@@ -1955,6 +1993,7 @@ origin/feature-a  ← 다른 브랜치는 '기록'만 생김 (로컬 브랜치 �
     } else h += '<div class="dk-seg"><small>Current branch</small><b>-</b></div>';
     h += '</div>';
     if (flash) h += '<div class="flash ' + flash.t + '" role="status" style="margin:10px 12px 0">' + esc(flash.m) + '</div>';
+    if (L && lStale() && !d.clone) h += '<div class="banner" style="margin:10px 12px 0"><span>이 폴더는 예전 저장소 <b class="mono">' + esc(L.url) + '</b> 에 연결돼 있음. 저장소가 바뀌었으니 새로 클론해야 함</span><button type="button" class="btn go sm" data-l="dk-clone">Clone repository...</button></div>';
     if (noL || d.clone) {
       h += '<div class="dk-empty">' + (d.clone || noL ? dkCloneBox() : "") + '</div>';
       return h + '</div>';
@@ -2039,6 +2078,7 @@ origin/feature-a  ← 다른 브랜치는 '기록'만 생김 (로컬 브랜치 �
     else if (a === "stage") { if (L.merging && hasMarkers(L.work[arg])) err(arg + " 에 충돌 표시(<<<<<<< ======= >>>>>>>)가 남아 있어 스테이징할 수 없음. 먼저 충돌을 정리함."); else if (arg in L.work) L.index[arg] = L.work[arg]; else delete L.index[arg]; }
     else if (a === "abort") lAbort();
     else if (a === "undo") { lUndo(); d.tab = "changes"; }
+    else if (a === "vs-reclone") { v.reclone = !v.reclone; v.view = "explorer"; }
     else if (a === "discard") lDiscard(arg);
     else if (a === "discard-all") lDiscard(null);
     else if (a === "noop") return;
