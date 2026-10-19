@@ -472,6 +472,21 @@ origin/feature-a  ← 다른 브랜치는 '기록'만 생김 (로컬 브랜치 �
         </tbody></table></div>
         <ul><li>고르지 않은 파일은 커밋 안 된 채 내 컴퓨터에 남음 (지워지지 않음)</li><li>이미 커밋된 파일은 .gitignore 에 적어도 계속 추적됨 → 처음부터 넣는 게 중요. 비밀 키가 올라갔다면 키부터 교체</li></ul>
       </section>
+      <section><h3>Q13. Accept Current Change 와 Incoming Change 가 헷갈림</h3>
+        <p>기준은 하나임: <b>지금 체크아웃해 있는 브랜치 = Current(현재 변경)</b>, <b>합쳐 들어오는 쪽 = Incoming(수신 변경)</b>.</p>
+        <pre>&lt;&lt;&lt;&lt;&lt;&lt;&lt; HEAD (Current Change)          ← 지금 내 브랜치 내용
+기한: 10월 24일
+=======
+기한: 10월 31일
+&gt;&gt;&gt;&gt;&gt;&gt;&gt; origin/main (Incoming Change)  ← 들어오는 쪽 내용</pre>
+        <div class="tbl"><table><thead><tr><th>상황</th><th>Current (위)</th><th>Incoming (아래)</th></tr></thead><tbody>
+          <tr><td>main 에서 feature 를 merge</td><td>main</td><td>feature</td></tr>
+          <tr><td>내 브랜치에서 pull</td><td>내 로컬 커밋</td><td>원격 (동료가 올린 것)</td></tr>
+          <tr><td>내 브랜치에 origin/main merge</td><td>내 브랜치</td><td>main</td></tr>
+          <tr><td>⚠ rebase 중</td><td>main (기준)</td><td>내 커밋 ← 반대</td></tr>
+        </tbody></table></div>
+        <ul><li>요령: ① 표시 줄 뒤 브랜치 이름 확인 ② 상태바에서 지금 브랜치 확인 ③ 둘 다 필요하면 Accept Both 후 손질</li><li>연습: 컨플릭트 실습 '누구 것을 남길까', VS Code·데스크톱 실전 요청</li></ul>
+      </section>
     </div>
   </details>
 </div>
@@ -803,7 +818,7 @@ origin/feature-a  ← 다른 브랜치는 '기록'만 생김 (로컬 브랜치 �
       else { if (!S.quest) newQuest(); q = S.quest; item = { from: q.from, r: q.r, w: q.w, s: q.s, loc: q.loc || ["원격"] }; isDone = questOk(q); key = "q" + q.n; }
       eyebrow = TRACK_NAME[S.track] + " · 실전 요청 #" + q.n;
     } else {
-      var m = list[show]; item = { from: m.from || "팀장", r: m.r(), w: m.w, s: typeof m.s === "function" ? m.s() : m.s, loc: m.loc }; eyebrow = TRACK_NAME[S.track] + " · 기본 " + (show + 1) + " · " + m.t; isDone = m.ok(); key = S.track + "m" + show;
+      var m = list[show]; item = { from: m.from || "팀장", r: m.r(), w: m.w, s: typeof m.s === "function" ? m.s() : m.s, loc: m.key === "c6" && S.flags.c6q ? S.flags.c6q.loc : m.loc }; eyebrow = TRACK_NAME[S.track] + " · 기본 " + (show + 1) + " · " + m.t; isDone = m.ok(); key = S.track + "m" + show;
     }
     if (key !== ui.key) { ui.hint = ui.steps = false; ui.key = key; }
     var h = '<span class="eyebrow">' + esc(eyebrow) + '</span>' + locBadges(item.loc) + '<span class="who">' + esc(item.from) + '</span><p>' + esc(item.r) + '</p>';
@@ -1375,7 +1390,7 @@ origin/feature-a  ← 다른 브랜치는 '기록'만 생김 (로컬 브랜치 �
     var L = S.local;
     if (pickFiles) pickFiles.forEach(toIndex);
     if (L.merging) {
-      var mg = L.merging, left = mg.conflicts.filter(function (k) { return hasMarkers(L.work[k]) || L.index[k] !== L.work[k]; });
+      var mg = L.merging, left = mg.conflicts.filter(function (k) { return hasMarkers(L.work[k]) || L.index[k] !== L.work[k] || !(mg.staged || {})[k]; });
       if (left.length) { err("아직 해결 안 된 충돌 파일: " + left.join(", ") + " → 충돌 표시를 정리하고 스테이징(+)해야 커밋할 수 있음"); return false; }
       var mb = lHead(), mid = sha();
       S.commits[mid] = { id: mid, msg: msg || mg.msg, author: ME, tree: clone(L.index) };
@@ -1456,6 +1471,7 @@ origin/feature-a  ← 다른 브랜치는 '기록'만 생김 (로컬 브랜치 �
     err("충돌 발생! " + r.conflicts.join(", ") + " 에서 같은 줄을 양쪽이 다르게 고쳤음. 파일을 열어 충돌을 정리 → 스테이징 → 커밋하면 병합이 끝남. 되돌리려면 '병합 중단'.");
     return true;
   }
+  function markStaged(k) { var mg = S.local && S.local.merging; if (mg && mg.conflicts.indexOf(k) >= 0) { mg.staged = mg.staged || {}; mg.staged[k] = true; } }
   function inMerge() { if (S.local && S.local.merging) { err("병합(merge) 진행 중임. 충돌을 해결해 커밋하거나 '병합 중단'을 먼저 해야 함."); return true; } return false; }
   function lAbort(silent) {
     var L = S.local; if (!L || !L.merging) return silent ? null : err("진행 중인 병합이 없음");
@@ -1636,7 +1652,9 @@ origin/feature-a  ← 다른 브랜치는 '기록'만 생김 (로컬 브랜치 �
     { t: "Q. CRLF 와 LF", from: "질문", quiz: { id: "q10", opts: ["파일이 깨져서", "줄바꿈 방식(CRLF ↔ LF)이 바뀌어서", "Git 버전이 낮아서"], ans: 1, exp: "윈도우는 줄 끝에 CR+LF(\\r\\n), 맥·리눅스는 LF(\\n)를 씀. 편집기가 줄바꿈을 바꿔 저장하면 눈에는 같아도 Git 은 모든 줄이 바뀐 것으로 봄. 해결: 편집기에서 LF 로 저장, 팀 전체는 .gitattributes 에 * text=auto, 윈도우는 core.autocrlf true." },
       r: function () { return "윈도우에서 한 줄만 고쳤는데 파일 전체가 바뀐 것으로 나와요. 흔한 원인은?"; }, w: "VS Code 는 상태바 오른쪽 아래에 CRLF/LF 가 표시되고 눌러서 바꿀 수 있음. 실전 요청 'CRLF' 상황으로 연습.", s: ["보기 중 하나를 고름"], ok: qz("q10") },
     { t: "Q. 특정 파일만 올리기", from: "질문", quiz: { id: "q11", opts: ["push 할 때 올릴 파일을 고름", "커밋할 때 그 파일만 스테이징(체크)해서 커밋한 뒤 push", "올리기 싫은 파일을 지운 뒤 push"], ans: 1, exp: "push 는 커밋 단위라 파일을 고르는 단계가 없음. 커밋할 때 고름: VS Code 는 그 파일만 +, 데스크톱 앱은 그 파일만 체크, 명령어는 git add 파일명. 항상 올리면 안 되는 파일(.env, 로그 등)은 .gitignore 에 적어 둠." },
-      r: function () { return "파일 3개를 고쳤는데 그중 1개만 올리고 싶어요. 어떻게 하나요?"; }, w: "실전 요청 '특정 파일만 커밋', '.gitignore' 상황으로 연습.", s: ["보기 중 하나를 고름"], ok: qz("q11") }
+      r: function () { return "파일 3개를 고쳤는데 그중 1개만 올리고 싶어요. 어떻게 하나요?"; }, w: "실전 요청 '특정 파일만 커밋', '.gitignore' 상황으로 연습.", s: ["보기 중 하나를 고름"], ok: qz("q11") },
+    { t: "Q. Current·Incoming 헷갈림", from: "질문", quiz: { id: "q12", opts: ["내 브랜치에서 pull 하다 충돌 → Incoming 은 원격(동료가 올린 것)", "내 브랜치에서 pull 하다 충돌 → Incoming 은 내 로컬 커밋", "어느 경우든 Current 는 항상 원격"], ans: 0, exp: "Current = 지금 서 있는 브랜치(내 로컬), Incoming = 들어오는 쪽(원격). 단 rebase 중에는 반대. 표시 줄 뒤의 브랜치 이름을 꼭 확인." },
+      r: function () { return "accept current change 와 incoming change 가 헷갈려요."; }, w: "컨플릭트 실습 '누구 것을 남길까' 와 실전 요청에서 반복 연습 가능.", s: ["보기 중 하나를 고름"], ok: qz("q12") }
   ];
   function keepDone(list, key) { list.forEach(function (m, i) { var raw = m.ok; m.ok = function () { return latch(key + i, raw); }; }); }
   keepDone(M, "M"); keepDone(MV, "MV"); keepDone(MD, "MD");
@@ -1644,7 +1662,7 @@ origin/feature-a  ← 다른 브랜치는 '기록'만 생김 (로컬 브랜치 �
   setLoc(M, M.map(function () { return ["원격"]; }));
   setLoc(MV, [["원격"], ["원격→로컬"], ["로컬"], ["로컬"], ["로컬"], ["로컬"], ["로컬→원격"], ["원격→로컬"], ["로컬"], ["원격"]]);
   setLoc(MD, [["원격"], ["원격→로컬"], ["로컬"], ["로컬"], ["로컬"], ["로컬→원격"], ["원격"], ["원격→로컬"], ["로컬"], ["원격"]]);
-  setLoc(MQ, [null, ["로컬", "로컬→원격"], null, ["원격"], ["원격", "로컬→원격"], null, null, null, null, null, ["로컬→원격"], ["원격→로컬"], ["로컬"], ["로컬", "로컬→원격"]]);
+  setLoc(MQ, [null, ["로컬", "로컬→원격"], null, ["원격"], ["원격", "로컬→원격"], null, null, null, null, null, ["로컬→원격"], ["원격→로컬"], ["로컬"], ["로컬", "로컬→원격"], null]);
   var LOC_TIP = { "로컬": "내 컴퓨터에서만 일어남 (원격엔 변화 없음)", "원격": "GitHub(웹)에서 일어남", "로컬→원격": "내 컴퓨터 → GitHub 로 올림 (push·Publish)", "원격→로컬": "GitHub → 내 컴퓨터로 받음 (clone·pull)" };
   function locBadges(loc) { return loc ? '<div class="locs-badges">' + loc.map(function (l) { return '<span class="loc loc-' + (l === "로컬" ? "l" : l === "원격" ? "r" : l === "로컬→원격" ? "up" : "down") + '" title="' + LOC_TIP[l] + '">' + l + '</span>'; }).join("") + '</div>' : ""; }
   function renderLocTable() {
@@ -1792,18 +1810,27 @@ origin/feature-a  ← 다른 브랜치는 '기록'만 생김 (로컬 브랜치 �
       s: vsOrDk(["상태바가 ⎇ feature/c-local 인지 확인", "소스 제어 ··· → 분기 병합 → ☁ origin/main → 충돌", "일정.md 열기 → [수신 변경 수락]", "+ 스테이징 → ✓ 커밋 (병합 완료)", "··· → 밀어넣기(Push)", "[웹 사이트] 에서 PR 충돌이 사라졌는지 확인"], ["Current branch 가 feature/c-local 인지 확인", "메뉴 [브랜치] → Merge into current branch → origin/main", "충돌 창에서 일정.md [수신 쪽 사용 (origin/main)]", "[Continue merge]", "상단 [Push origin]", "[웹 사이트] 에서 PR 확인"]),
       ok: function () { return latch("c4", function () { var p = S.flags.c4pr && pr(S.flags.c4pr), r = br("feature/c-local"); return !!p && !!r && !!S.flags["resolvedc:origin/main>feature/c-local"] && r.commits.indexOf(S.flags.c4team) >= 0 && (r.files["일정.md"] || "").indexOf("수요일") >= 0 && !prConflicts(p).length; }); } },
     { t: "Q. PR 충돌 해결 방법", from: "질문", quiz: { id: "c3", opts: ["웹의 Resolve conflicts, 또는 로컬에서 base(main)를 merge 해 해결 후 push", "PR을 닫았다가 다시 열기", "브랜치 보호 규칙을 끄기"], ans: 0, exp: "PR 충돌은 head 브랜치에 base 의 변경을 합쳐서 풀어야 함. 간단하면 웹 Resolve conflicts, 복잡하면 로컬에서 git merge origin/main(또는 pull) → 해결 → push. 닫았다 열거나 규칙을 꺼도 충돌은 그대로임." },
-      r: function () { return "PR 에 충돌이 났을 때 해결하는 방법으로 맞는 것은?"; }, w: "이번 트랙에서 두 방법을 모두 직접 해 봤음.", s: ["보기 중 하나를 고름"], ok: function () { return !!S.flags["quiz:c3"]; } }
+      r: function () { return "PR 에 충돌이 났을 때 해결하는 방법으로 맞는 것은?"; }, w: "이번 트랙에서 두 방법을 모두 직접 해 봤음.", s: ["보기 중 하나를 고름"], ok: function () { return !!S.flags["quiz:c3"]; } },
+    { t: "Q. Current vs Incoming", from: "질문", quiz: { id: "c4", opts: ["Current = 지금 체크아웃한 브랜치(보통 내 것), Incoming = 합쳐 들어오는 쪽(보통 상대 것)", "Current = 원격, Incoming = 로컬", "Current = 최신 커밋, Incoming = 옛 커밋"], ans: 0, exp: "기준은 '지금 내가 서 있는 브랜치'임. main 에서 feature 를 merge 하면 Current=main·Incoming=feature, 내 브랜치에서 pull 하면 Current=내 로컬·Incoming=원격. <<<<<<< 와 >>>>>>> 뒤의 브랜치 이름을 보면 확실함." },
+      r: function () { return "accept current change 와 incoming change, 무엇이 무엇인가요?"; }, w: "VS Code 충돌 버튼에 브랜치 이름이 함께 표시됨.", s: ["보기 중 하나를 고름"], ok: function () { return !!S.flags["quiz:c4"]; } },
+    { t: "누구 것을 남길까 (Current/Incoming)", key: "c6", mode: "local", r: function () { var q = S.flags.c6q; return q ? q.r : "[상황 만들기] 를 누르면 pull 또는 merge 충돌 상황과 '누구 것을 남길지' 지시가 무작위로 만들어집니다. 다시 해보기로 여러 번 연습하세요."; },
+      w: "Current = 지금 서 있는 브랜치(상태바의 ⎇), Incoming = 들어오는 쪽. pull 이면 Incoming 이 원격(동료), 내 브랜치에 main 을 merge 하면 Incoming 이 main.",
+      setup: function () { ensureBase(true); var q = {}; genWhich(q, Math.random() < 0.5, Math.random() < 0.5); S.flags.c6q = q; return "현재 로컬 브랜치 " + q.br + " 에서 " + (q.vpull ? "pull" : "origin/main merge") + " 하면 충돌 나는 상태로 준비함. 남길 쪽: " + (q.keepMine ? "내 것 (Current)" : "상대 것 (Incoming)"); },
+      s: function () { return whichSteps(S.flags.c6q); },
+      ok: function () { return latch("c6", function () { return whichOk(S.flags.c6q); }); } },
+    { t: "Q. rebase 때는 반대", from: "질문", quiz: { id: "c5", opts: ["merge 와 같음: Current = 내 커밋", "반대임: Current = 기준(main) 쪽, Incoming = 내 커밋", "rebase 는 충돌이 안 남"], ans: 1, exp: "rebase 는 main 위에 내 커밋을 하나씩 다시 얹는 방식이라, 충돌 시점에 서 있는 쪽이 main(기준)임. 그래서 Current = main, Incoming = 내 커밋으로 뒤바뀜. rebase 중엔 '내 것 = Incoming' 이라고 기억함." },
+      r: function () { return "git rebase main 을 하다 충돌이 나면, Current 는 어느 쪽일까요?"; }, w: "Pull 설정을 rebase 로 쓰는 팀(pull --rebase)도 많아 알아 두면 좋음.", s: ["보기 중 하나를 고름"], ok: function () { return !!S.flags["quiz:c5"]; } }
   ];
-  setLoc(MC, [null, ["로컬"], ["로컬"], null, ["로컬→원격", "원격→로컬", "로컬"], ["로컬"], ["원격"], ["원격→로컬", "로컬", "로컬→원격"], null]);
+  setLoc(MC, [null, ["로컬"], ["로컬"], null, ["로컬→원격", "원격→로컬", "로컬"], ["로컬"], ["원격"], ["원격→로컬", "로컬", "로컬→원격"], null, null, ["원격→로컬", "로컬"], null]);
   function prepareLocal() {
     if (!hasRepo()) return;
     if (current(MV) === 7 && !S.flags.vTeam) S.flags.vTeam = teamPushMain("김주무관");
     if (current(MD) === 7 && !S.flags.dTeam) S.flags.dTeam = teamPushMain("김주무관");
   }
   function newLocalQuest() {
-    var types = ["feat", "pull", "pr", "lmerge", "rpr", "pushok", "pushhold", "prupdate", "pushhide", "switchrepo", "crlf", "selcommit", "gitignore"], last = S.lq && S.lq.type;
+    var types = ["feat", "pull", "pr", "lmerge", "rpr", "pushok", "pushhold", "prupdate", "pushhide", "switchrepo", "crlf", "selcommit", "gitignore", "whichside"], last = S.lq && S.lq.type;
     var type = pick(types.filter(function (t) { return t !== last; })), q = { type: type, n: S.lqDone + 1, from: "팀장" };
-    if (type === "pushok" || type === "pushhold" || type === "prupdate" || type === "pushhide" || type === "switchrepo" || type === "crlf" || type === "selcommit" || type === "gitignore") { genAskQuest(q); S.lq = q; return; }
+    if (type === "pushok" || type === "pushhold" || type === "prupdate" || type === "pushhide" || type === "switchrepo" || type === "crlf" || type === "selcommit" || type === "gitignore" || type === "whichside") { genAskQuest(q); S.lq = q; return; }
     if (type === "lmerge" || type === "rpr") {
       var cands = FEATS.filter(function (f) { var b = "feature/" + f[0] + (type === "lmerge" ? "-draft" : "-pr"); return !lbr(b) && !br(b); }), g = cands.length ? pick(cands) : [pick(FEATS)[0] + (S.seqL = (S.seqL || 0) + 1), "추가"];
       q.br = "feature/" + g[0] + (type === "lmerge" ? "-draft" : "-pr"); q.file = g[0] + "-" + type + ".md";
@@ -1842,6 +1869,42 @@ origin/feature-a  ← 다른 브랜치는 '기록'만 생김 (로컬 브랜치 �
     var c = FEATS.filter(function (f) { var b = prefix + f[0] + suffix; return !lbr(b) && !br(b); });
     return c.length ? pick(c) : [pick(FEATS)[0] + (S.seqL = (S.seqL || 0) + 1), "추가"];
   }
+  function genWhich(q, vpull, keepMine) {
+    var g = uniqFeat(vpull ? "team/" : "feature/", vpull ? "-share" : "-side");
+    q.br = (vpull ? "team/" : "feature/") + g[0] + (vpull ? "-share" : "-side"); q.file = g[0] + "-일정.txt";
+    var base = g[1] + " 담당: 나\n기한: 미정", mine = base.replace("기한: 미정", "기한: 10월 24일"), theirs = base.replace("기한: 미정", "기한: 10월 31일");
+    if (vpull) {
+      remoteFrom(q.br, "main"); addCommit(q.br, "일정 초안", withFile(br(q.br).files, q.file, base), "팀장");
+      localFrom(q.br, br(q.br), true); setHead(q.br);
+      localCommit(q.br, q.file, mine, "기한 지정 (내 작업)");
+      addCommit(q.br, "기한 지정 (김주무관)", withFile(br(q.br).files, q.file, theirs), "김주무관");
+      q.src = "origin/" + q.br; q.needPush = true;
+      q.r = "공용 브랜치 " + q.br + " 를 Pull 하면 충돌이 납니다. " + (keepMine ? "내가 로컬에서 정한 기한(24일)을 유지" : "김주무관이 원격에 올린 기한(31일)을 따르기") + "로 했습니다. 맞는 쪽을 골라 해결하고 커밋 후 push 하세요.";
+      q.loc = ["원격→로컬", "로컬", "로컬→원격"];
+    } else {
+      addCommit("main", "일정 초안", withFile(br("main").files, q.file, base), "팀장");
+      localFrom(q.br, br("main"), false); setHead(q.br);
+      localCommit(q.br, q.file, mine, "기한 지정 (내 작업)");
+      addCommit("main", "기한 지정 (김주무관)", withFile(br("main").files, q.file, theirs), "김주무관");
+      q.src = "origin/main"; q.needPush = false;
+      q.r = "로컬 " + q.br + " 에 최신 origin/main 을 merge 하세요. 충돌이 나면 " + (keepMine ? "내 브랜치 쪽 기한(24일)을 유지" : "main 쪽 기한(31일)을 따르기") + "로 합니다. 해결 후 커밋까지만 하면 됩니다 (push 안 해도 됨).";
+      q.loc = ["원격→로컬", "로컬"];
+    }
+    q.keep = keepMine ? "24일" : "31일"; q.drop = keepMine ? "31일" : "24일"; q.keepMine = keepMine; q.vpull = vpull;
+    clearFlags(["resolvedc:" + q.src + ">" + q.br]);
+    q.w = "지금 서 있는 브랜치 = " + q.br + " → Current(현재 변경, 위·초록). 들어오는 쪽 = " + q.src + " → Incoming(수신 변경, 아래·파랑). 이번엔 " + (keepMine ? "내 것 = Current" : "상대 것 = Incoming") + " 를 고르면 됨. (rebase 때만 반대)";
+  }
+  function whichOk(q) {
+    if (!q || !S.flags["resolvedc:" + q.src + ">" + q.br]) return false;
+    var f = q.needPush ? (br(q.br) && br(q.br).files[q.file]) : (lbr(q.br) && lbr(q.br).files[q.file]);
+    return !!f && f.indexOf(q.keep) >= 0 && f.indexOf(q.drop) < 0 && !hasMarkers(f);
+  }
+  function whichSteps(q) {
+    if (!q) return ["[상황 만들기] 를 먼저 누름"];
+    var vs = S.mode !== "desktop", pickVs = q.keepMine ? "[Accept Current 현재 변경 수락 (" + q.br + ")]" : "[Accept Incoming 수신 변경 수락 (" + q.src + ")]", pickDk = q.keepMine ? "[현재 쪽 사용 (" + q.br + ")]" : "[수신 쪽 사용 (" + q.src + ")]";
+    if (vs) return (q.vpull ? ["소스 제어 ··· → 끌어오기(Pull) → 충돌"] : ["소스 제어 ··· → 분기 병합 → ☁ origin/main → 충돌"]).concat(["탐색기에서 " + q.file + " 열기 → 위(초록) = Current = " + q.br + ", 아래(파랑) = Incoming = " + q.src, pickVs, "+ 스테이징 → ✓ 커밋"], q.needPush ? ["··· → 밀어넣기(Push)"] : []);
+    return (q.vpull ? ["상단 [Pull origin] → 충돌 창"] : ["메뉴 [브랜치] → Merge into current branch → origin/main → 충돌 창"]).concat([pickDk, "[Continue merge]"], q.needPush ? ["상단 [Push origin]"] : []);
+  }
   function genAskQuest(q) {
     ensureBase(true);
     var g;
@@ -1858,6 +1921,8 @@ origin/feature-a  ← 다른 브랜치는 '기록'만 생김 (로컬 브랜치 �
       q.r = "팀 저장소 main 에 실수로 커밋 2개를 했네요(↑2, Push origin 안내). main 엔 바로 push 하지 말고, 새 브랜치 " + q.br + " 를 만들어 그 브랜치를 원격에 Publish 해 주세요.";
       q.w = "지금 커밋이 있는 상태에서 새 브랜치를 만들면 그 커밋을 그대로 가져감. 그 브랜치를 Publish 하면 원격 main 은 건드리지 않음. (실제 데스크톱 앱은 이때 main 의 커밋을 옮길지 물어봄)";
       q.loc = ["로컬", "로컬→원격"];
+    } else if (q.type === "whichside") {
+      genWhich(q, Math.random() < 0.5, Math.random() < 0.5);
     } else if (q.type === "crlf") {
       g = uniqFeat("feature/", "-eol"); q.br = "feature/" + g[0] + "-eol";
       var lf = "[server]\nhost=10.0.0.1\nport=8080\ntimeout=30\nlog=info";
@@ -1919,6 +1984,7 @@ origin/feature-a  ← 다른 브랜치는 '기록'만 생김 (로컬 브랜치 �
     }
   }
   function localQuestOk(q) {
+    if (q.type === "whichside") return latch("lq" + q.n + "ws", function () { return whichOk(q); });
     if (q.type === "crlf") { var rc = br(q.br), fc = rc && rc.files["config.ini"]; return !!fc && fc.indexOf("\r") < 0 && fc === q.want; }
     if (q.type === "selcommit") { var rs2 = br(q.br); return !!rs2 && rs2.files[q.file] === q.code && !("debug.log" in rs2.files) && !("메모_개인.txt" in rs2.files); }
     if (q.type === "gitignore") { var rg = br(q.br), gi = rg && rg.files[".gitignore"]; return !!gi && ignoredBy(gi, ".env") && ignoredBy(gi, "app.log") && !(".env" in rg.files) && !Object.keys(rg.files).some(function (k) { return /\.log$/.test(k); }); }
@@ -1936,6 +2002,7 @@ origin/feature-a  ← 다른 브랜치는 '기록'만 생김 (로컬 브랜치 �
   }
   function localSteps(q) {
     var vs = S.track === "vscode";
+    if (q.type === "whichside") return whichSteps(q);
     if (q.type === "crlf") return vs ? ["탐색기에서 config.ini 열기 → 맨 아래 상태바의 [CRLF] 확인", "(방법 1) 상태바 [CRLF] 클릭 → LF 로 바뀜", "(방법 2) [+ 새 파일] .gitattributes → '* text=auto' 입력 → 저장", "소스 제어에서 바뀐 내용 확인 → + 스테이징 → ✓ 커밋", "[☁ Publish Branch]"] : ["Changes 에서 config.ini 클릭 → '줄바꿈 변경' 경고와 모든 줄이 바뀐 diff 확인", "[Open in editor] → (새 파일) .gitattributes → '* text=auto' → 저장", "config.ini diff 가 timeout 한 줄로 줄었는지 확인", "Summary 입력 → Commit (.gitattributes 도 함께 체크)", "[Publish branch]"];
     if (q.type === "selcommit") return vs ? ["소스 제어에서 변경 사항 3개 확인", q.file + " 옆 + 만 눌러 스테이징 (나머지는 그대로 둠)", "메시지 입력 → ✓ 커밋 (스테이징된 것만 커밋됨)", "상태바의 [☁ 게시 필요] 또는 ··· → 밀어넣기(Push) 로 Publish (남은 변경이 있으면 큰 버튼은 '커밋'으로 보임) → 커밋 안 한 파일은 로컬에만 남음"] : ["Changes 에서 debug.log, 메모_개인.txt 체크 해제", q.file + " 만 체크된 상태로 Summary 입력 → Commit", "[Publish branch] → 체크 안 한 파일은 로컬에만 남음"];
     if (q.type === "gitignore") return vs ? ["탐색기 [+ 새 파일] → .gitignore", "내용: 첫 줄 .env, 둘째 줄 *.log → 저장", "소스 제어에서 .env·로그가 목록에서 사라진 것 확인", ".gitignore 만 + 스테이징 → ✓ 커밋", "[☁ Publish Branch]"] : ["[Open in editor] → (새 파일) .gitignore", "내용: .env 와 *.log 를 한 줄씩 → 저장", "Changes 에 .gitignore 만 남은 것 확인 → Commit", "[Publish branch]"];
@@ -2001,7 +2068,7 @@ origin/feature-a  ← 다른 브랜치는 '기록'만 생김 (로컬 브랜치 �
     if (!L) return h + '<div class="vs-pad vs-dim">열린 Git 저장소가 없음. 탐색기에서 먼저 복제함.</div>';
     var st = lStaged(), un = lUnstaged(), s = lSync(), mg = L.merging, cleft = [];
     if (mg) {
-      cleft = mg.conflicts.filter(function (k) { return hasMarkers(L.work[k]) || L.index[k] !== L.work[k]; });
+      cleft = mg.conflicts.filter(function (k) { return hasMarkers(L.work[k]) || L.index[k] !== L.work[k] || !(mg.staged || {})[k]; });
       h += '<div class="vs-merge"><b>병합 중</b>: ' + esc(mg.from) + ' → ' + esc(L.head) + '<br>' + (cleft.length ? '해결·스테이징 남은 충돌 파일 ' + cleft.length + '개' : '충돌 정리 완료 → 커밋하면 병합 끝') + '<br><button type="button" class="vs-btn sm warn" data-l="abort">병합 중단</button></div>';
       un = un.filter(function (d) { return mg.conflicts.indexOf(d[0]) < 0; });
     }
@@ -2024,9 +2091,9 @@ origin/feature-a  ← 다른 브랜치는 '기록'만 생김 (로컬 브랜치 �
     var buf = v.buf != null ? v.buf : L.work[v.file], dirty = v.buf != null && v.buf !== L.work[v.file], conf = "";
     if (hasMarkers(buf)) {
       var segs = hunks(buf), ci = -1;
-      conf = '<div class="vs-conf"><div class="vs-legend"><span class="cur">■ 현재 변경 (내 쪽 · ' + esc(L.head) + ')</span><span class="inc">■ 수신 변경 (들어오는 쪽)</span></div>' + segs.filter(function (x) { return x.c; }).map(function (sg) {
+      conf = '<div class="vs-conf"><div class="vs-legend"><span class="cur">■ 위: Current Change 현재 변경 = 지금 브랜치 ' + esc(L.head) + ' (보통 내 것)</span><span class="inc">■ 아래: Incoming Change 수신 변경 = 들어오는 쪽' + (L.merging ? " " + esc(L.merging.from) : "") + ' (보통 상대 것)</span></div>' + segs.filter(function (x) { return x.c; }).map(function (sg) {
         ci++;
-        return '<div class="vs-hunk"><div class="vs-cbar">충돌 ' + (ci + 1) + ': <button type="button" data-l="vs-res" data-arg="' + ci + '|ours">현재 변경 수락</button> | <button type="button" data-l="vs-res" data-arg="' + ci + '|theirs">수신 변경 수락</button> | <button type="button" data-l="vs-res" data-arg="' + ci + '|both">두 변경 모두 수락</button></div>' +
+        return '<div class="vs-hunk"><div class="vs-cbar">충돌 ' + (ci + 1) + ': <button type="button" data-l="vs-res" data-arg="' + ci + '|ours">Accept Current 현재 변경 수락 (' + esc(sg.la.split(" (")[0]) + ')</button> | <button type="button" data-l="vs-res" data-arg="' + ci + '|theirs">Accept Incoming 수신 변경 수락 (' + esc(sg.lb.split(" (")[0]) + ')</button> | <button type="button" data-l="vs-res" data-arg="' + ci + '|both">Accept Both 두 변경 모두 수락</button></div>' +
           '<div class="cur">' + sg.m.map(esc).join("<br>") + '<small>' + esc(sg.la) + '</small></div><div class="inc">' + sg.t.map(esc).join("<br>") + '<small>' + esc(sg.lb) + '</small></div></div>';
       }).join("") + '<div class="vs-dim" style="font-size:12px">버튼으로 고르거나, 아래 편집기에서 &lt;&lt;&lt;&lt;&lt;&lt;&lt; ======= &gt;&gt;&gt;&gt;&gt;&gt;&gt; 줄을 직접 지우고 저장해도 됨</div></div>';
     }
@@ -2153,7 +2220,7 @@ origin/feature-a  ← 다른 브랜치는 '기록'만 생김 (로컬 브랜치 �
     else if (a === "vs-mergepick") v.pick = "merge";
     else if (a === "merge") { lMerge(arg); v.pick = false; d.mergeOpen = false; d.sel = null; }
     else if (a === "dk-merge") { d.mergeOpen = !d.mergeOpen; d.editor = d.newbr = false; }
-    else if (a === "stage") { if (L.merging && hasMarkers(L.work[arg])) err(arg + " 에 충돌 표시(<<<<<<< ======= >>>>>>>)가 남아 있어 스테이징할 수 없음. 먼저 충돌을 정리함."); else toIndex(arg); }
+    else if (a === "stage") { if (L.merging && hasMarkers(L.work[arg])) err(arg + " 에 충돌 표시(<<<<<<< ======= >>>>>>>)가 남아 있어 스테이징할 수 없음. 먼저 충돌을 정리함."); else { toIndex(arg); markStaged(arg); } }
     else if (a === "abort") lAbort();
     else if (a === "undo") { lUndo(); d.tab = "changes"; }
     else if (a === "vs-eol") { vsSaveBuf(); flash = null; var cur4 = L.work[v.file], toLF = /\r\n/.test(cur4); L.work[v.file] = toLF ? nl(cur4) : nl(cur4).replace(/\n/g, "\r\n"); ok(v.file + " 의 줄바꿈을 " + (toLF ? "LF (맥·리눅스 방식)" : "CRLF (윈도우 방식)") + " 로 바꿔 저장함"); }
@@ -2164,9 +2231,9 @@ origin/feature-a  ← 다른 브랜치는 '기록'만 생김 (로컬 브랜치 �
     else if (a === "vs-res") { var pr3 = arg.split("|"), cur3 = v.buf != null ? v.buf : L.work[v.file]; L.work[v.file] = resolveHunk(cur3, +pr3[0], pr3[1]); v.buf = null; ok(({ ours: "현재 변경", theirs: "수신 변경", both: "두 변경 모두" })[pr3[1]] + " 수락 → 저장됨." + (hasMarkers(L.work[v.file]) ? " 남은 충돌도 정리함." : " 이 파일의 충돌이 모두 정리됨 → 소스 제어에서 스테이징(+)")); }
     else if (a === "dk-use") { var pu = arg.split("|"); L.work[pu[0]] = resolveHunk(L.work[pu[0]], "all", pu[1]); ok(pu[0] + " : " + (pu[1] === "ours" ? "현재 쪽" : "수신 쪽") + " 내용으로 정리함"); }
     else if (a === "dk-open-c") { d.editor = true; d.efile = arg; }
-    else if (a === "dk-continue") { L.merging.conflicts.forEach(function (k) { if (k in L.work) L.index[k] = L.work[k]; else delete L.index[k]; }); lCommit(L.merging.msg); }
-    else if (a === "unstage") { var hf = lHead().files; if (arg in hf) L.index[arg] = hf[arg]; else delete L.index[arg]; }
-    else if (a === "stage-all") lUnstaged().forEach(function (x) { if (L.merging && hasMarkers(L.work[x[0]])) return; toIndex(x[0]); });
+    else if (a === "dk-continue") { L.merging.conflicts.forEach(function (k) { if (k in L.work) L.index[k] = L.work[k]; else delete L.index[k]; markStaged(k); }); lCommit(L.merging.msg); }
+    else if (a === "unstage") { if (L.merging && L.merging.staged) delete L.merging.staged[arg]; var hf = lHead().files; if (arg in hf) L.index[arg] = hf[arg]; else delete L.index[arg]; }
+    else if (a === "stage-all") { lUnstaged().forEach(function (x) { if (L.merging && hasMarkers(L.work[x[0]])) return; toIndex(x[0]); }); if (L.merging) L.merging.conflicts.forEach(function (k) { if (!hasMarkers(L.work[k])) { toIndex(k); markStaged(k); } }); }
     else if (a === "unstage-all") L.index = clone(lHead().files);
     else if (a === "switch") { vsSaveBuf(); lSwitch(arg); v.pick = false; d.sel = null; }
     else if (a === "push") lPush();
