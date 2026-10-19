@@ -487,6 +487,15 @@ origin/feature-a  ← 다른 브랜치는 '기록'만 생김 (로컬 브랜치 �
         </tbody></table></div>
         <ul><li>요령: ① 표시 줄 뒤 브랜치 이름 확인 ② 상태바에서 지금 브랜치 확인 ③ 둘 다 필요하면 Accept Both 후 손질</li><li>연습: 컨플릭트 실습 '누구 것을 남길까', VS Code·데스크톱 실전 요청</li></ul>
       </section>
+      <section><h3>Q14. "Unable to pull when changes are present on your branch … would be overwritten" 오류</h3>
+        <p>커밋 안 한 내 수정과 원격 변경이 <b>같은 파일</b>이라, pull 하면 내 수정이 덮일 수 있어 Git 이 막은 것임. 고장이 아님.</p>
+        <div class="tbl"><table><thead><tr><th>내 수정이…</th><th>데스크톱 앱</th><th>VS Code</th><th>명령어</th></tr></thead><tbody>
+          <tr><td>살릴 작업</td><td>Commit → Pull origin → (충돌 시 해결) → Push</td><td>+ → ✓ 커밋 → 끌어오기</td><td>git commit → git pull</td></tr>
+          <tr><td>아직 이른 작업</td><td>Branch → Stash all changes → Pull → Stashed Changes [Restore]</td><td>··· → 임시 저장 → 끌어오기 → 임시 저장 꺼내기</td><td>git stash → git pull → git stash pop</td></tr>
+          <tr><td>버릴 실험</td><td>파일 우클릭 → Discard changes → Pull</td><td>↶ 변경 내용 취소 → 끌어오기</td><td>git restore 파일 → git pull</td></tr>
+        </tbody></table></div>
+        <ul><li>잘 모르겠으면 Stash 가 가장 안전함 (수정이 따로 보관됨)</li><li>Restore(pop) 때 같은 줄이 바뀌었다면 충돌 표시가 생김 → Current(받은 내용) / Incoming(내 임시 저장) 중 골라 정리</li><li>겹치지 않는 파일만 고쳤다면 이 오류 없이 Pull 됨</li></ul>
+      </section>
     </div>
   </details>
 </div>
@@ -1388,6 +1397,7 @@ origin/feature-a  ← 다른 브랜치는 '기록'만 생김 (로컬 브랜치 �
   function staleBlock() { if (lStale()) { err("이 폴더는 예전 저장소(" + S.local.url + ")에 연결돼 있음. 저장소가 바뀌었으니 pull·push 하지 말고, 새 주소로 새 폴더에 클론해야 함."); return true; } return false; }
   function lCommit(msg, pickFiles) {
     var L = S.local;
+    if (pickFiles && pickFiles.some(function (f) { return hasMarkers(L.work[f]); })) { err("충돌 표시(<<<<<<< ======= >>>>>>>)가 남은 파일이 있어 커밋할 수 없음. 먼저 정리함"); return false; }
     if (pickFiles) pickFiles.forEach(toIndex);
     if (L.merging) {
       var mg = L.merging, left = mg.conflicts.filter(function (k) { return hasMarkers(L.work[k]) || L.index[k] !== L.work[k] || !(mg.staged || {})[k]; });
@@ -1427,9 +1437,13 @@ origin/feature-a  ← 다른 브랜치는 '기록'만 생김 (로컬 브랜치 �
     var L = S.local, n = L.head, l = lbr(n), r = S.repo.branches[n];
     if (inMerge()) return false;
     if (!l.upstream || !r) { err("원격에 " + n + " 브랜치가 없음. 먼저 Publish 해야 함."); return false; }
-    if (lDirty()) { err("커밋하지 않은 변경이 있어 Pull 할 수 없음. 먼저 커밋함."); return false; }
-    var s = lSync(n);
+    var s = lSync(n), dirty = lAll(), keep = dirty.map(function (d) { return [d[0], L.work[d[0]]]; });
     if (!s.behind) { ok("이미 최신 상태임 (받을 커밋 없음)"); return true; }
+    if (dirty.length) {
+      var over = dirty.map(function (d) { return d[0]; }).filter(function (k) { return l.files[k] !== r.files[k]; });
+      if (over.length) { err("Unable to pull when changes are present on your branch. The following files would be overwritten: " + over.join(", ") + " → 커밋 안 한 내 변경이 원격 변경에 덮일 수 있어 막힘. ① 커밋 ② Stash(임시 저장) ③ Discard(버리기) 중 하나를 한 뒤 다시 Pull"); return false; }
+      if (s.ahead) { err("내 커밋과 원격 커밋을 합쳐야 해서, 커밋 안 한 변경(" + dirty.map(function (d) { return d[0]; }).join(", ") + ")을 먼저 커밋하거나 Stash 해야 함"); return false; }
+    }
     var rs = setOf(r.commits), ls = setOf(l.commits), remoteOnly = r.commits.filter(function (c) { return !ls[c]; });
     if (s.ahead && !l.commits.some(function (c) { return rs[c]; })) { err("fatal: refusing to merge unrelated histories → 기록이 전혀 다른 저장소라 합칠 수 없음. 새로 클론해야 함."); return false; }
     if (!s.ahead) { l.commits = r.commits.slice(); l.files = clone(r.files); }
@@ -1442,14 +1456,15 @@ origin/feature-a  ← 다른 브랜치는 '기록'만 생김 (로컬 브랜치 �
       l.commits.push(id); l.files = res;
     }
     L.work = clone(l.files); L.index = clone(l.files);
-    ok("원격 커밋 " + remoteOnly.length + "개를 받아옴 (Pull)" + (s.ahead ? ". 내 커밋과 합쳐 머지 커밋이 생김" : "")); return true;
+    keep.forEach(function (x) { if (x[1] === undefined) delete L.work[x[0]]; else L.work[x[0]] = x[1]; });
+    ok("원격 커밋 " + remoteOnly.length + "개를 받아옴 (Pull)" + (s.ahead ? ". 내 커밋과 합쳐 머지 커밋이 생김" : "") + (keep.length ? ". 커밋 안 한 내 변경(겹치지 않는 파일)은 그대로 남음" : "")); return true;
   }
   function lFetch() { if (staleBlock()) return; var s = lSync(); ok(s.pub ? "이 브랜치는 아직 원격에 없음 (Publish 필요)" : "Fetch 완료: 받을 커밋 " + s.behind + "개, 올릴 커밋 " + s.ahead + "개"); }
   function lSwitch(n) {
     var L = S.local;
     if (n === L.head) return;
     if (inMerge()) return;
-    if (lDirty()) return err("커밋하지 않은 변경이 있어 브랜치를 바꿀 수 없음. 먼저 커밋함.");
+    if (lDirty()) return err("커밋하지 않은 변경이 있어 브랜치를 바꿀 수 없음. 먼저 커밋하거나 Stash(임시 저장)함.");
     if (!lbr(n)) { var r = S.repo.branches[n]; if (!r) return err("브랜치가 없음: " + n); L.branches[n] = { commits: r.commits.slice(), files: clone(r.files), upstream: true }; }
     L.head = n; L.work = clone(lbr(n).files); L.index = clone(lbr(n).files); ok(n + " 브랜치로 체크아웃함");
   }
@@ -1519,6 +1534,30 @@ origin/feature-a  ← 다른 브랜치는 '기록'만 생김 (로컬 브랜치 �
     var v = vsState(); if (v.file && !(v.file in L.work)) v.file = null; v.buf = null;
     ok((file ? file + " 의 변경" : "모든 변경(" + list.length + "개)") + "을 버리고 마지막 커밋 상태로 되돌림 (Discard)");
   }
+  function lStash() {
+    var L = S.local; if (inMerge()) return; var ch = lAll();
+    if (!ch.length) return ok("임시 저장할 변경이 없음");
+    if (L.stash) return err("이미 임시 저장한 변경이 있음 (연습판은 1개만 보관). 먼저 꺼내거나(Pop/Restore) 버림");
+    var files = {}; ch.forEach(function (d) { files[d[0]] = d[0] in L.work ? L.work[d[0]] : null; });
+    L.stash = { branch: L.head, base: clone(lHead().files), files: files };
+    L.work = clone(lHead().files); L.index = clone(lHead().files); S.flags.stashed = true;
+    var v = vsState(); v.buf = null;
+    ok("변경 " + ch.length + "개를 임시 저장(Stash)함. 작업 폴더는 마지막 커밋 상태로 깨끗해짐 → 이제 Pull 가능");
+  }
+  function lPopStash() {
+    var L = S.local, st = L.stash; if (!st) return err("임시 저장한 변경이 없음"); if (inMerge()) return;
+    var hf = lHead().files, over = Object.keys(st.files).filter(function (f) { return L.work[f] !== hf[f]; });
+    if (over.length) return err("꺼낼 파일에 커밋 안 한 변경이 있어 덮일 수 있음: " + over.join(", ") + " → 먼저 커밋하거나 버림");
+    var conf = [];
+    Object.keys(st.files).forEach(function (f) {
+      var r = merge3(st.base[f], hf[f], st.files[f] === null ? undefined : st.files[f], L.head + " (현재 변경: 받은 내용)", "Stashed changes (수신 변경: 임시 저장한 내 수정)");
+      if (r.text === undefined) delete L.work[f]; else L.work[f] = r.text;
+      if (r.conflict) conf.push(f);
+    });
+    L.stash = null; S.flags.popped = true; var v = vsState(); v.buf = null;
+    if (conf.length) err("임시 저장을 꺼냈지만 같은 줄이 바뀌어 충돌: " + conf.join(", ") + " → 파일을 열어 충돌 표시를 정리하고 저장"); else ok("임시 저장한 변경을 다시 꺼냄 (커밋 안 된 변경으로 돌아옴)");
+  }
+  function lDropStash() { if (!S.local.stash) return; S.local.stash = null; ok("임시 저장한 변경을 버림 (Discard stash)"); }
   function lNewFile(n) {
     n = (n || "").trim();
     if (!/^[\w.\-\/]+$/.test(n)) { err("파일 이름에는 영문·숫자·- _ . / 만 쓸 수 있음"); return false; }
@@ -1654,7 +1693,9 @@ origin/feature-a  ← 다른 브랜치는 '기록'만 생김 (로컬 브랜치 �
     { t: "Q. 특정 파일만 올리기", from: "질문", quiz: { id: "q11", opts: ["push 할 때 올릴 파일을 고름", "커밋할 때 그 파일만 스테이징(체크)해서 커밋한 뒤 push", "올리기 싫은 파일을 지운 뒤 push"], ans: 1, exp: "push 는 커밋 단위라 파일을 고르는 단계가 없음. 커밋할 때 고름: VS Code 는 그 파일만 +, 데스크톱 앱은 그 파일만 체크, 명령어는 git add 파일명. 항상 올리면 안 되는 파일(.env, 로그 등)은 .gitignore 에 적어 둠." },
       r: function () { return "파일 3개를 고쳤는데 그중 1개만 올리고 싶어요. 어떻게 하나요?"; }, w: "실전 요청 '특정 파일만 커밋', '.gitignore' 상황으로 연습.", s: ["보기 중 하나를 고름"], ok: qz("q11") },
     { t: "Q. Current·Incoming 헷갈림", from: "질문", quiz: { id: "q12", opts: ["내 브랜치에서 pull 하다 충돌 → Incoming 은 원격(동료가 올린 것)", "내 브랜치에서 pull 하다 충돌 → Incoming 은 내 로컬 커밋", "어느 경우든 Current 는 항상 원격"], ans: 0, exp: "Current = 지금 서 있는 브랜치(내 로컬), Incoming = 들어오는 쪽(원격). 단 rebase 중에는 반대. 표시 줄 뒤의 브랜치 이름을 꼭 확인." },
-      r: function () { return "accept current change 와 incoming change 가 헷갈려요."; }, w: "컨플릭트 실습 '누구 것을 남길까' 와 실전 요청에서 반복 연습 가능.", s: ["보기 중 하나를 고름"], ok: qz("q12") }
+      r: function () { return "accept current change 와 incoming change 가 헷갈려요."; }, w: "컨플릭트 실습 '누구 것을 남길까' 와 실전 요청에서 반복 연습 가능.", s: ["보기 중 하나를 고름"], ok: qz("q12") },
+    { t: "Q. Unable to pull … would be overwritten", from: "질문", quiz: { id: "q13", opts: ["저장소가 고장 나서 다시 클론해야 함", "커밋 안 한 내 수정과 원격 변경이 같은 파일이라 덮일까 봐 막은 것. 커밋·Stash·Discard 중 하나 후 다시 Pull", "강제로 Pull 하면 됨"], ans: 1, exp: "Git 이 내 수정을 지키려고 막은 것임. 살릴 수정이면 커밋 후 Pull, 아직 이른 수정이면 Stash → Pull → Restore(pop), 버릴 수정이면 Discard 후 Pull. 겹치지 않는 파일만 고쳤다면 Pull 이 그대로 됨." },
+      r: function () { return "데스크톱 앱에서 'Unable to pull when changes are present on your branch. The following files would be overwritten: syscall.c' 오류가 떠요."; }, w: "VS Code·데스크톱 실전 요청 'pull 거절(덮어쓰기)' 상황으로 연습.", s: ["보기 중 하나를 고름"], ok: qz("q13") }
   ];
   function keepDone(list, key) { list.forEach(function (m, i) { var raw = m.ok; m.ok = function () { return latch(key + i, raw); }; }); }
   keepDone(M, "M"); keepDone(MV, "MV"); keepDone(MD, "MD");
@@ -1662,7 +1703,7 @@ origin/feature-a  ← 다른 브랜치는 '기록'만 생김 (로컬 브랜치 �
   setLoc(M, M.map(function () { return ["원격"]; }));
   setLoc(MV, [["원격"], ["원격→로컬"], ["로컬"], ["로컬"], ["로컬"], ["로컬"], ["로컬→원격"], ["원격→로컬"], ["로컬"], ["원격"]]);
   setLoc(MD, [["원격"], ["원격→로컬"], ["로컬"], ["로컬"], ["로컬"], ["로컬→원격"], ["원격"], ["원격→로컬"], ["로컬"], ["원격"]]);
-  setLoc(MQ, [null, ["로컬", "로컬→원격"], null, ["원격"], ["원격", "로컬→원격"], null, null, null, null, null, ["로컬→원격"], ["원격→로컬"], ["로컬"], ["로컬", "로컬→원격"], null]);
+  setLoc(MQ, [null, ["로컬", "로컬→원격"], null, ["원격"], ["원격", "로컬→원격"], null, null, null, null, null, ["로컬→원격"], ["원격→로컬"], ["로컬"], ["로컬", "로컬→원격"], null, null]);
   var LOC_TIP = { "로컬": "내 컴퓨터에서만 일어남 (원격엔 변화 없음)", "원격": "GitHub(웹)에서 일어남", "로컬→원격": "내 컴퓨터 → GitHub 로 올림 (push·Publish)", "원격→로컬": "GitHub → 내 컴퓨터로 받음 (clone·pull)" };
   function locBadges(loc) { return loc ? '<div class="locs-badges">' + loc.map(function (l) { return '<span class="loc loc-' + (l === "로컬" ? "l" : l === "원격" ? "r" : l === "로컬→원격" ? "up" : "down") + '" title="' + LOC_TIP[l] + '">' + l + '</span>'; }).join("") + '</div>' : ""; }
   function renderLocTable() {
@@ -1828,9 +1869,9 @@ origin/feature-a  ← 다른 브랜치는 '기록'만 생김 (로컬 브랜치 �
     if (current(MD) === 7 && !S.flags.dTeam) S.flags.dTeam = teamPushMain("김주무관");
   }
   function newLocalQuest() {
-    var types = ["feat", "pull", "pr", "lmerge", "rpr", "pushok", "pushhold", "prupdate", "pushhide", "switchrepo", "crlf", "selcommit", "gitignore", "whichside"], last = S.lq && S.lq.type;
+    var types = ["feat", "pull", "pr", "lmerge", "rpr", "pushok", "pushhold", "prupdate", "pushhide", "switchrepo", "crlf", "selcommit", "gitignore", "whichside", "pulldirty"], last = S.lq && S.lq.type;
     var type = pick(types.filter(function (t) { return t !== last; })), q = { type: type, n: S.lqDone + 1, from: "팀장" };
-    if (type === "pushok" || type === "pushhold" || type === "prupdate" || type === "pushhide" || type === "switchrepo" || type === "crlf" || type === "selcommit" || type === "gitignore" || type === "whichside") { genAskQuest(q); S.lq = q; return; }
+    if (type === "pushok" || type === "pushhold" || type === "prupdate" || type === "pushhide" || type === "switchrepo" || type === "crlf" || type === "selcommit" || type === "gitignore" || type === "whichside" || type === "pulldirty") { genAskQuest(q); S.lq = q; return; }
     if (type === "lmerge" || type === "rpr") {
       var cands = FEATS.filter(function (f) { var b = "feature/" + f[0] + (type === "lmerge" ? "-draft" : "-pr"); return !lbr(b) && !br(b); }), g = cands.length ? pick(cands) : [pick(FEATS)[0] + (S.seqL = (S.seqL || 0) + 1), "추가"];
       q.br = "feature/" + g[0] + (type === "lmerge" ? "-draft" : "-pr"); q.file = g[0] + "-" + type + ".md";
@@ -1897,7 +1938,8 @@ origin/feature-a  ← 다른 브랜치는 '기록'만 생김 (로컬 브랜치 �
   function whichOk(q) {
     if (!q || !S.flags["resolvedc:" + q.src + ">" + q.br]) return false;
     var f = q.needPush ? (br(q.br) && br(q.br).files[q.file]) : (lbr(q.br) && lbr(q.br).files[q.file]);
-    return !!f && f.indexOf(q.keep) >= 0 && f.indexOf(q.drop) < 0 && !hasMarkers(f);
+    var lf = lbr(q.br) && lbr(q.br).files[q.file];
+    return !!f && f.indexOf(q.keep) >= 0 && f.indexOf(q.drop) < 0 && !hasMarkers(f) && (!q.needPush || (lf === f && !lSync(q.br).ahead));
   }
   function whichSteps(q) {
     if (!q) return ["[상황 만들기] 를 먼저 누름"];
@@ -1921,6 +1963,19 @@ origin/feature-a  ← 다른 브랜치는 '기록'만 생김 (로컬 브랜치 �
       q.r = "팀 저장소 main 에 실수로 커밋 2개를 했네요(↑2, Push origin 안내). main 엔 바로 push 하지 말고, 새 브랜치 " + q.br + " 를 만들어 그 브랜치를 원격에 Publish 해 주세요.";
       q.w = "지금 커밋이 있는 상태에서 새 브랜치를 만들면 그 커밋을 그대로 가져감. 그 브랜치를 Publish 하면 원격 main 은 건드리지 않음. (실제 데스크톱 앱은 이때 main 의 커밋을 옮길지 물어봄)";
       q.loc = ["로컬", "로컬→원격"];
+    } else if (q.type === "pulldirty") {
+      g = uniqFeat("team/", "-sys"); q.br = "team/" + g[0] + "-sys"; q.file = "userprog/syscall.c";
+      var b0 = '#include "syscall.h"\nstatic void halt (void);\nstatic void exit (int status);\n/* TODO: 시스템 콜 구현 */';
+      remoteFrom(q.br, "main"); addCommit(q.br, "syscall 뼈대", withFile(br(q.br).files, q.file, b0), "팀장");
+      localFrom(q.br, br(q.br), true); setHead(q.br);
+      q.mineTxt = "/* 내 작업: write 구현 중 */"; q.theirTxt = "static void halt (void) NO_RETURN;";
+      S.local.work[q.file] = b0.replace("/* TODO: 시스템 콜 구현 */", q.mineTxt);
+      q.team = addCommit(q.br, "halt 선언 수정 (김주무관)", withFile(br(q.br).files, q.file, b0.replace("static void halt (void);", q.theirTxt)), "김주무관");
+      q.how = pick(["commit", "stash", "discard"]); S.flags.stashed = false;
+      var lead = "공용 브랜치 " + q.br + " 를 Pull 하니 'Unable to pull when changes are present on your branch … " + q.file + "' 오류가 납니다. ";
+      q.r = lead + (q.how === "commit" ? "내 수정(write 구현)도 살려야 하니, 먼저 커밋한 뒤 Pull 해서 합치고 Push 까지 해 주세요." : q.how === "stash" ? "내 수정은 아직 커밋하기 이릅니다. 임시 저장(Stash) → Pull → 다시 꺼내기(Pop/Restore) 해서, 받은 내용 위에 내 수정이 커밋 안 된 채 남게 해 주세요." : "내 수정은 실험이라 버려도 됩니다. 변경을 버리고(Discard) Pull 해서 원격과 똑같이 맞춰 주세요.");
+      q.w = "커밋 안 한 내 수정과 원격 변경이 같은 파일이라, 그대로 pull 하면 내 수정이 덮일 수 있어 Git 이 막음. 살릴 거면 커밋, 잠시 미룰 거면 Stash(임시 저장), 필요 없으면 Discard. 잘 모르겠으면 Stash 가 가장 안전함.";
+      q.loc = q.how === "commit" ? ["로컬", "원격→로컬", "로컬→원격"] : ["로컬", "원격→로컬"];
     } else if (q.type === "whichside") {
       genWhich(q, Math.random() < 0.5, Math.random() < 0.5);
     } else if (q.type === "crlf") {
@@ -1984,6 +2039,13 @@ origin/feature-a  ← 다른 브랜치는 '기록'만 생김 (로컬 브랜치 �
     }
   }
   function localQuestOk(q) {
+    if (q.type === "pulldirty") return latch("lq" + q.n + "pd", function () {
+      var lb = lbr(q.br), rb = br(q.br); if (!lb || !rb || lb.commits.indexOf(q.team) < 0) return false;
+      if (q.how === "commit") { var rf = rb.files[q.file] || ""; return rf.indexOf(q.mineTxt) >= 0 && rf.indexOf(q.theirTxt) >= 0 && !lSync(q.br).ahead; }
+      var wf = S.local.work[q.file] || "";
+      if (q.how === "stash") return !!S.flags.stashed && !S.local.stash && S.local.head === q.br && wf.indexOf(q.mineTxt) >= 0 && wf.indexOf(q.theirTxt) >= 0 && !hasMarkers(wf);
+      return S.local.head === q.br && !lDirty() && wf === rb.files[q.file];
+    });
     if (q.type === "whichside") return latch("lq" + q.n + "ws", function () { return whichOk(q); });
     if (q.type === "crlf") { var rc = br(q.br), fc = rc && rc.files["config.ini"]; return !!fc && fc.indexOf("\r") < 0 && fc === q.want; }
     if (q.type === "selcommit") { var rs2 = br(q.br); return !!rs2 && rs2.files[q.file] === q.code && !("debug.log" in rs2.files) && !("메모_개인.txt" in rs2.files); }
@@ -2002,6 +2064,13 @@ origin/feature-a  ← 다른 브랜치는 '기록'만 생김 (로컬 브랜치 �
   }
   function localSteps(q) {
     var vs = S.track === "vscode";
+    if (q.type === "pulldirty") {
+      var pullV = vs ? "소스 제어 ··· → 끌어오기(Pull)" : "상단 [Pull origin]";
+      var first = [pullV + " → 'Unable to pull … would be overwritten' 확인"];
+      if (q.how === "commit") return first.concat(vs ? ["+ 스테이징 → 메시지 → ✓ 커밋", pullV + " (다른 줄이라 자동으로 합쳐짐)", "··· → 밀어넣기(Push)"] : ["Summary 입력 → Commit", pullV + " (다른 줄이라 자동으로 합쳐짐)", "상단 [Push origin]"]);
+      if (q.how === "stash") return first.concat(vs ? ["··· → 변경 내용 임시 저장 (Stash)", pullV, "··· → 임시 저장 꺼내기 (Pop Stash) 또는 아래 [꺼내기 (Pop)]", "탐색기에서 " + q.file + " 에 두 변경이 다 있는지 확인 (커밋은 안 함)"] : ["Changes 아래 [Stash all changes] (또는 메뉴 [브랜치] → Stash all changes)", pullV, "Stashed Changes 의 [Restore]", "Changes 에 내 수정이 다시 보이는지 확인 (커밋은 안 함)"]);
+      return first.concat(vs ? [q.file + " 옆 ↶ (변경 내용 취소)", pullV] : [q.file + " 옆 ↶ 또는 [Discard all changes]", pullV]);
+    }
     if (q.type === "whichside") return whichSteps(q);
     if (q.type === "crlf") return vs ? ["탐색기에서 config.ini 열기 → 맨 아래 상태바의 [CRLF] 확인", "(방법 1) 상태바 [CRLF] 클릭 → LF 로 바뀜", "(방법 2) [+ 새 파일] .gitattributes → '* text=auto' 입력 → 저장", "소스 제어에서 바뀐 내용 확인 → + 스테이징 → ✓ 커밋", "[☁ Publish Branch]"] : ["Changes 에서 config.ini 클릭 → '줄바꿈 변경' 경고와 모든 줄이 바뀐 diff 확인", "[Open in editor] → (새 파일) .gitattributes → '* text=auto' → 저장", "config.ini diff 가 timeout 한 줄로 줄었는지 확인", "Summary 입력 → Commit (.gitattributes 도 함께 체크)", "[Publish branch]"];
     if (q.type === "selcommit") return vs ? ["소스 제어에서 변경 사항 3개 확인", q.file + " 옆 + 만 눌러 스테이징 (나머지는 그대로 둠)", "메시지 입력 → ✓ 커밋 (스테이징된 것만 커밋됨)", "상태바의 [☁ 게시 필요] 또는 ··· → 밀어넣기(Push) 로 Publish (남은 변경이 있으면 큰 버튼은 '커밋'으로 보임) → 커밋 안 한 파일은 로컬에만 남음"] : ["Changes 에서 debug.log, 메모_개인.txt 체크 해제", q.file + " 만 체크된 상태로 Summary 입력 → Commit", "[Publish branch] → 체크 안 한 파일은 로컬에만 남음"];
@@ -2063,7 +2132,7 @@ origin/feature-a  ← 다른 브랜치는 '기록'만 생김 (로컬 브랜치 �
   function vsSCM() {
     var L = S.local, h = '<div class="vs-h"><span>소스 제어</span>';
     if (L) h += '<details class="dd vs-more"><summary title="추가 작업" aria-label="추가 작업">···</summary><div class="menu">' +
-      [["pull", "끌어오기 (Pull)"], ["push", "밀어넣기 (Push)"], ["fetch", "가져오기 (Fetch)"], ["vs-pick", "분기 만들기 / 체크아웃"], ["vs-mergepick", "분기 병합 (merge)..."], ["abort", "병합 중단 (Merge Abort)"], ["undo", "마지막 커밋 실행 취소 (Undo Last Commit)"], ["vs-reclone", "Git 저장소 복제 (새 폴더)…"], ["discard-all", "모든 변경 내용 취소 (Discard All)"], ["open-pr-web", "Pull Request 만들기 (웹에서 열기)"]].map(function (x) { return '<button type="button" class="mi" data-l="' + x[0] + '">' + x[1] + '</button>'; }).join("") + '</div></details>';
+      [["pull", "끌어오기 (Pull)"], ["push", "밀어넣기 (Push)"], ["fetch", "가져오기 (Fetch)"], ["vs-pick", "분기 만들기 / 체크아웃"], ["vs-mergepick", "분기 병합 (merge)..."], ["abort", "병합 중단 (Merge Abort)"], ["undo", "마지막 커밋 실행 취소 (Undo Last Commit)"], ["vs-reclone", "Git 저장소 복제 (새 폴더)…"], ["stash", "변경 내용 임시 저장 (Stash)"], ["pop-stash", "임시 저장 꺼내기 (Pop Stash)"], ["drop-stash", "임시 저장 버리기 (Drop Stash)"], ["discard-all", "모든 변경 내용 취소 (Discard All)"], ["open-pr-web", "Pull Request 만들기 (웹에서 열기)"]].map(function (x) { return '<button type="button" class="mi" data-l="' + x[0] + '">' + x[1] + '</button>'; }).join("") + '</div></details>';
     h += '</div>';
     if (!L) return h + '<div class="vs-pad vs-dim">열린 Git 저장소가 없음. 탐색기에서 먼저 복제함.</div>';
     var st = lStaged(), un = lUnstaged(), s = lSync(), mg = L.merging, cleft = [];
@@ -2083,6 +2152,7 @@ origin/feature-a  ← 다른 브랜치는 '기록'만 생김 (로컬 브랜치 �
     if (st.length) h += '<div class="vs-sub"><span>스테이징된 변경 사항 ' + st.length + '</span><button type="button" class="vs-mini" data-l="unstage-all" title="모두 스테이징 취소">−</button></div>' + st.map(function (d) { return vsRow(d, "unstage", "−", "스테이징 취소"); }).join("");
     h += '<div class="vs-sub"><span>변경 사항 ' + un.length + '</span>' + (un.length ? '<button type="button" class="vs-mini" data-l="stage-all" title="모든 변경 내용 스테이징">+</button>' : "") + '</div>' + un.map(function (d) { return vsRow(d, "stage", "+", "변경 내용 스테이징"); }).join("");
     if (!un.length && !st.length && !cleft.length) h += '<div class="vs-pad vs-dim">변경 사항 없음</div>';
+    if (L.stash) h += '<div class="vs-merge">임시 저장(Stash) 1개 보관 중 · ' + Object.keys(L.stash.files).map(esc).join(", ") + '<br><button type="button" class="vs-btn sm" data-l="pop-stash">꺼내기 (Pop)</button> <button type="button" class="vs-btn sm warn" data-l="drop-stash">버리기</button></div>';
     return h;
   }
   function vsEditor() {
@@ -2124,7 +2194,7 @@ origin/feature-a  ← 다른 브랜치는 '기록'만 생김 (로컬 브랜치 �
     var L = S.local, d = dkState(), noL = !L;
     var h = '<div class="dk"><div class="dk-menu">' + dkMenu("파일", [["dk-clone", "Clone repository..."]]) +
       dkMenu("저장소", [["dk-editor", "Open in editor", noL], ["push", "Push", noL], ["pull", "Pull", noL], ["fetch", "Fetch", noL], ["abort", "Abort merge", noL || !S.local.merging]]) +
-      dkMenu("브랜치", [["dk-newbr", "New branch...", noL], ["dk-merge", "Merge into current branch... (로컬)", noL], ["open-pr-web", "Create pull request (원격)", noL]]) + '</div>';
+      dkMenu("브랜치", [["dk-newbr", "New branch...", noL], ["dk-merge", "Merge into current branch... (로컬)", noL], ["stash", "Stash all changes", noL], ["open-pr-web", "Create pull request (원격)", noL]]) + '</div>';
     h += '<div class="dk-bar"><div class="dk-seg"><small>Current repository</small><b>' + (L ? esc(R().name) : "없음") + '</b></div>';
     if (L) {
       var rem = Object.keys(S.repo.branches).filter(function (n) { return !lbr(n); }), s = lSync();
@@ -2145,9 +2215,10 @@ origin/feature-a  ← 다른 브랜치는 '기록'만 생김 (로컬 브랜치 �
     h += '<div class="dk-body"><div class="dk-left"><div class="dk-tabs"><button type="button" class="' + (d.tab === "changes" ? "on" : "") + '" data-l="dk-tab" data-arg="changes">Changes ' + ch.length + '</button><button type="button" class="' + (d.tab === "history" ? "on" : "") + '" data-l="dk-tab" data-arg="history">History</button></div>';
     if (d.tab === "changes") {
       h += '<div class="dk-list">' + (ch.length ? ch.map(function (c) {
-        return '<div class="dk-row' + (d.sel === c[0] ? " on" : "") + '"><input type="checkbox" data-lpick="' + esc(c[0]) + '"' + (d.off[c[0]] ? "" : " checked") + ' aria-label="' + esc(c[0]) + ' 커밋에 포함"><button type="button" class="dk-fn" data-l="dk-sel" data-arg="' + esc(c[0]) + '">' + esc(c[0]) + '</button><b class="g-' + c[1] + '">' + { U: "+", M: "•", D: "−" }[c[1]] + '</b></div>';
+        return '<div class="dk-row' + (d.sel === c[0] ? " on" : "") + '"><input type="checkbox" data-lpick="' + esc(c[0]) + '"' + (d.off[c[0]] ? "" : " checked") + ' aria-label="' + esc(c[0]) + ' 커밋에 포함"><button type="button" class="dk-fn" data-l="dk-sel" data-arg="' + esc(c[0]) + '">' + esc(c[0]) + '</button><button type="button" class="btn sm" data-l="discard" data-arg="' + esc(c[0]) + '" title="Discard changes (이 파일 변경 버리기)" aria-label="' + esc(c[0]) + ' 변경 버리기">↶</button><b class="g-' + c[1] + '">' + { U: "+", M: "•", D: "−" }[c[1]] + '</b></div>';
       }).join("") : '<div class="kv" style="padding:12px">변경 없음</div>') + '</div>';
-      if (ch.length && !L.merging) h += '<div style="padding:4px 10px"><button type="button" class="btn sm danger" data-l="discard-all">Discard all changes</button></div>';
+      if (ch.length && !L.merging) h += '<div class="row" style="padding:4px 10px"><button type="button" class="btn sm" data-l="stash">Stash all changes</button><button type="button" class="btn sm danger" data-l="discard-all">Discard all changes</button></div>';
+      if (L.stash) h += '<div class="dk-card" style="margin:6px 10px"><span><b>Stashed Changes</b> · 임시 저장 ' + Object.keys(L.stash.files).length + '개</span><span class="row"><button type="button" class="btn go sm" data-l="pop-stash">Restore</button><button type="button" class="btn sm danger" data-l="drop-stash">Discard</button></span></div>';
       h += '<form data-lform="dk-commit" class="dk-commit"><input class="inp" id="dk-sum" placeholder="Summary (필수)"><textarea class="inp" id="dk-desc" rows="2" placeholder="Description" style="min-height:52px"></textarea><button class="btn go" type="submit"' + (ch.length && !L.merging ? "" : " disabled") + '>Commit to <b>' + esc(L.head) + '</b></button>' + (L.merging ? '<span class="kv">병합 중에는 오른쪽 충돌 창에서 [Continue merge] 로 커밋함</span>' : "") + '</form>';
     } else {
       var rb = S.repo.branches[L.head], rs = rb ? setOf(rb.commits) : {};
@@ -2220,20 +2291,23 @@ origin/feature-a  ← 다른 브랜치는 '기록'만 생김 (로컬 브랜치 �
     else if (a === "vs-mergepick") v.pick = "merge";
     else if (a === "merge") { lMerge(arg); v.pick = false; d.mergeOpen = false; d.sel = null; }
     else if (a === "dk-merge") { d.mergeOpen = !d.mergeOpen; d.editor = d.newbr = false; }
-    else if (a === "stage") { if (L.merging && hasMarkers(L.work[arg])) err(arg + " 에 충돌 표시(<<<<<<< ======= >>>>>>>)가 남아 있어 스테이징할 수 없음. 먼저 충돌을 정리함."); else { toIndex(arg); markStaged(arg); } }
+    else if (a === "stage") { if (hasMarkers(L.work[arg])) err(arg + " 에 충돌 표시(<<<<<<< ======= >>>>>>>)가 남아 있어 스테이징할 수 없음. 먼저 충돌을 정리함."); else { toIndex(arg); markStaged(arg); } }
     else if (a === "abort") lAbort();
     else if (a === "undo") { lUndo(); d.tab = "changes"; }
     else if (a === "vs-eol") { vsSaveBuf(); flash = null; var cur4 = L.work[v.file], toLF = /\r\n/.test(cur4); L.work[v.file] = toLF ? nl(cur4) : nl(cur4).replace(/\n/g, "\r\n"); ok(v.file + " 의 줄바꿈을 " + (toLF ? "LF (맥·리눅스 방식)" : "CRLF (윈도우 방식)") + " 로 바꿔 저장함"); }
     else if (a === "vs-reclone") { v.reclone = !v.reclone; v.view = "explorer"; }
     else if (a === "discard") lDiscard(arg);
     else if (a === "discard-all") lDiscard(null);
+    else if (a === "stash") lStash();
+    else if (a === "pop-stash") { lPopStash(); d.tab = "changes"; }
+    else if (a === "drop-stash") lDropStash();
     else if (a === "noop") return;
     else if (a === "vs-res") { var pr3 = arg.split("|"), cur3 = v.buf != null ? v.buf : L.work[v.file]; L.work[v.file] = resolveHunk(cur3, +pr3[0], pr3[1]); v.buf = null; ok(({ ours: "현재 변경", theirs: "수신 변경", both: "두 변경 모두" })[pr3[1]] + " 수락 → 저장됨." + (hasMarkers(L.work[v.file]) ? " 남은 충돌도 정리함." : " 이 파일의 충돌이 모두 정리됨 → 소스 제어에서 스테이징(+)")); }
     else if (a === "dk-use") { var pu = arg.split("|"); L.work[pu[0]] = resolveHunk(L.work[pu[0]], "all", pu[1]); ok(pu[0] + " : " + (pu[1] === "ours" ? "현재 쪽" : "수신 쪽") + " 내용으로 정리함"); }
     else if (a === "dk-open-c") { d.editor = true; d.efile = arg; }
     else if (a === "dk-continue") { L.merging.conflicts.forEach(function (k) { if (k in L.work) L.index[k] = L.work[k]; else delete L.index[k]; markStaged(k); }); lCommit(L.merging.msg); }
     else if (a === "unstage") { if (L.merging && L.merging.staged) delete L.merging.staged[arg]; var hf = lHead().files; if (arg in hf) L.index[arg] = hf[arg]; else delete L.index[arg]; }
-    else if (a === "stage-all") { lUnstaged().forEach(function (x) { if (L.merging && hasMarkers(L.work[x[0]])) return; toIndex(x[0]); }); if (L.merging) L.merging.conflicts.forEach(function (k) { if (!hasMarkers(L.work[k])) { toIndex(k); markStaged(k); } }); }
+    else if (a === "stage-all") { lUnstaged().forEach(function (x) { if (hasMarkers(L.work[x[0]])) return; toIndex(x[0]); }); if (L.merging) L.merging.conflicts.forEach(function (k) { if (!hasMarkers(L.work[k])) { toIndex(k); markStaged(k); } }); }
     else if (a === "unstage-all") L.index = clone(lHead().files);
     else if (a === "switch") { vsSaveBuf(); lSwitch(arg); v.pick = false; d.sel = null; }
     else if (a === "push") lPush();
