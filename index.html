@@ -195,6 +195,7 @@ h2.pt span { color: var(--muted); }
 .modes .qa-btn { grid-column: span 3; border: 1px dashed rgba(255,255,255,0.25); }
 .modes .cf-btn.on { background: #a8423a; border-color: #a8423a; }
 .modes .qa-btn.on { background: #b9862a; border-color: #b9862a; }
+.cr { color: var(--closed); font-weight: 700; }
 .conf-box { border: 1px solid var(--closed); background: var(--err-soft); border-radius: 8px; padding: 10px 12px; display: flex; flex-direction: column; gap: 6px; font-size: 0.86rem; }
 .vs-merge { margin: 6px 12px; padding: 8px 10px; border-radius: 4px; background: #3a2a1a; border-left: 3px solid var(--g-M); font-size: 12.5px; line-height: 1.6; }
 .vs-btn.warn { background: #8a3b33; margin-top: 4px; }
@@ -450,6 +451,26 @@ origin/feature-a  ← 다른 브랜치는 '기록'만 생김 (로컬 브랜치 �
         <ul><li>하지 말 것: 예전 파일을 새 폴더에 복사해 덮기 (이름이 같아 팀원 코드가 내 옛 코드로 바뀜), 예전 폴더에서 새 저장소 pull (unrelated histories), 예전 코드를 새 저장소에 push</li>
           <li>예전 폴더를 계속 쓰려면 (고급): git branch backup-old → git remote set-url origin 새주소 → git fetch origin → git switch -C main origin/main</li>
           <li>옛 작업 중 살릴 것은 새 저장소에서 브랜치를 따 손으로 옮겨 PR</li></ul>
+      </section>
+      <section><h3>Q11. CRLF 와 LF 는 뭐고 왜 문제가 되나?</h3>
+        <p>줄 끝 표시 방식임. <b>CRLF</b>(\r\n) = 윈도우, <b>LF</b>(\n) = 맥·리눅스·서버. 편집기가 줄바꿈을 바꿔 저장하면 눈에는 같아도 Git 은 <b>모든 줄이 바뀐 것</b>으로 봄.</p>
+        <div class="tbl"><table><thead><tr><th>증상</th><th>해결</th></tr></thead><tbody>
+          <tr><td>한 줄 고쳤는데 파일 전체 diff</td><td>편집기에서 LF 로 저장 (VS Code 상태바 CRLF/LF 클릭)</td></tr>
+          <tr><td>warning: LF will be replaced by CRLF</td><td>경고일 뿐 파일은 안전함. 팀 설정을 맞추면 사라짐</td></tr>
+          <tr><td>팀원마다 줄바꿈이 다름</td><td>저장소에 .gitattributes 추가: <span class="mono">* text=auto</span> (모두에게 적용)</td></tr>
+          <tr><td>윈도우 개인 설정</td><td><span class="mono">git config --global core.autocrlf true</span></td></tr>
+        </tbody></table></div>
+        <ul><li>데스크톱 앱 diff 에 '줄바꿈 변경' 경고가 뜨면 이 문제임. 연습허브 diff 의 ␍ 표시가 윈도우 줄바꿈 문자임</li></ul>
+      </section>
+      <section><h3>Q12. 특정 파일만 올리려면?</h3>
+        <p>push 는 커밋 단위라 파일을 고르는 단계가 없음. <b>커밋할 때 올릴 파일만 골라야 함.</b></p>
+        <div class="tbl"><table><thead><tr><th>도구</th><th>방법</th></tr></thead><tbody>
+          <tr><td>VS Code</td><td>올릴 파일만 + (스테이징) → 커밋 → push. ⚠ 아무것도 스테이징 안 하고 커밋하면 전부 커밋됨</td></tr>
+          <tr><td>데스크톱 앱</td><td>Changes 에서 올릴 파일만 체크 → Commit → Push</td></tr>
+          <tr><td>명령어</td><td><span class="mono">git add 파일명</span> → <span class="mono">git commit -m "메시지"</span> → <span class="mono">git push</span></td></tr>
+          <tr><td>항상 제외할 파일</td><td>.gitignore 에 적기 (예: <span class="mono">.env</span>, <span class="mono">*.log</span>, <span class="mono">node_modules/</span>)</td></tr>
+        </tbody></table></div>
+        <ul><li>고르지 않은 파일은 커밋 안 된 채 내 컴퓨터에 남음 (지워지지 않음)</li><li>이미 커밋된 파일은 .gitignore 에 적어도 계속 추적됨 → 처음부터 넣는 게 중요. 비밀 키가 올라갔다면 키부터 교체</li></ul>
       </section>
     </div>
   </details>
@@ -1012,6 +1033,7 @@ origin/feature-a  ← 다른 브랜치는 '기록'만 생김 (로컬 브랜치 �
     }).join("") : '<div class="empty">' + (st === "open" ? "열린 PR이 없음. 브랜치에서 작업한 뒤 [New pull request]로 올려 보기." : "닫힌 PR이 없음") + '</div>';
     return h + '</div>';
   }
+  function escCR(t) { return esc(t).replace(/\r/g, '<span class="cr" title="CR (윈도우 줄바꿈 문자)">␍</span>'); }
   function diffHTML(baseFiles, headFiles) {
     var keys = Object.keys(Object.assign({}, baseFiles, headFiles)).sort().filter(function (k) { return baseFiles[k] !== headFiles[k]; });
     if (!keys.length) return '<div class="empty">변경된 파일이 없음</div>';
@@ -1019,9 +1041,11 @@ origin/feature-a  ← 다른 브랜치는 '기록'만 생김 (로컬 브랜치 �
       var h = '<div class="box" style="margin-bottom:10px"><div class="box-head"><span class="mono">' + esc(k) + '</span><span class="kv">' + (!(k in baseFiles) ? "새 파일" : !(k in headFiles) ? "삭제" : "수정") + '</span></div><div class="diff">';
       var a = k in baseFiles ? baseFiles[k].split("\n") : [], b = k in headFiles ? headFiles[k].split("\n") : [];
       var sameTop = 0; while (sameTop < a.length && sameTop < b.length && a[sameTop] === b[sameTop]) sameTop++;
-      for (var i = 0; i < sameTop; i++) h += '<div>  ' + esc(a[i]) + '</div>';
-      a.slice(sameTop).forEach(function (l) { h += '<div class="d">- ' + esc(l) + '</div>'; });
-      b.slice(sameTop).forEach(function (l) { h += '<div class="a">+ ' + esc(l) + '</div>'; });
+      var sameBot = 0; while (sameBot < a.length - sameTop && sameBot < b.length - sameTop && a[a.length - 1 - sameBot] === b[b.length - 1 - sameBot]) sameBot++;
+      for (var i = 0; i < sameTop; i++) h += '<div>  ' + escCR(a[i]) + '</div>';
+      a.slice(sameTop, a.length - sameBot).forEach(function (l) { h += '<div class="d">- ' + escCR(l) + '</div>'; });
+      b.slice(sameTop, b.length - sameBot).forEach(function (l) { h += '<div class="a">+ ' + escCR(l) + '</div>'; });
+      a.slice(a.length - sameBot).forEach(function (l) { h += '<div>  ' + escCR(l) + '</div>'; });
       return h + '</div></div>';
     }).join("");
   }
@@ -1302,14 +1326,30 @@ origin/feature-a  ← 다른 브랜치는 '기록'만 생김 (로컬 브랜치 �
   /* ---------- 내 컴퓨터의 클론 (VS Code·데스크톱 앱 공용) ---------- */
   function lbr(n) { return S.local ? S.local.branches[n] : null; }
   function lHead() { return lbr(S.local.head); }
-  function dk(a, b) {
-    var out = [];
-    Object.keys(Object.assign({}, a, b)).sort().forEach(function (k) { if (!(k in a)) out.push([k, "U"]); else if (!(k in b)) out.push([k, "D"]); else if (a[k] !== b[k]) out.push([k, "M"]); });
+  function nl(t) { return t == null ? t : String(t).replace(/\r\n/g, "\n"); }
+  function eolNorm() { var L = S.local; if (!L) return false; var ga = L.work[".gitattributes"] || (lHead() && lHead().files[".gitattributes"]) || ""; return /text\s*=\s*auto|eol\s*=\s*lf/.test(ga); }
+  function keepEol(old, nw) { return old && /\r\n/.test(old) && !/\r\n/.test(nw) ? nw.replace(/\n/g, "\r\n") : nw; }
+  function ignoredBy(text, path) {
+    return (text || "").split(/\r?\n/).map(function (x) { return x.trim(); }).filter(function (x) { return x && x[0] !== "#"; }).some(function (pt) {
+      if (/\/$/.test(pt)) return path.indexOf(pt) === 0;
+      var re = new RegExp("^" + pt.replace(/[.+^${}()|[\]\\]/g, "\\$&").replace(/\*/g, "[^/]*").replace(/\?/g, ".") + "$");
+      return re.test(path) || re.test(path.split("/").pop());
+    });
+  }
+  function ignored(path) { var L = S.local; if (!L || path === ".gitignore") return false; return ignoredBy(L.work[".gitignore"] || lHead().files[".gitignore"], path); }
+  function dk(a, b, ign) {
+    var out = [], norm = eolNorm();
+    Object.keys(Object.assign({}, a, b)).sort().forEach(function (k) {
+      if (!(k in a)) { if (!(ign && ignored(k))) out.push([k, "U"]); }
+      else if (!(k in b)) out.push([k, "D"]);
+      else if (norm ? nl(a[k]) !== nl(b[k]) : a[k] !== b[k]) out.push([k, "M"]);
+    });
     return out;
   }
+  function toIndex(f) { var L = S.local; if (f in L.work) L.index[f] = eolNorm() ? nl(L.work[f]) : L.work[f]; else delete L.index[f]; }
   function lStaged() { return dk(lHead().files, S.local.index); }
-  function lUnstaged() { return dk(S.local.index, S.local.work); }
-  function lAll() { return dk(lHead().files, S.local.work); }
+  function lUnstaged() { return dk(S.local.index, S.local.work, true); }
+  function lAll() { return dk(lHead().files, S.local.work, true); }
   function lDirty() { return lAll().length > 0; }
   function repoUrl() { return "https://practicehub.local/" + OWNER + "/" + (R() ? R().name : REPO) + ".git"; }
   function setOf(arr) { var o = {}; arr.forEach(function (c) { o[c] = 1; }); return o; }
@@ -1333,7 +1373,7 @@ origin/feature-a  ← 다른 브랜치는 '기록'만 생김 (로컬 브랜치 �
   function staleBlock() { if (lStale()) { err("이 폴더는 예전 저장소(" + S.local.url + ")에 연결돼 있음. 저장소가 바뀌었으니 pull·push 하지 말고, 새 주소로 새 폴더에 클론해야 함."); return true; } return false; }
   function lCommit(msg, pickFiles) {
     var L = S.local;
-    if (pickFiles) pickFiles.forEach(function (f) { if (f in L.work) L.index[f] = L.work[f]; else delete L.index[f]; });
+    if (pickFiles) pickFiles.forEach(toIndex);
     if (L.merging) {
       var mg = L.merging, left = mg.conflicts.filter(function (k) { return hasMarkers(L.work[k]) || L.index[k] !== L.work[k]; });
       if (left.length) { err("아직 해결 안 된 충돌 파일: " + left.join(", ") + " → 충돌 표시를 정리하고 스테이징(+)해야 커밋할 수 있음"); return false; }
@@ -1592,7 +1632,11 @@ origin/feature-a  ← 다른 브랜치는 '기록'만 생김 (로컬 브랜치 �
     { t: "Q. 'Push origin' 안내가 뜨면?", from: "질문", quiz: { id: "q8", opts: ["무조건 바로 눌러야 함. 안 누르면 커밋이 사라짐", "현재 브랜치와 커밋 내용을 확인하고 정함. 내 작업 브랜치면 push, 팀 저장소 main 이면 새 브랜치로 옮겨 PR", "누르면 원격 main 에 자동으로 PR 이 생김"], ans: 1, exp: "'No local changes … You have 3 local commits waiting to be pushed' 는 커밋은 했지만 아직 로컬에만 있다는 뜻임(현황표의 ↑3). 꼭 지금 눌러야 하는 건 아니고, 커밋이 사라지지도 않음. 단, 컴퓨터에만 있으니 공유·백업하려면 push 해야 함. 팀 저장소의 main 이라면 바로 push 하지 말고 브랜치 → PR 로 올림." },
       r: function () { return "데스크톱 앱에 'No local changes … 3 local commits waiting to be pushed · Push origin' 이 떴어요. 이거 꼭 해야 하나요?"; }, w: "확인 순서: ① 상단 Current branch ② History 탭의 커밋 내용 ③ 저장소 주인. Ctrl+P 는 Push origin 단축키임.", s: ["보기 중 하나를 고름", "실습: 데스크톱 앱에서 커밋 후 현황표의 ↑ 숫자와 Push origin 버튼 확인"], ok: qz("q8") },
     { t: "Q. 팀·저장소가 통째로 바뀌면?", from: "질문", quiz: { id: "q9", opts: ["예전 폴더에서 새 저장소를 pull 해서 합침", "새 저장소를 새 폴더로 클론함. 예전 파일을 복사해 덮지 않음", "예전 폴더 파일을 새 저장소에 그대로 push 함"], ans: 1, exp: "기록이 다른 저장소라 pull 은 'refusing to merge unrelated histories' 로 막히고, 파일 이름이 같아 덮어쓰면 팀원 코드가 내 옛 코드로 바뀜. 새 폴더로 클론하는 게 가장 안전함. 살릴 작업은 새 저장소에서 브랜치를 따 손으로 옮겨 PR." },
-      r: function () { return "팀이 바뀌어 다른 팀원 코드로 진행하기로 했어요. 저장소도 바뀌었고 파일 이름은 같아요. 어떻게 바꿔야 하나요?"; }, w: "VS Code·데스크톱 실전 요청에 '저장소 교체' 상황으로 나옴.", s: ["보기 중 하나를 고름"], ok: qz("q9") }
+      r: function () { return "팀이 바뀌어 다른 팀원 코드로 진행하기로 했어요. 저장소도 바뀌었고 파일 이름은 같아요. 어떻게 바꿔야 하나요?"; }, w: "VS Code·데스크톱 실전 요청에 '저장소 교체' 상황으로 나옴.", s: ["보기 중 하나를 고름"], ok: qz("q9") },
+    { t: "Q. CRLF 와 LF", from: "질문", quiz: { id: "q10", opts: ["파일이 깨져서", "줄바꿈 방식(CRLF ↔ LF)이 바뀌어서", "Git 버전이 낮아서"], ans: 1, exp: "윈도우는 줄 끝에 CR+LF(\\r\\n), 맥·리눅스는 LF(\\n)를 씀. 편집기가 줄바꿈을 바꿔 저장하면 눈에는 같아도 Git 은 모든 줄이 바뀐 것으로 봄. 해결: 편집기에서 LF 로 저장, 팀 전체는 .gitattributes 에 * text=auto, 윈도우는 core.autocrlf true." },
+      r: function () { return "윈도우에서 한 줄만 고쳤는데 파일 전체가 바뀐 것으로 나와요. 흔한 원인은?"; }, w: "VS Code 는 상태바 오른쪽 아래에 CRLF/LF 가 표시되고 눌러서 바꿀 수 있음. 실전 요청 'CRLF' 상황으로 연습.", s: ["보기 중 하나를 고름"], ok: qz("q10") },
+    { t: "Q. 특정 파일만 올리기", from: "질문", quiz: { id: "q11", opts: ["push 할 때 올릴 파일을 고름", "커밋할 때 그 파일만 스테이징(체크)해서 커밋한 뒤 push", "올리기 싫은 파일을 지운 뒤 push"], ans: 1, exp: "push 는 커밋 단위라 파일을 고르는 단계가 없음. 커밋할 때 고름: VS Code 는 그 파일만 +, 데스크톱 앱은 그 파일만 체크, 명령어는 git add 파일명. 항상 올리면 안 되는 파일(.env, 로그 등)은 .gitignore 에 적어 둠." },
+      r: function () { return "파일 3개를 고쳤는데 그중 1개만 올리고 싶어요. 어떻게 하나요?"; }, w: "실전 요청 '특정 파일만 커밋', '.gitignore' 상황으로 연습.", s: ["보기 중 하나를 고름"], ok: qz("q11") }
   ];
   function keepDone(list, key) { list.forEach(function (m, i) { var raw = m.ok; m.ok = function () { return latch(key + i, raw); }; }); }
   keepDone(M, "M"); keepDone(MV, "MV"); keepDone(MD, "MD");
@@ -1600,7 +1644,7 @@ origin/feature-a  ← 다른 브랜치는 '기록'만 생김 (로컬 브랜치 �
   setLoc(M, M.map(function () { return ["원격"]; }));
   setLoc(MV, [["원격"], ["원격→로컬"], ["로컬"], ["로컬"], ["로컬"], ["로컬"], ["로컬→원격"], ["원격→로컬"], ["로컬"], ["원격"]]);
   setLoc(MD, [["원격"], ["원격→로컬"], ["로컬"], ["로컬"], ["로컬"], ["로컬→원격"], ["원격"], ["원격→로컬"], ["로컬"], ["원격"]]);
-  setLoc(MQ, [null, ["로컬", "로컬→원격"], null, ["원격"], ["원격", "로컬→원격"], null, null, null, null, null, ["로컬→원격"], ["원격→로컬"]]);
+  setLoc(MQ, [null, ["로컬", "로컬→원격"], null, ["원격"], ["원격", "로컬→원격"], null, null, null, null, null, ["로컬→원격"], ["원격→로컬"], ["로컬"], ["로컬", "로컬→원격"]]);
   var LOC_TIP = { "로컬": "내 컴퓨터에서만 일어남 (원격엔 변화 없음)", "원격": "GitHub(웹)에서 일어남", "로컬→원격": "내 컴퓨터 → GitHub 로 올림 (push·Publish)", "원격→로컬": "GitHub → 내 컴퓨터로 받음 (clone·pull)" };
   function locBadges(loc) { return loc ? '<div class="locs-badges">' + loc.map(function (l) { return '<span class="loc loc-' + (l === "로컬" ? "l" : l === "원격" ? "r" : l === "로컬→원격" ? "up" : "down") + '" title="' + LOC_TIP[l] + '">' + l + '</span>'; }).join("") + '</div>' : ""; }
   function renderLocTable() {
@@ -1757,9 +1801,9 @@ origin/feature-a  ← 다른 브랜치는 '기록'만 생김 (로컬 브랜치 �
     if (current(MD) === 7 && !S.flags.dTeam) S.flags.dTeam = teamPushMain("김주무관");
   }
   function newLocalQuest() {
-    var types = ["feat", "pull", "pr", "lmerge", "rpr", "pushok", "pushhold", "prupdate", "pushhide", "switchrepo"], last = S.lq && S.lq.type;
+    var types = ["feat", "pull", "pr", "lmerge", "rpr", "pushok", "pushhold", "prupdate", "pushhide", "switchrepo", "crlf", "selcommit", "gitignore"], last = S.lq && S.lq.type;
     var type = pick(types.filter(function (t) { return t !== last; })), q = { type: type, n: S.lqDone + 1, from: "팀장" };
-    if (type === "pushok" || type === "pushhold" || type === "prupdate" || type === "pushhide" || type === "switchrepo") { genAskQuest(q); S.lq = q; return; }
+    if (type === "pushok" || type === "pushhold" || type === "prupdate" || type === "pushhide" || type === "switchrepo" || type === "crlf" || type === "selcommit" || type === "gitignore") { genAskQuest(q); S.lq = q; return; }
     if (type === "lmerge" || type === "rpr") {
       var cands = FEATS.filter(function (f) { var b = "feature/" + f[0] + (type === "lmerge" ? "-draft" : "-pr"); return !lbr(b) && !br(b); }), g = cands.length ? pick(cands) : [pick(FEATS)[0] + (S.seqL = (S.seqL || 0) + 1), "추가"];
       q.br = "feature/" + g[0] + (type === "lmerge" ? "-draft" : "-pr"); q.file = g[0] + "-" + type + ".md";
@@ -1814,6 +1858,31 @@ origin/feature-a  ← 다른 브랜치는 '기록'만 생김 (로컬 브랜치 �
       q.r = "팀 저장소 main 에 실수로 커밋 2개를 했네요(↑2, Push origin 안내). main 엔 바로 push 하지 말고, 새 브랜치 " + q.br + " 를 만들어 그 브랜치를 원격에 Publish 해 주세요.";
       q.w = "지금 커밋이 있는 상태에서 새 브랜치를 만들면 그 커밋을 그대로 가져감. 그 브랜치를 Publish 하면 원격 main 은 건드리지 않음. (실제 데스크톱 앱은 이때 main 의 커밋을 옮길지 물어봄)";
       q.loc = ["로컬", "로컬→원격"];
+    } else if (q.type === "crlf") {
+      g = uniqFeat("feature/", "-eol"); q.br = "feature/" + g[0] + "-eol";
+      var lf = "[server]\nhost=10.0.0.1\nport=8080\ntimeout=30\nlog=info";
+      var mf = clone(br("main").files); delete mf[".gitattributes"]; mf["config.ini"] = lf;
+      addCommit("main", "설정 파일 추가", mf, "김주무관");
+      syncLocalMain(); localFrom(q.br, lbr("main"), false); setHead(q.br);
+      S.local.work["config.ini"] = lf.replace("timeout=30", "timeout=60").replace(/\n/g, "\r\n");
+      q.want = lf.replace("timeout=30", "timeout=60"); q.from = "김주무관";
+      q.r = "윈도우 PC에서 config.ini 의 timeout 한 줄만 60 으로 고쳤는데, 변경이 파일 전체로 잡힙니다(줄바꿈이 LF → CRLF 로 바뀜). 줄바꿈을 LF 로 되돌리거나 .gitattributes 에 '* text=auto' 를 넣어서, 실제로 바뀐 한 줄만 로컬 " + q.br + " 에 커밋하고 원격에 Publish 해 주세요.";
+      q.w = "CRLF(\\r\\n) = 윈도우 줄바꿈, LF(\\n) = 맥·리눅스 줄바꿈. 눈에는 같아 보여도 Git 은 모든 줄이 바뀐 것으로 봄. 개인 해결: 편집기에서 LF 로 저장. 팀 해결: .gitattributes 에 * text=auto (저장소에 올라가 모두에게 적용됨). 윈도우에선 git config --global core.autocrlf true 도 많이 씀.";
+      q.loc = ["로컬", "로컬→원격"];
+    } else if (q.type === "selcommit") {
+      g = uniqFeat("feature/", "-part"); q.br = "feature/" + g[0] + "-part"; q.file = g[0] + ".py"; q.code = "def " + g[0] + "():\n    return '완성'";
+      syncLocalMain(); localFrom(q.br, lbr("main"), false); setHead(q.br);
+      S.local.work[q.file] = q.code; S.local.work["debug.log"] = "DEBUG 09:12 테스트 출력\nDEBUG 09:13 변수 확인"; S.local.work["메모_개인.txt"] = "점심 약속, 개인 메모";
+      q.r = "로컬 " + q.br + " 에서 작업한 " + q.file + " 만 커밋해서 원격에 Publish 해 주세요. debug.log 와 메모_개인.txt 는 올리면 안 됩니다.";
+      q.w = "push 는 '커밋' 단위라 파일 하나만 골라 push 하는 기능은 없음. 커밋할 때 올릴 파일만 골라야 함: VS Code 는 그 파일만 + 스테이징, 데스크톱 앱은 그 파일만 체크. 명령어는 git add 파일명 → git commit. 고르지 않은 파일은 커밋 안 된 채 로컬에 남음. ⚠ VS Code 에서 아무것도 스테이징하지 않고 커밋하면 전부 커밋되니 주의.";
+      q.loc = ["로컬", "로컬→원격"];
+    } else if (q.type === "gitignore") {
+      g = uniqFeat("feature/", "-ignore"); q.br = "feature/" + g[0] + "-ignore";
+      syncLocalMain(); localFrom(q.br, lbr("main"), false); setHead(q.br);
+      S.local.work[".env"] = "API_KEY=sk-test-1234 (비밀 키)"; S.local.work["app.log"] = "실행 로그"; S.local.work["error.log"] = "오류 로그";
+      q.r = "로컬 " + q.br + " 에 비밀 키 파일 .env 와 로그 파일(*.log)이 계속 생깁니다. 앞으로도 올라가지 않게 .gitignore 를 만들어(.env, *.log) 커밋하고 원격에 Publish 해 주세요. .env 와 로그는 커밋하지 마세요.";
+      q.w = ".gitignore 에 적은 파일은 Git 이 무시해서 변경 목록에도 안 뜸. 한 번 만들어 두면 실수로 올릴 일이 없음. 이미 커밋된 파일은 .gitignore 에 적어도 계속 추적되니 처음부터 넣는 게 중요함. 비밀 키가 한 번이라도 올라가면 키를 바꿔야 함.";
+      q.loc = ["로컬", "로컬→원격"];
     } else if (q.type === "switchrepo") {
       syncLocalMain(); setHead("main");
       localCommit("main", "README.md", (lbr("main").files["README.md"] || "") + "\n내 작업 메모", "내 작업 메모 추가");
@@ -1850,6 +1919,9 @@ origin/feature-a  ← 다른 브랜치는 '기록'만 생김 (로컬 브랜치 �
     }
   }
   function localQuestOk(q) {
+    if (q.type === "crlf") { var rc = br(q.br), fc = rc && rc.files["config.ini"]; return !!fc && fc.indexOf("\r") < 0 && fc === q.want; }
+    if (q.type === "selcommit") { var rs2 = br(q.br); return !!rs2 && rs2.files[q.file] === q.code && !("debug.log" in rs2.files) && !("메모_개인.txt" in rs2.files); }
+    if (q.type === "gitignore") { var rg = br(q.br), gi = rg && rg.files[".gitignore"]; return !!gi && ignoredBy(gi, ".env") && ignoredBy(gi, "app.log") && !(".env" in rg.files) && !Object.keys(rg.files).some(function (k) { return /\.log$/.test(k); }); }
     if (q.type === "switchrepo") return latch("lq" + q.n + "sw", function () { var m = lbr("main"), r = br("main"); return !lStale() && S.local.url === q.newUrl && !!m && !!r && m.commits.length === r.commits.length && r.commits.every(function (c) { return m.commits.indexOf(c) >= 0; }) && !lDirty(); });
     if (q.type === "pushok") return !!br(q.br) && q.ids.every(function (c) { return br(q.br).commits.indexOf(c) >= 0; });
     if (q.type === "pushhold") return !!br(q.br) && q.ids.every(function (c) { return br(q.br).commits.indexOf(c) >= 0 && br("main").commits.indexOf(c) < 0; });
@@ -1864,6 +1936,9 @@ origin/feature-a  ← 다른 브랜치는 '기록'만 생김 (로컬 브랜치 �
   }
   function localSteps(q) {
     var vs = S.track === "vscode";
+    if (q.type === "crlf") return vs ? ["탐색기에서 config.ini 열기 → 맨 아래 상태바의 [CRLF] 확인", "(방법 1) 상태바 [CRLF] 클릭 → LF 로 바뀜", "(방법 2) [+ 새 파일] .gitattributes → '* text=auto' 입력 → 저장", "소스 제어에서 바뀐 내용 확인 → + 스테이징 → ✓ 커밋", "[☁ Publish Branch]"] : ["Changes 에서 config.ini 클릭 → '줄바꿈 변경' 경고와 모든 줄이 바뀐 diff 확인", "[Open in editor] → (새 파일) .gitattributes → '* text=auto' → 저장", "config.ini diff 가 timeout 한 줄로 줄었는지 확인", "Summary 입력 → Commit (.gitattributes 도 함께 체크)", "[Publish branch]"];
+    if (q.type === "selcommit") return vs ? ["소스 제어에서 변경 사항 3개 확인", q.file + " 옆 + 만 눌러 스테이징 (나머지는 그대로 둠)", "메시지 입력 → ✓ 커밋 (스테이징된 것만 커밋됨)", "상태바의 [☁ 게시 필요] 또는 ··· → 밀어넣기(Push) 로 Publish (남은 변경이 있으면 큰 버튼은 '커밋'으로 보임) → 커밋 안 한 파일은 로컬에만 남음"] : ["Changes 에서 debug.log, 메모_개인.txt 체크 해제", q.file + " 만 체크된 상태로 Summary 입력 → Commit", "[Publish branch] → 체크 안 한 파일은 로컬에만 남음"];
+    if (q.type === "gitignore") return vs ? ["탐색기 [+ 새 파일] → .gitignore", "내용: 첫 줄 .env, 둘째 줄 *.log → 저장", "소스 제어에서 .env·로그가 목록에서 사라진 것 확인", ".gitignore 만 + 스테이징 → ✓ 커밋", "[☁ Publish Branch]"] : ["[Open in editor] → (새 파일) .gitignore", "내용: .env 와 *.log 를 한 줄씩 → 저장", "Changes 에 .gitignore 만 남은 것 확인 → Commit", "[Publish branch]"];
     if (q.type === "switchrepo") return vs ? ["(확인) 소스 제어 ··· → 끌어오기(Pull) → 예전 저장소라 막히는 것 확인", "탐색기의 [새 폴더로 복제] (또는 ··· → Git 저장소 복제 (새 폴더)…)", "[입력칸에 넣기] → 새 주소 확인 → [Git 저장소 복제]", "탐색기 파일이 '[김주무관 팀 버전]' 내용인지 확인"] : ["(확인) 상단 버튼으로 Pull 해 보면 막히는 것 확인", "메뉴 [파일] → Clone repository... (또는 노란 안내의 버튼)", "목록의 새 저장소 선택 → [Clone]", "History 가 김주무관 커밋으로 바뀌었는지 확인"];
     if (q.type === "pushok") return vs ? ["상태바 ⎇ 가 " + q.br + " 이고 ↑3 인지 확인", "상태바 ⟳ 클릭 또는 소스 제어 ··· → 밀어넣기(Push)"] : ["Current branch 가 " + q.br + " 인지 확인", "상단 [Push origin ↑3] (또는 Ctrl+P 대신 메뉴 [저장소] → Push)"];
     if (q.type === "pushhold") return vs ? ["상태바 ⎇ → 새 분기 이름 " + q.br + " 입력 후 Enter", "소스 제어 [☁ Publish Branch]", "main 으로는 push 하지 않음 → 현황표에서 원격 main 이 그대로인지 확인"] : ["[Current branch ▾] → [New branch] → " + q.br + " → Create branch", "상단 [Publish branch]", "main 으로는 Push origin 하지 않음"];
@@ -1894,7 +1969,8 @@ origin/feature-a  ← 다른 브랜치는 '기록'만 생김 (로컬 브랜치 �
     h += '<div class="vs-status">';
     if (L) { var s = lSync(); h += '<button type="button" data-l="vs-pick" title="브랜치 전환·만들기">⎇ ' + esc(L.head) + (lDirty() ? "*" : "") + (L.merging ? " (병합 중)" : "") + '</button><button type="button" data-l="sync" title="변경 내용 동기화">' + (s.pub ? "☁ 게시 필요" : "⟳ " + s.behind + "↓ " + s.ahead + "↑") + '</button>'; }
     else h += '<span>Git 저장소 없음</span>';
-    return h + '<span style="flex:1"></span><span>UTF-8 · 연습용 편집기</span></div></div>';
+    var ef = L && v.file && L.work[v.file] != null ? L.work[v.file] : null;
+    return h + '<span style="flex:1"></span>' + (ef != null ? '<button type="button" data-l="vs-eol" title="줄 끝 시퀀스 선택 (클릭하면 LF/CRLF 전환)">' + (/\r\n/.test(ef) ? "CRLF" : "LF") + '</button>' : "") + '<span>UTF-8 · 연습용 편집기</span></div></div>';
   }
   function vsExplorer() {
     var L = S.local, v = vsState(), h = '<div class="vs-h">탐색기</div>';
@@ -2029,7 +2105,9 @@ origin/feature-a  ← 다른 브랜치는 '기록'만 생김 (로컬 브랜치 �
     } else if (d.editor) h += dkEditor();
     else if (d.newbr) h += '<form data-lform="dk-newbr" class="dk-dialog"><h3>Create a branch</h3><div class="field"><label for="dk-brname">Name</label><input class="inp mono" id="dk-brname" placeholder="예: feature/abc"></div><p class="kv">현재 브랜치 <b class="mono">' + esc(L.head) + '</b> 를 기준으로 만듦</p><div class="row"><button class="btn go" type="submit">Create branch</button><button class="btn" type="button" data-l="dk-newbr">Cancel</button></div></form>';
     else if (d.sel && ch.some(function (c) { return c[0] === d.sel; })) {
-      var a = {}, b = {}; if (d.sel in lHead().files) a[d.sel] = lHead().files[d.sel]; if (d.sel in L.work) b[d.sel] = L.work[d.sel];
+      var a = {}, b = {}, nrm = eolNorm(); if (d.sel in lHead().files) a[d.sel] = nrm ? nl(lHead().files[d.sel]) : lHead().files[d.sel]; if (d.sel in L.work) b[d.sel] = nrm ? nl(L.work[d.sel]) : L.work[d.sel];
+      var ea = /\r\n/.test(lHead().files[d.sel] || ""), eb = /\r\n/.test(L.work[d.sel] || "");
+      if (d.sel in lHead().files && d.sel in L.work && ea !== eb) h += '<div class="banner">⚠ 줄바꿈 변경: ' + (ea ? "CRLF" : "LF") + ' → ' + (eb ? "CRLF" : "LF") + (nrm ? " (.gitattributes 로 커밋 시 LF 로 정리됨)" : " · 내용이 같아 보여도 모든 줄이 바뀐 것으로 잡힘 (␍ = 윈도우 줄바꿈 문자)") + '</div>';
       h += diffHTML(a, b);
     } else if (ch.length) h += '<div class="empty">왼쪽 목록에서 파일을 누르면 변경 내용(diff)이 보임</div>';
     else {
@@ -2060,7 +2138,7 @@ origin/feature-a  ← 다른 브랜치는 '기록'만 생김 (로컬 브랜치 �
   }
 
   /* ---------- 로컬 화면 동작 ---------- */
-  function vsSaveBuf() { var v = vsState(); if (v.file && v.buf != null) { S.local.work[v.file] = v.buf; v.buf = null; ok(v.file + " 저장됨 → 작업 폴더에 반영"); } }
+  function vsSaveBuf() { var v = vsState(); if (v.file && v.buf != null) { S.local.work[v.file] = keepEol(S.local.work[v.file], v.buf); v.buf = null; ok(v.file + " 저장됨 → 작업 폴더에 반영"); } }
   site.addEventListener("click", function (e) {
     var t = e.target.closest("[data-l]"); if (!t || t.disabled) return;
     var a = t.dataset.l, arg = t.dataset.arg, L = S.local, v = vsState(), d = dkState();
@@ -2075,9 +2153,10 @@ origin/feature-a  ← 다른 브랜치는 '기록'만 생김 (로컬 브랜치 �
     else if (a === "vs-mergepick") v.pick = "merge";
     else if (a === "merge") { lMerge(arg); v.pick = false; d.mergeOpen = false; d.sel = null; }
     else if (a === "dk-merge") { d.mergeOpen = !d.mergeOpen; d.editor = d.newbr = false; }
-    else if (a === "stage") { if (L.merging && hasMarkers(L.work[arg])) err(arg + " 에 충돌 표시(<<<<<<< ======= >>>>>>>)가 남아 있어 스테이징할 수 없음. 먼저 충돌을 정리함."); else if (arg in L.work) L.index[arg] = L.work[arg]; else delete L.index[arg]; }
+    else if (a === "stage") { if (L.merging && hasMarkers(L.work[arg])) err(arg + " 에 충돌 표시(<<<<<<< ======= >>>>>>>)가 남아 있어 스테이징할 수 없음. 먼저 충돌을 정리함."); else toIndex(arg); }
     else if (a === "abort") lAbort();
     else if (a === "undo") { lUndo(); d.tab = "changes"; }
+    else if (a === "vs-eol") { vsSaveBuf(); flash = null; var cur4 = L.work[v.file], toLF = /\r\n/.test(cur4); L.work[v.file] = toLF ? nl(cur4) : nl(cur4).replace(/\n/g, "\r\n"); ok(v.file + " 의 줄바꿈을 " + (toLF ? "LF (맥·리눅스 방식)" : "CRLF (윈도우 방식)") + " 로 바꿔 저장함"); }
     else if (a === "vs-reclone") { v.reclone = !v.reclone; v.view = "explorer"; }
     else if (a === "discard") lDiscard(arg);
     else if (a === "discard-all") lDiscard(null);
@@ -2087,7 +2166,7 @@ origin/feature-a  ← 다른 브랜치는 '기록'만 생김 (로컬 브랜치 �
     else if (a === "dk-open-c") { d.editor = true; d.efile = arg; }
     else if (a === "dk-continue") { L.merging.conflicts.forEach(function (k) { if (k in L.work) L.index[k] = L.work[k]; else delete L.index[k]; }); lCommit(L.merging.msg); }
     else if (a === "unstage") { var hf = lHead().files; if (arg in hf) L.index[arg] = hf[arg]; else delete L.index[arg]; }
-    else if (a === "stage-all") lUnstaged().forEach(function (x) { if (L.merging && hasMarkers(L.work[x[0]])) return; if (x[0] in L.work) L.index[x[0]] = L.work[x[0]]; else delete L.index[x[0]]; });
+    else if (a === "stage-all") lUnstaged().forEach(function (x) { if (L.merging && hasMarkers(L.work[x[0]])) return; toIndex(x[0]); });
     else if (a === "unstage-all") L.index = clone(lHead().files);
     else if (a === "switch") { vsSaveBuf(); lSwitch(arg); v.pick = false; d.sel = null; }
     else if (a === "push") lPush();
@@ -2125,7 +2204,7 @@ origin/feature-a  ← 다른 브랜치는 '기록'만 생김 (로컬 브랜치 �
     else if (k === "vs-commit") {
       vsSaveBuf(); flash = null;
       var msg = $("vs-msg").value.trim(), smart = !S.local.merging && !lStaged().length && lUnstaged().length;
-      if (smart && msg) lUnstaged().forEach(function (x) { if (x[0] in S.local.work) S.local.index[x[0]] = S.local.work[x[0]]; else delete S.local.index[x[0]]; });
+      if (smart && msg) lUnstaged().forEach(function (x) { toIndex(x[0]); });
       if (lCommit(msg) && smart) flash.m += " (스테이징된 항목이 없어 모든 변경을 스테이징 후 커밋함)";
     }
     else if (k === "dk-commit") {
@@ -2138,7 +2217,7 @@ origin/feature-a  ← 다른 브랜치는 '기록'만 생김 (로컬 브랜치 �
     else if (k === "dk-esave") {
       var name = d.efile || ($("dk-enew") ? $("dk-enew").value.trim() : "");
       if (!d.efile) { if (!lNewFile(name)) return afterChange(); d.efile = name; }
-      S.local.work[name] = $("dk-etext").value; d.editor = false; d.sel = name; d.tab = "changes"; ok(name + " 저장됨 → Changes 목록에 반영");
+      S.local.work[name] = keepEol(S.local.work[name], $("dk-etext").value); d.editor = false; d.sel = name; d.tab = "changes"; ok(name + " 저장됨 → Changes 목록에 반영");
     }
     afterChange();
   });
