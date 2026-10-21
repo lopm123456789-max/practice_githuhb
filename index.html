@@ -192,7 +192,8 @@ h2.pt span { color: var(--muted); }
 .modes button { background: none; border: 0; color: var(--rail-ink); padding: 7px 4px; border-radius: 6px; cursor: pointer; font-size: 0.82rem; }
 .modes button.on { background: #2f9a66; font-weight: 700; }
 .modes button { grid-column: span 2; }
-.modes .qa-btn { grid-column: span 3; border: 1px dashed rgba(255,255,255,0.25); }
+.modes .qa-btn { grid-column: span 2; border: 1px dashed rgba(255,255,255,0.25); font-size: 0.78rem; }
+.modes .fk-btn.on { background: #3d6aa8; border-color: #3d6aa8; }
 .modes .cf-btn.on { background: #a8423a; border-color: #a8423a; }
 .modes .qa-btn.on { background: #b9862a; border-color: #b9862a; }
 .cr { color: var(--closed); font-weight: 700; }
@@ -331,7 +332,7 @@ h2.pt span { color: var(--muted); }
   </div>
   <div class="grid">
     <aside class="rail" aria-label="업무 요청">
-      <div class="modes" role="group" aria-label="연습 도구"><button type="button" data-mode="web">웹 사이트</button><button type="button" data-mode="vscode">VS Code</button><button type="button" data-mode="desktop">데스크톱 앱</button><button type="button" data-mode="qa" class="qa-btn">내 질문 실습</button><button type="button" data-mode="conflict" class="qa-btn cf-btn">컨플릭트 실습</button></div>
+      <div class="modes" role="group" aria-label="연습 도구"><button type="button" data-mode="web">웹 사이트</button><button type="button" data-mode="vscode">VS Code</button><button type="button" data-mode="desktop">데스크톱 앱</button><button type="button" data-mode="qa" class="qa-btn">내 질문 실습</button><button type="button" data-mode="conflict" class="qa-btn cf-btn">컨플릭트 실습</button><button type="button" data-mode="fork" class="qa-btn fk-btn">Fork 실습</button></div>
       <div class="prog"><span id="prog-t"></span><div class="bar"><i id="prog-b"></i></div></div>
       <div class="msg" id="req"></div>
       <h3>로컬 ↔ 원격 현황</h3>
@@ -496,6 +497,22 @@ origin/feature-a  ← 다른 브랜치는 '기록'만 생김 (로컬 브랜치 �
         </tbody></table></div>
         <ul><li>잘 모르겠으면 Stash 가 가장 안전함 (수정이 따로 보관됨)</li><li>Restore(pop) 때 같은 줄이 바뀌었다면 충돌 표시가 생김 → Current(받은 내용) / Incoming(내 임시 저장) 중 골라 정리</li><li>겹치지 않는 파일만 고쳤다면 이 오류 없이 Pull 됨</li></ul>
       </section>
+      <section><h3>Q15. Fork 와 저장소 간 PR 은 어떻게 하나?</h3>
+        <p>쓰기 권한이 없는 저장소(원본)에 기여할 때 쓰는 방법임. <b>Fork</b> = 원본을 내 GitHub 계정으로 복사(원격끼리), <b>Clone</b> = 내 컴퓨터로 복사.</p>
+        <pre>원본 kim-team/team-tool  ──Fork──▶  내 fork jeonnam-dev/team-tool  ──Clone──▶  내 컴퓨터
+        ▲                                     ▲   (origin)                        │
+        └──── PR (base 원본:main ← 내fork:브랜치) ─┴──── push ◀──────────────────────┘
+원본이 바뀌면: 웹 [Sync fork]  또는  로컬 upstream/main merge → push</pre>
+        <div class="tbl"><table><thead><tr><th>단계</th><th>방법</th></tr></thead><tbody>
+          <tr><td>Fork</td><td>원본 저장소 오른쪽 위 [Fork]</td></tr>
+          <tr><td>Clone</td><td>내 fork 주소로 클론 (origin = 내 fork, upstream = 원본)</td></tr>
+          <tr><td>작업·push</td><td>브랜치 → 커밋 → <b>내 fork(origin)</b>에 push</td></tr>
+          <tr><td>PR</td><td>내 fork 의 [Contribute → Open pull request] 또는 원본 New pull request → compare across forks</td></tr>
+          <tr><td>동기화</td><td>내 fork 웹 [Sync fork] → 로컬 Pull. 또는 git fetch upstream → git merge upstream/main → git push</td></tr>
+          <tr><td>특정 브랜치만</td><td>git switch -c dev upstream/release/v1 → git push -u origin dev</td></tr>
+        </tbody></table></div>
+        <ul><li>원본에 직접 push 하면 403 으로 거절됨 → 항상 내 fork 로 push</li><li>머지는 원본 관리자가 함. PR 이 열려 있는 동안 내 fork 브랜치에 push 하면 PR 에 자동으로 붙음</li><li>연습: 왼쪽 [Fork 실습] 트랙</li></ul>
+      </section>
     </div>
   </details>
 </div>
@@ -511,11 +528,12 @@ origin/feature-a  ← 다른 브랜치는 '기록'만 생김 (로컬 브랜치 �
   function sha() { var s = ""; for (var i = 0; i < 7; i++) s += "0123456789abcdef"[Math.floor(Math.random() * 16)]; return s; }
 
   function fresh() {
-    return { repo: null, commits: {}, feed: [], quest: null, questDone: 0, flags: {}, mode: "web", track: "web", local: null, lq: null, lqDone: 0,
+    return { repo: null, commits: {}, feed: [], quest: null, questDone: 0, flags: {}, mode: "web", track: "web", local: null, lq: null, lqDone: 0, repos: {}, repoKey: "home",
       v: { page: "home", tab: "code", branch: "main", sub: null } };
   }
   var S = load() || fresh();
   (function () { var f = fresh(); for (var k in f) if (!(k in S)) S[k] = f[k]; })();
+  (function () { if (S.repo && !S.repos.home) S.repos.home = S.repo; S.repoKey = "home"; S.repo = S.repos.home || null; })();
   function load() { try { var r = localStorage.getItem(KEY); return r ? JSON.parse(r) : null; } catch (e) { return null; } }
   function save() { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) {} }
   var flash = null;
@@ -526,11 +544,26 @@ origin/feature-a  ← 다른 브랜치는 '기록'만 생김 (로컬 브랜치 �
   /* ---------- 저장소 모델 ---------- */
   var R = function () { return S.repo; };
   function br(n) { return S.repo ? S.repo.branches[n] : undefined; }
+  /* 여러 저장소: home(내 기본 저장소), up(팀원 원본), fork(내 fork) */
+  function useRepo(k) { if (S.repos && S.repos[k]) { S.repo = S.repos[k]; S.repoKey = k; } }
+  function viewKey() { return S.v.repoKey && S.repos[S.v.repoKey] ? S.v.repoKey : "home"; }
+  function localKey() { return S.local && S.local.repoKey && S.repos[S.local.repoKey] ? S.local.repoKey : "home"; }
+  function ownerOf(r) { return (r && r.owner) || OWNER; }
+  function repoUrlOf(r) { return "https://practicehub.local/" + ownerOf(r) + "/" + r.name + ".git"; }
+  function canWrite() { var r = S.repo; return !!r && (!r.owner || r.owner === OWNER || r.collabs.some(function (c) { return c.who === ME && c.ok; })); }
+  function noWriteMsg() { return "이 저장소(" + ownerOf(S.repo) + "/" + S.repo.name + ")에는 쓰기 권한이 없음 (403). Fork 해서 내 저장소에서 작업한 뒤 원본으로 PR 을 보내야 함"; }
+  function parseSpec(sp) { if (sp && sp[0] === "@") { var i = sp.indexOf(":"); return { repo: sp.slice(1, i), name: sp.slice(i + 1) }; } return { repo: null, name: sp }; }
+  function specBr(sp) { var x = parseSpec(sp); return x.repo ? (S.repos[x.repo] && S.repos[x.repo].branches[x.name]) : br(x.name); }
+  function specOf(p) { return p.headRepo ? "@" + p.headRepo + ":" + p.head : p.head; }
+  function hb(p) { return p.headRepo ? (S.repos[p.headRepo] && S.repos[p.headRepo].branches[p.head]) : br(p.head); }
+  function aheadBr(h, b) { if (!h || !b) return []; var bs = {}; b.commits.forEach(function (c) { bs[c] = 1; }); return h.commits.filter(function (c) { return !bs[c]; }); }
+  function aheadP(p) { return aheadBr(hb(p), br(p.base)); }
+  function headLabel(p) { return p.headRepo && S.repos[p.headRepo] ? ownerOf(S.repos[p.headRepo]) + ":" + p.head : p.head; }
   function aheadOf(head, base) { if (!br(head) || !br(base)) return []; var b = {}; br(base).commits.forEach(function (c) { b[c] = 1; }); return br(head).commits.filter(function (c) { return !b[c]; }); }
   function addCommit(branch, msg, files, author) {
     var id = sha(); S.commits[id] = { id: id, msg: msg, author: author || ME, tree: clone(files) };
     var b = br(branch); b.commits.push(id); b.files = clone(files);
-    S.repo.prs.forEach(function (p) { if (p.state === "open" && p.head === branch) p.timeline.push({ k: "commit", id: id, msg: msg, who: author || ME }); });
+    Object.keys(S.repos).forEach(function (k) { var rr = S.repos[k]; rr.prs.forEach(function (p) { if (p.state === "open" && p.head === branch && ((rr === S.repo && !p.headRepo) || (rr !== S.repo && p.headRepo === S.repoKey))) p.timeline.push({ k: "commit", id: id, msg: msg, who: author || ME }); }); });
     return id;
   }
   function newBranch(name, from) { S.repo.branches[name] = { files: clone(br(from).files), commits: br(from).commits.slice() }; }
@@ -579,8 +612,8 @@ origin/feature-a  ← 다른 브랜치는 '기록'만 생김 (로컬 브랜치 �
     for (var i = aCommits.length - 1; i >= 0; i--) if (bs[aCommits[i]]) return (S.commits[aCommits[i]] && S.commits[aCommits[i]].tree) || {};
     return {};
   }
-  function prMergeResult(p) { var h = br(p.head), b = br(p.base); return mergeTrees(commonTree(h.commits, b.commits), h.files, b.files, p.head, p.base); }
-  function prConflicts(p) { if (!br(p.head) || !br(p.base)) return []; return prMergeResult(p).conflicts; }
+  function prMergeResult(p) { var h = hb(p), b = br(p.base); return mergeTrees(commonTree(h.commits, b.commits), h.files, b.files, headLabel(p), p.base); }
+  function prConflicts(p) { if (!hb(p) || !br(p.base)) return []; return prMergeResult(p).conflicts; }
   function hunks(text) {
     var segs = [], cur = null, mode = 0;
     (text || "").split("\n").forEach(function (l) {
@@ -605,8 +638,9 @@ origin/feature-a  ← 다른 브랜치는 '기록'만 생김 (로컬 브랜치 �
   }
   function mergeBlock(p) {
     var out = [], rule = S.repo.rules[p.base];
-    if (!br(p.head)) out.push("head 브랜치가 삭제됨");
-    else if (!aheadOf(p.head, p.base).length) out.push("합칠 새 커밋이 없음");
+    if (!canWrite()) out.push("이 저장소에 쓰기 권한이 없음 → 머지는 저장소 관리자(" + ownerOf(S.repo) + ")가 함");
+    if (!hb(p)) out.push("head 브랜치가 삭제됨");
+    else if (!aheadP(p).length) out.push("합칠 새 커밋이 없음");
     else if (prConflicts(p).length) out.push("충돌이 있음: " + prConflicts(p).join(", ") + " → [Resolve conflicts] 또는 로컬에서 해결 필요");
     if (rule && rule.requirePR) {
       if (approvals(p) < rule.approvals) out.push("승인 리뷰 " + rule.approvals + "개 필요 (현재 " + approvals(p) + "개)");
@@ -616,9 +650,9 @@ origin/feature-a  ← 다른 브랜치는 '기록'만 생김 (로컬 브랜치 �
   }
   function closingRefs(text) { var out = [], re = /\b(close[sd]?|fix(?:e[sd])?|resolve[sd]?)\s+#(\d+)/gi, m; while ((m = re.exec(text || ""))) out.push(+m[2]); return out; }
   function doMerge(p, method) {
-    var base = br(p.base), head = br(p.head), ah = aheadOf(p.head, p.base);
+    var base = br(p.base), head = hb(p), ah = aheadP(p);
     var files = prMergeResult(p).files;
-    if (method === "merge") { ah.forEach(function (c) { base.commits.push(c); }); addCommit(p.base, "Merge pull request #" + p.num + " from " + OWNER + "/" + p.head, files); }
+    if (method === "merge") { ah.forEach(function (c) { base.commits.push(c); }); addCommit(p.base, "Merge pull request #" + p.num + " from " + (p.headRepo ? ownerOf(S.repos[p.headRepo]) : OWNER) + "/" + p.head, files); }
     else if (method === "squash") addCommit(p.base, p.title + " (#" + p.num + ")", files);
     else { ah.forEach(function (c) { var id = sha(); S.commits[id] = clone(S.commits[c]); S.commits[id].id = id; base.commits.push(id); }); base.files = files; }
     p.state = "merged"; p.method = method; p.mergedBy = ME;
@@ -627,8 +661,8 @@ origin/feature-a  ← 다른 브랜치는 '기록'만 생김 (로컬 브랜치 �
   }
   function makePR(o) {
     var p = { num: nextNum(), title: o.title, body: o.body || "", base: o.base, head: o.head, author: o.author || ME, state: "open",
-      reviewers: o.reviewers || [], reviews: [], timeline: [], wantChanges: !!o.wantChanges };
-    aheadOf(p.head, p.base).forEach(function (c) { p.timeline.push({ k: "commit", id: c, msg: S.commits[c].msg, who: S.commits[c].author }); });
+      reviewers: o.reviewers || [], reviews: [], timeline: [], wantChanges: !!o.wantChanges, headRepo: o.headRepo || null };
+    aheadP(p).forEach(function (c) { p.timeline.push({ k: "commit", id: c, msg: S.commits[c].msg, who: S.commits[c].author }); });
     p.init = p.timeline.length; S.repo.prs.push(p); return p;
   }
   function makeIssue(o) {
@@ -642,7 +676,19 @@ origin/feature-a  ← 다른 브랜치는 '기록'만 생김 (로컬 브랜치 �
     if (botTimer || !needBots()) return;
     botTimer = setTimeout(function () { botTimer = null; runBots(); afterChange(true); }, 1100);
   }
-  function needBots() { return !!S.repo && (S.repo.collabs.some(function (c) { return !c.ok; }) || botPRs().length > 0); }
+  function eachRepo(fn) { var cur = S.repoKey; Object.keys(S.repos).forEach(function (k) { useRepo(k); fn(k); }); useRepo(cur); }
+  function needBots() { var any = false; eachRepo(function () { if (S.repo.collabs.some(function (c) { return !c.ok; }) || botPRs().length > 0 || crossBotPRs().length > 0) any = true; }); return any; }
+  function crossBotPRs() { if (!S.repo.owner || S.repo.owner === OWNER) return []; return S.repo.prs.filter(function (p) { return p.state === "open" && p.author === ME && p.headRepo && hb(p) && aheadP(p).length && (!prConflicts(p).length || !p.cfNoted); }); }
+  function crossBots() {
+    var owner = S.repo.owner === "kim-team" ? "김주무관" : S.repo.owner;
+    crossBotPRs().forEach(function (p) {
+      if (prConflicts(p).length) { p.cfNoted = true; p.timeline.push({ k: "comment", who: owner, text: "충돌이 있어요. 내 fork 를 원본과 동기화(upstream/main merge)해서 충돌을 정리한 뒤 다시 push 해 주세요." }); feed(owner, "원본 PR #" + p.num + " 에 충돌 안내 코멘트를 남김"); return; }
+      var t = "기여 감사합니다! 머지할게요.";
+      p.reviews.push({ who: owner, state: "APPROVED", text: t }); p.timeline.push({ k: "review", who: owner, state: "APPROVED", text: t });
+      doMerge(p, "merge"); p.mergedBy = owner; p.timeline[p.timeline.length - 1].who = owner;
+      feed(owner, "원본 저장소에서 내 PR #" + p.num + " 를 머지함");
+    });
+  }
   function botPRs() {
     var out = [];
     S.repo.prs.forEach(function (p) {
@@ -650,18 +696,19 @@ origin/feature-a  ← 다른 브랜치는 '기록'만 생김 (로컬 브랜치 �
       p.reviewers.forEach(function (r) {
         if (r === ME) return;
         var last = latestReviews(p)[r];
-        if (!last || (last === "CHANGES_REQUESTED" && aheadOf(p.head, p.base).length > p.askedAt)) out.push([p, r]);
+        if (!last || (last === "CHANGES_REQUESTED" && aheadP(p).length > p.askedAt)) out.push([p, r]);
       });
     });
     return out;
   }
-  function runBots() {
+  function runBots() { eachRepo(function () { runBotsOne(); crossBots(); }); }
+  function runBotsOne() {
     S.repo.collabs.forEach(function (c) { if (!c.ok) { c.ok = true; feed(c.who, "저장소 초대를 수락함"); } });
     botPRs().forEach(function (pair) {
       var p = pair[0], r = pair[1], last = latestReviews(p)[r];
       if (!last && p.wantChanges && !p.askedAt) {
-        p.askedAt = aheadOf(p.head, p.base).length;
-        var file = Object.keys(br(p.head).files).filter(function (f) { return /\.py$/.test(f); })[0] || "README.md";
+        p.askedAt = aheadP(p).length;
+        var file = Object.keys(hb(p).files).filter(function (f) { return /\.py$/.test(f); })[0] || "README.md";
         p.reviews.push({ who: r, state: "CHANGES_REQUESTED", text: file + " 맨 위에 무슨 기능인지 주석 한 줄 추가해 주세요." });
         p.timeline.push({ k: "review", who: r, state: "CHANGES_REQUESTED", text: file + " 맨 위에 무슨 기능인지 주석 한 줄 추가해 주세요." });
         feed(r, "PR #" + p.num + " 에 변경 요청(Request changes)을 남김");
@@ -807,12 +854,13 @@ origin/feature-a  ← 다른 브랜치는 '기록'만 생김 (로컬 브랜치 �
 
   /* ---------- 요청 레일 렌더 ---------- */
   var ui = { hint: false, steps: false, key: null, view: null };
-  var TRACK_NAME = { web: "웹 사이트", vscode: "VS Code", desktop: "데스크톱 앱", qa: "내 질문 실습", conflict: "컨플릭트 실습" };
-  function isStudyTrack() { return S.track === "qa" || S.track === "conflict"; }
-  function trackList(t) { t = t || S.track; return t === "vscode" ? MV : t === "desktop" ? MD : t === "qa" ? MQ : t === "conflict" ? MC : M; }
+  var TRACK_NAME = { web: "웹 사이트", vscode: "VS Code", desktop: "데스크톱 앱", qa: "내 질문 실습", conflict: "컨플릭트 실습", fork: "Fork 실습" };
+  function isStudyKey(k) { return k === "qa" || k === "conflict" || k === "fork"; }
+  function isStudyTrack() { return isStudyKey(S.track); }
+  function trackList(t) { t = t || S.track; return t === "vscode" ? MV : t === "desktop" ? MD : t === "qa" ? MQ : t === "conflict" ? MC : t === "fork" ? MF : M; }
   function isLocalTrack() { return S.track === "vscode" || S.track === "desktop"; }
   function renderRail() {
-    Array.prototype.forEach.call(document.querySelectorAll("[data-mode]"), function (b) { var on = b.dataset.mode === "qa" || b.dataset.mode === "conflict" ? S.track === b.dataset.mode : b.dataset.mode === S.mode; b.classList.toggle("on", on); b.setAttribute("aria-pressed", on ? "true" : "false"); });
+    Array.prototype.forEach.call(document.querySelectorAll("[data-mode]"), function (b) { var on = isStudyKey(b.dataset.mode) ? S.track === b.dataset.mode : b.dataset.mode === S.mode; b.classList.toggle("on", on); b.setAttribute("aria-pressed", on ? "true" : "false"); });
     var list = trackList(), cur = current(list), done = list.filter(function (m) { return m.ok(); }).length;
     var extra = isLocalTrack() ? S.lqDone : S.questDone;
     $("prog-t").textContent = TRACK_NAME[S.track] + (isStudyTrack() ? " " : " 기본 ") + done + "/" + list.length + (extra ? " · 실전 " + extra + "건" : "");
@@ -820,6 +868,7 @@ origin/feature-a  ← 다른 브랜치는 '기록'만 생김 (로컬 브랜치 �
     var show = ui.view !== null ? ui.view : cur, item, eyebrow, isDone, key, q;
     if (show >= list.length && isStudyTrack()) {
       item = S.track === "qa" ? { from: "안내", r: "질문하신 내용을 모두 실습함. 아래 '자주 묻는 질문'에서 다시 정리해 볼 수 있음.", w: "새로 궁금한 점이 생기면 Claude에게 물어보면 이 트랙에 추가할 수 있음.", s: ["화면 아래 '자주 묻는 질문' 펼치기"] }
+        : S.track === "fork" ? { from: "안내", r: "Fork → 클론 → 내 fork 에 push → 원본으로 PR → Sync fork → 특정 브랜치 가져오기까지 모두 해 봄. 요청 목록에서 항목을 눌러 [다시 해보기]로 반복할 수 있음.", w: "실무 요령: push 는 항상 내 fork(origin), 원본 최신화는 upstream, 원본 반영은 PR.", s: ["요청 목록에서 다시 해볼 항목 클릭 → [다시 해보기]"] }
         : { from: "안내", r: "컨플릭트 상황을 모두 겪어 봄. 요청 목록에서 항목을 눌러 [다시 해보기]로 몇 번이든 반복할 수 있음.", w: "실무 요령: 작업 전 pull, 브랜치는 작게 자주 머지, 충돌이 나면 당황하지 말고 Abort 후 상의.", s: ["요청 목록에서 다시 해볼 항목 클릭 → [다시 해보기]"] };
       eyebrow = TRACK_NAME[S.track] + " · 완료"; isDone = true; key = S.track + "-done";
     } else if (show >= list.length) {
@@ -842,6 +891,7 @@ origin/feature-a  ← 다른 브랜치는 '기록'만 생김 (로컬 브랜치 �
     h += '<div class="row"><button type="button" class="btn sm" data-rail="hint">' + (ui.hint ? "힌트 닫기" : "힌트 보기") + '</button><button type="button" class="btn sm" data-rail="steps">' + (ui.steps ? "클릭 경로 닫기" : "클릭 경로 보기") + '</button></div>';
     if (mq && mq.setup) h += '<div class="row"><button type="button" class="btn go sm" data-rail="setup">' + (isDone ? "다시 해보기" : "상황 만들기") + '</button><span class="hint" style="font-size:.78rem">' + (mq.mode === "web" ? "웹 화면에서 진행" : "VS Code 또는 데스크톱 앱 화면에서 진행") + '</span></div>';
     if (ui.hint) h += '<p class="hint">' + esc(item.w) + '</p>';
+    if (isStudyTrack()) h += '<p class="hint" style="font-size:.76rem;opacity:.75">화면 전환은 위 [웹 사이트]·[VS Code]·[데스크톱 앱] 버튼으로 함 (이 트랙은 유지됨. 같은 버튼을 한 번 더 누르면 그 모드의 기본 트랙으로 이동)</p>';
     if (ui.steps) h += '<ol>' + item.s.map(function (s) { return "<li>" + esc(s) + "</li>"; }).join("") + '</ol>';
     if (show >= list.length && S.track !== "qa") h += '<div class="row">' + (isDone ? '<span class="done-tag">처리 완료</span><button type="button" class="btn go sm" data-rail="next">다음 요청 받기</button>' : '<button type="button" class="btn sm" data-rail="skip">다른 요청으로 바꾸기</button>') + '</div>';
     else if (isDone) h += '<span class="done-tag">처리 완료</span>';
@@ -855,8 +905,9 @@ origin/feature-a  ← 다른 브랜치는 '기록'만 생김 (로컬 브랜치 �
     $("feed").innerHTML = S.feed.length ? S.feed.map(function (f) { return "<div><b>" + esc(f.who) + "</b> " + esc(f.text) + "</div>"; }).join("") : "<div>아직 알림 없음</div>";
   }
   document.querySelector(".rail").addEventListener("click", function (e) {
+    useRepo("home");
     var md = e.target.closest("[data-mode]");
-    if (md) { if (md.dataset.mode === "qa" || md.dataset.mode === "conflict") S.track = md.dataset.mode; else S.mode = S.track = md.dataset.mode; ui.view = null; flash = null; return afterChange(); }
+    if (md) { if (isStudyKey(md.dataset.mode)) S.track = md.dataset.mode; else if (isStudyTrack() && md.dataset.mode !== S.mode) S.mode = md.dataset.mode; else S.mode = S.track = md.dataset.mode; ui.view = null; flash = null; return afterChange(); }
     var b = e.target.closest("[data-rail]"); if (!b) return;
     var a = b.dataset.rail, loc = isLocalTrack();
     if (a === "hint") ui.hint = !ui.hint;
@@ -869,7 +920,8 @@ origin/feature-a  ← 다른 브랜치는 '기록'만 생김 (로컬 브랜치 �
         delete S.flags["done:" + ms.key];
         if (ms.mode === "local" && S.mode === "web") S.mode = "vscode";
         var msg = ms.setup(); flash = null; ok("상황을 만들었음: " + msg);
-        if (S.mode === "vscode") { var vv = vsState(); vv.pick = false; vv.view = "scm"; }
+        if (S.mode === "vscode") { var vv = vsState(); vv.pick = false; if (ms.key === "f3" && S.local && !forkLocal()) { vv.reclone = true; vv.view = "explorer"; } else vv.view = S.local ? "scm" : "explorer"; }
+        if (S.mode === "desktop" && ms.key === "f3") dkState().clone = true;
         if (S.mode === "desktop") { var dd2 = dkState(); dd2.editor = dd2.newbr = dd2.mergeOpen = false; dd2.sel = null; }
       }
     }
@@ -893,7 +945,7 @@ origin/feature-a  ← 다른 브랜치는 '기록'만 생김 (로컬 브랜치 �
     var v = V(), u = "practicehub.local/";
     if (v.page === "new") return u + "new";
     if (!R() || v.page === "home") return u;
-    u += OWNER + "/" + R().name;
+    u += ownerOf(R()) + "/" + R().name;
     var s = v.sub || {};
     if (v.tab === "code") { if (s.type === "file") u += "/blob/" + v.branch + "/" + s.path; else if (s.type === "edit") u += (s.path ? "/edit/" : "/new/") + v.branch + (s.path ? "/" + s.path : ""); else if (v.branch !== "main") u += "/tree/" + v.branch; }
     if (v.tab === "issues") u += "/issues" + (s.type === "issue" ? "/" + s.num : s.type === "new" ? "/new" : "");
@@ -910,7 +962,7 @@ origin/feature-a  ← 다른 브랜치는 '기록'만 생김 (로컬 브랜치 �
     if (flash) h += '<div class="flash ' + flash.t + '" role="status">' + esc(flash.m) + '</div>';
     var v = V();
     if (v.page === "new") h += pageNew();
-    else if (!R() || v.page === "home") h += pageHome();
+    else if (!Object.keys(S.repos).length || !R() || v.page === "home") h += pageHome();
     else h += pageRepo();
     h += '</div>';
     $("site").innerHTML = h;
@@ -920,7 +972,8 @@ origin/feature-a  ← 다른 브랜치는 '기록'만 생김 (로컬 브랜치 �
   function pageHome() {
     var h = '<div class="two"><div><h2 class="pt">대시보드</h2>';
     h += '<div class="box"><div class="box-head"><b>내 저장소</b><button type="button" class="btn go sm" data-act="new-repo">New</button></div>';
-    if (R()) h += '<div class="item">' + ICON.file + '<div><button type="button" class="link t" data-act="open-repo">' + OWNER + "/" + esc(R().name) + '</button> <span class="badge">' + (R().private ? "Private" : "Public") + '</span><div class="sub">' + esc(R().desc || "설명 없음") + '</div></div></div>';
+    var keys0 = Object.keys(S.repos);
+    if (keys0.length) keys0.forEach(function (k) { var rr = S.repos[k], mine = ownerOf(rr) === OWNER; h += '<div class="item">' + ICON.file + '<div><button type="button" class="link t" data-act="open-repo" data-arg="' + k + '">' + esc(ownerOf(rr) + "/" + rr.name) + '</button> <span class="badge">' + (rr.private ? "Private" : "Public") + '</span>' + (rr.parent ? ' <span class="badge">fork</span>' : !mine ? ' <span class="badge">팀 저장소 · 쓰기 권한 없음</span>' : "") + '<div class="sub">' + esc(rr.parent && S.repos[rr.parent] ? "forked from " + ownerOf(S.repos[rr.parent]) + "/" + S.repos[rr.parent].name : rr.desc || "설명 없음") + '</div></div></div>'; });
     else h += '<div class="empty">저장소가 없음. [New]로 첫 저장소를 만들어 보기.</div>';
     h += '</div></div><div class="side"><section><h4>최근 활동</h4>' + (S.feed.length ? S.feed.slice(0, 5).map(function (f) { return "<div>" + esc(f.who) + " " + esc(f.text) + "</div>"; }).join("") : "<div class='kv'>활동 없음</div>") + '</section></div></div>';
     return h;
@@ -940,9 +993,10 @@ origin/feature-a  ← 다른 브랜치는 '기록'만 생김 (로컬 브랜치 �
   function pageRepo() {
     var r = R(), v = V();
     var openI = r.issues.filter(function (i) { return i.state === "open"; }).length, openP = r.prs.filter(function (p) { return p.state === "open"; }).length;
-    var h = '<div class="repo-head"><div class="repo-name">' + ICON.file + '<a data-act="home">' + OWNER + '</a> / <a data-act="tab" data-arg="code"><b>' + esc(r.name) + '</b></a><span class="badge">' + (r.private ? "Private" : "Public") + '</span></div>' +
-      '<div class="row"><button type="button" class="btn sm" data-act="star">' + (r.starred ? "★ Starred" : "☆ Star") + ' <span class="count">' + (r.starred ? 1 : 0) + '</span></button></div></div>';
-    var tabs = [["code", "Code", ""], ["issues", "Issues", openI], ["pulls", "Pull requests", openP], ["releases", "Releases", r.releases.length || ""], ["settings", "Settings", ""]];
+    var h = '<div class="repo-head"><div class="repo-name">' + ICON.file + '<a data-act="home">' + esc(ownerOf(r)) + '</a> / <a data-act="tab" data-arg="code"><b>' + esc(r.name) + '</b></a><span class="badge">' + (r.private ? "Private" : "Public") + '</span>' + (!canWrite() ? '<span class="badge">읽기 전용 (쓰기 권한 없음)</span>' : "") + (r.parent && S.repos[r.parent] ? '<span class="kv" style="font-size:.8rem;width:100%">forked from <button type="button" class="link" data-act="open-repo" data-arg="' + r.parent + '">' + esc(ownerOf(S.repos[r.parent]) + "/" + S.repos[r.parent].name) + '</button></span>' : "") + '</div>' +
+      '<div class="row">' + (ownerOf(r) !== OWNER ? '<button type="button" class="btn sm" data-act="fork">⑂ Fork' + (S.repos.fork && S.repos.fork.parent === viewKey() ? ' (이미 함)' : '') + '</button>' : "") + '<button type="button" class="btn sm" data-act="star">' + (r.starred ? "★ Starred" : "☆ Star") + ' <span class="count">' + (r.starred ? 1 : 0) + '</span></button></div></div>';
+    var tabs = [["code", "Code", ""], ["issues", "Issues", openI], ["pulls", "Pull requests", openP], ["releases", "Releases", r.releases.length || ""]].concat(canWrite() ? [["settings", "Settings", ""]] : []);
+    if (v.tab === "settings" && !canWrite()) v.tab = "code";
     h += '<nav class="tabs">' + tabs.map(function (t) { return '<button type="button" class="tab' + (v.tab === t[0] ? " on" : "") + '" data-act="tab" data-arg="' + t[0] + '">' + t[1] + (t[2] !== "" ? '<span class="count">' + t[2] + '</span>' : "") + '</button>'; }).join("") + '</nav>';
     if (!br(v.branch)) v.branch = "main";
     if (v.tab === "code") h += tabCode();
@@ -972,11 +1026,16 @@ origin/feature-a  ← 다른 브랜치는 '기록'만 생김 (로컬 브랜치 �
       return '<div class="row" style="margin-bottom:10px">' + branchMenu() + '<span class="mono"><button type="button" class="link" data-act="code-root">' + esc(R().name) + '</button> / ' + esc(s.path) + '</span></div>' +
         '<div class="box"><div class="box-head"><span class="mono">' + esc(s.path) + '</span><div class="row"><button type="button" class="btn sm" data-act="edit-file" data-arg="' + esc(s.path) + '">✎ 편집</button><button type="button" class="btn sm danger" data-act="delete-file" data-arg="' + esc(s.path) + '">삭제</button></div></div><div class="file-view">' + (esc(c) || '<span class="kv">(빈 파일)</span>') + '</div></div>';
     }
-    Object.keys(R().branches).forEach(function (n) {
+    if (!R().parent) Object.keys(R().branches).forEach(function (n) {
       if (n === "main" || n !== v.branch && !R().recent[n]) return;
       if (aheadOf(n, "main").length && !R().prs.some(function (p) { return p.head === n && p.state === "open"; }))
         h += '<div class="banner"><span><b class="mono">' + esc(n) + '</b> 브랜치에 최근 푸시된 커밋이 있음</span><button type="button" class="btn go sm" data-act="compare" data-arg="' + esc(n) + '">Compare &amp; pull request</button></div>';
     });
+    if (R().parent && S.repos[R().parent]) {
+      var pr0 = S.repos[R().parent], pm0 = pr0.branches.main, behind0 = aheadBr(pm0, br("main")).length, ahead0 = aheadBr(br("main"), pm0).length;
+      h += '<div class="banner"><span>이 fork 의 main 은 원본 <b class="mono">' + esc(ownerOf(pr0) + ":main") + '</b> 보다 ' + (behind0 ? '<b>' + behind0 + '개 커밋 뒤처짐 (behind)</b>' : '최신임 (up to date)') + (ahead0 ? ', ' + ahead0 + '개 앞섬 (ahead)' : '') + '</span>' + (behind0 ? '<button type="button" class="btn go sm" data-act="sync-fork">⟳ Sync fork</button>' : '') + '</div>';
+      Object.keys(R().branches).forEach(function (n) { if (n === "main") return; var a0 = aheadBr(br(n), pr0.branches[n] || pm0).filter(function (c) { return pm0.commits.indexOf(c) < 0; }); if (a0.length && !pr0.prs.some(function (p) { return p.state === "open" && p.headRepo === viewKey() && p.head === n; })) h += '<div class="banner"><span><b class="mono">' + esc(n) + '</b> 에 원본보다 앞선 커밋 ' + a0.length + '개 → 원본으로 PR 을 보낼 수 있음</span><button type="button" class="btn go sm" data-act="contribute" data-arg="' + esc(n) + '">Contribute → Open pull request</button></div>'; });
+    }
     var names = Object.keys(R().branches), lastId = b.commits[b.commits.length - 1], last = S.commits[lastId];
     h += '<div class="row" style="justify-content:space-between;margin-bottom:10px"><div class="row">' + branchMenu() + '<span class="kv">' + names.length + ' branches · ' + R().releases.length + ' tags</span></div><button type="button" class="btn sm" data-act="add-file">+ Add file</button></div>';
     h += '<div class="box files-table"><div class="box-head"><span class="row">' + (last ? av(last.author) + " <b>" + esc(last.author) + "</b> " + esc(last.msg) : "커밋 없음") + '</span><span class="mono kv">' + (last ? last.id + " · " : "") + b.commits.length + ' commits</span></div>';
@@ -1053,7 +1112,7 @@ origin/feature-a  ← 다른 브랜치는 '기록'만 생김 (로컬 브랜치 �
     h += '<div class="box"><div class="box-head"><div class="row"><button type="button" class="link" data-act="pr-filter" data-arg="open">' + (st === "open" ? "<b>" : "") + nOpen + ' Open' + (st === "open" ? "</b>" : "") + '</button><button type="button" class="link" data-act="pr-filter" data-arg="closed">' + (st !== "open" ? "<b>" : "") + (R().prs.length - nOpen) + ' Closed' + (st !== "open" ? "</b>" : "") + '</button></div></div>';
     h += list.length ? list.map(function (p) {
       var rs = latestReviews(p), rvs = Object.keys(rs).map(function (k) { return rs[k] === "APPROVED" ? "승인됨" : "변경 요청됨"; });
-      return '<div class="item"><span class="st-' + (p.state === "open" ? "open" : p.state === "merged" ? "merged" : "closed") + '">' + ICON.pr + '</span><div style="min-width:0"><button type="button" class="link t" data-act="open-pr" data-arg="' + p.num + '">' + esc(p.title) + '</button><div class="sub">#' + p.num + ' · ' + esc(p.author) + ' · <span class="mono">' + esc(p.base) + ' ← ' + esc(p.head) + '</span>' + (rvs.length ? " · " + rvs[rvs.length - 1] : p.reviewers.length ? " · 리뷰 대기" : "") + '</div></div></div>';
+      return '<div class="item"><span class="st-' + (p.state === "open" ? "open" : p.state === "merged" ? "merged" : "closed") + '">' + ICON.pr + '</span><div style="min-width:0"><button type="button" class="link t" data-act="open-pr" data-arg="' + p.num + '">' + esc(p.title) + '</button><div class="sub">#' + p.num + ' · ' + esc(p.author) + ' · <span class="mono">' + esc(p.base) + ' ← ' + esc(headLabel(p)) + '</span>' + (rvs.length ? " · " + rvs[rvs.length - 1] : p.reviewers.length ? " · 리뷰 대기" : "") + '</div></div></div>';
     }).join("") : '<div class="empty">' + (st === "open" ? "열린 PR이 없음. 브랜치에서 작업한 뒤 [New pull request]로 올려 보기." : "닫힌 PR이 없음") + '</div>';
     return h + '</div>';
   }
@@ -1074,23 +1133,27 @@ origin/feature-a  ← 다른 브랜치는 '기록'만 생김 (로컬 브랜치 �
     }).join("");
   }
   function compareView(s) {
-    var names = Object.keys(R().branches), base = s.base || "main", head = s.head || names.filter(function (n) { return n !== base; })[0] || "";
-    var opt = function (sel) { return names.map(function (n) { return '<option' + (n === sel ? " selected" : "") + '>' + esc(n) + '</option>'; }).join(""); };
-    var h = '<h2 class="pt">Compare changes</h2><p class="kv">합칠 브랜치를 고름. 화살표 방향으로 compare 의 변경이 base 로 들어감.</p>';
-    h += '<div class="box" style="margin-bottom:14px"><div class="box-head"><div class="row"><label class="row">base: <select class="inp" id="cmp-base" data-change="cmp" style="width:auto">' + opt(base) + '</select></label><span>←</span><label class="row">compare: <select class="inp" id="cmp-head" data-change="cmp" style="width:auto"><option value="">브랜치 선택</option>' + opt(head) + '</select></label></div></div>';
-    var ah = head && br(head) ? aheadOf(head, base) : [];
-    var exist = R().prs.filter(function (p) { return p.state === "open" && p.base === base && p.head === head; })[0];
+    var names = Object.keys(R().branches), base = s.base || "main";
+    var specs = names.map(function (n) { return [n, n]; });
+    Object.keys(S.repos).filter(function (k) { return S.repos[k].parent === viewKey(); }).forEach(function (k) { Object.keys(S.repos[k].branches).forEach(function (n) { specs.push(["@" + k + ":" + n, ownerOf(S.repos[k]) + ":" + n + "  (fork)"]); }); });
+    var head = s.head || (specs.filter(function (x) { return x[0] !== base; })[0] || [""])[0];
+    var optB = names.map(function (n) { return '<option' + (n === base ? " selected" : "") + '>' + esc(n) + '</option>'; }).join("");
+    var optH = specs.map(function (x) { return '<option value="' + esc(x[0]) + '"' + (x[0] === head ? " selected" : "") + '>' + esc(x[1]) + '</option>'; }).join("");
+    var h = '<h2 class="pt">Compare changes</h2><p class="kv">합칠 브랜치를 고름. 화살표 방향으로 compare 의 변경이 base 로 들어감.' + (specs.some(function (x) { return x[0][0] === "@"; }) ? ' <b>fork 의 브랜치도 compare 에서 고를 수 있음 (compare across forks)</b>' : "") + '</p>';
+    h += '<div class="box" style="margin-bottom:14px"><div class="box-head"><div class="row"><label class="row">base: <span class="mono kv">' + esc(ownerOf(R()) + "/" + R().name) + '</span> <select class="inp" id="cmp-base" data-change="cmp" style="width:auto">' + optB + '</select></label><span>←</span><label class="row">compare: <select class="inp" id="cmp-head" data-change="cmp" style="width:auto"><option value="">브랜치 선택</option>' + optH + '</select></label></div></div>';
+    var hBr = head ? specBr(head) : null, bBr = br(base), ah = hBr ? aheadBr(hBr, bBr) : [];
+    var exist = R().prs.filter(function (p) { return p.state === "open" && p.base === base && specOf(p) === head; })[0];
     if (!head) h += '<div class="empty">compare 브랜치를 선택함. 브랜치가 main 하나뿐이면 먼저 Code 탭에서 브랜치를 만들어야 함.</div></div>';
     else if (head === base) h += '<div class="empty">같은 브랜치끼리는 비교할 수 없음</div></div>';
-    else if (!ah.length) h += '<div class="empty">' + esc(head) + ' 에 ' + esc(base) + ' 보다 앞선 커밋이 없음. 먼저 그 브랜치에 커밋해야 함.</div></div>';
+    else if (!ah.length) h += '<div class="empty">' + esc(head.replace(/^@[^:]+:/, "")) + ' 에 ' + esc(base) + ' 보다 앞선 커밋이 없음. 먼저 그 브랜치에 커밋해야 함.</div></div>';
     else if (exist) h += '<div class="empty">이미 열린 PR이 있음 → <button type="button" class="link" data-act="open-pr" data-arg="' + exist.num + '">#' + exist.num + ' ' + esc(exist.title) + '</button></div></div>';
     else {
-      h += '<div style="padding:10px 14px" class="st-open">✓ Able to merge. ' + ah.length + '개 커밋을 합칠 수 있음</div></div>';
+      h += '<div style="padding:10px 14px" class="st-open">✓ Able to merge. ' + ah.length + '개 커밋을 합칠 수 있음' + (head[0] === "@" ? ' · 다른 저장소(fork)에서 보내는 PR — 머지는 이 저장소 관리자가 함' : '') + '</div></div>';
       var revOpts = collaborators();
       h += '<form data-form="create-pr"><div class="two"><div><div class="field"><label for="pr-title">Title</label><input class="inp" id="pr-title" required value="' + esc(s.title || S.commits[ah[ah.length - 1]].msg) + '"></div>' +
         '<div class="field"><label for="pr-body">Description</label><textarea class="inp" id="pr-body" placeholder="무엇을 왜 바꿨는지. 이슈 연결: Closes #번호">' + esc(s.body || "") + '</textarea><small>Closes #번호 / Fixes #번호 를 쓰면 머지 시 해당 이슈가 자동으로 닫힘</small></div>' +
-        '<button class="btn go" type="submit">Create pull request</button></div><div class="side"><section><h4>Reviewers</h4>' + (revOpts.length ? pickers("pr-rv", revOpts, []) : '<span class="kv">협업자가 없음 (Settings → Collaborators)</span>') + '</section></div></div></form>';
-      h += '<h3 style="font-size:.95rem;margin:18px 0 8px">변경 파일</h3>' + diffHTML(br(base).files, br(head).files);
+        '<button class="btn go" type="submit">Create pull request</button></div><div class="side"><section><h4>Reviewers</h4>' + (revOpts.length ? pickers("pr-rv", revOpts, []) : '<span class="kv">' + (canWrite() ? "협업자가 없음 (Settings → Collaborators)" : "원본 관리자가 확인함") + '</span>') + '</section></div></div></form>';
+      h += '<h3 style="font-size:.95rem;margin:18px 0 8px">변경 파일</h3>' + diffHTML(bBr.files, hBr.files);
     }
     return h;
   }
@@ -1107,12 +1170,12 @@ origin/feature-a  ← 다른 브랜치는 '기록'만 생김 (로컬 브랜치 �
   }
   function prView(p, filesTab) {
     if (!p) { V().sub = null; return tabPulls(); }
-    if (V().sub.resolve && p.state === "open" && br(p.head)) return resolverView(p);
-    var stc = p.state === "open" ? "open" : p.state === "merged" ? "merged" : "closed", ah = br(p.head) ? aheadOf(p.head, p.base) : [];
-    var h = '<h2 class="pt">' + esc(p.title) + ' <span>#' + p.num + '</span></h2><div class="row" style="margin-bottom:6px"><span class="state ' + stc + '">' + { open: "Open", merged: "Merged", closed: "Closed" }[stc] + '</span><span class="kv"><b>' + esc(p.author) + '</b> 님이 <span class="mono">' + esc(p.head) + '</span> → <span class="mono">' + esc(p.base) + '</span> ' + (p.state === "merged" ? "머지 완료" : "머지 요청") + '</span></div>';
+    if (V().sub.resolve && p.state === "open" && hb(p) && !p.headRepo) return resolverView(p);
+    var stc = p.state === "open" ? "open" : p.state === "merged" ? "merged" : "closed", ah = hb(p) ? aheadP(p) : [];
+    var h = '<h2 class="pt">' + esc(p.title) + ' <span>#' + p.num + '</span></h2><div class="row" style="margin-bottom:6px"><span class="state ' + stc + '">' + { open: "Open", merged: "Merged", closed: "Closed" }[stc] + '</span><span class="kv"><b>' + esc(p.author) + '</b> 님이 <span class="mono">' + esc(headLabel(p)) + '</span> → <span class="mono">' + esc(p.base) + '</span> ' + (p.state === "merged" ? "머지 완료" : "머지 요청") + '</span></div>';
     h += '<div class="subtabs"><button type="button" class="tab' + (filesTab ? "" : " on") + '" data-act="pr-tab" data-arg="conv">Conversation</button><button type="button" class="tab' + (filesTab ? " on" : "") + '" data-act="pr-tab" data-arg="files">Files changed</button></div>';
     if (filesTab) {
-      h += p.state === "open" && br(p.head) ? diffHTML(br(p.base).files, br(p.head).files) : '<div class="empty">' + (p.state === "merged" ? "이미 머지됨" : "닫힌 PR") + '</div>';
+      h += p.state === "open" && hb(p) ? diffHTML(br(p.base).files, hb(p).files) : '<div class="empty">' + (p.state === "merged" ? "이미 머지됨" : "닫힌 PR") + '</div>';
       if (p.state === "open") {
         var own = p.author === ME;
         h += '<form data-form="review" class="box" style="margin-top:14px"><div class="box-head"><b>Review changes</b></div><div style="padding:12px 14px"><textarea class="inp" id="rv-text" placeholder="리뷰 의견"></textarea>' +
@@ -1132,14 +1195,14 @@ origin/feature-a  ← 다른 브랜치는 '기록'만 생김 (로컬 브랜치 �
       h += '<div class="mergebox">';
       if (rule && rule.requirePR) h += '<div class="check">' + (approvals(p) >= rule.approvals && !changesReq(p) ? '<span class="ok">✓</span> 리뷰 승인 조건 충족' : '<span class="no">✕</span> 리뷰 승인 필요 (보호 규칙: 승인 ' + rule.approvals + '명)') + '</div>';
       var cfs = ah.length ? prConflicts(p) : [];
-      if (cfs.length) h += '<div class="conf-box"><b>⚠ 이 브랜치에 충돌이 있어 머지할 수 없음 (This branch has conflicts that must be resolved)</b><div class="kv">충돌 파일: ' + cfs.map(esc).join(", ") + '</div><div class="row"><button type="button" class="btn" data-act="resolve-pr">Resolve conflicts (웹에서 해결)</button><span class="kv">또는 로컬에서 ' + esc(p.base) + ' 를 ' + esc(p.head) + ' 에 merge → 해결 → push</span></div></div>';
+      if (cfs.length) h += '<div class="conf-box"><b>⚠ 이 브랜치에 충돌이 있어 머지할 수 없음 (This branch has conflicts that must be resolved)</b><div class="kv">충돌 파일: ' + cfs.map(esc).join(", ") + '</div><div class="row"><button type="button" class="btn" data-act="resolve-pr"' + (p.headRepo ? ' disabled title="fork 의 브랜치는 내 컴퓨터에서 해결함"' : "") + '>Resolve conflicts (웹에서 해결)</button><span class="kv">또는 로컬에서 ' + esc(p.base) + ' 를 ' + esc(headLabel(p)) + ' 에 merge → 해결 → push</span></div></div>';
       else h += '<div class="check">' + (ah.length ? '<span class="ok">✓</span> 충돌 없음 · ' + ah.length + '개 커밋' : '<span class="no">✕</span> 합칠 커밋 없음') + '</div>';
       blocks.forEach(function (b) { h += '<div class="check kv">· ' + esc(b) + '</div>'; });
       h += '<form data-form="merge" class="row"><select class="inp" id="mg-method" style="width:auto"><option value="merge">Create a merge commit</option><option value="squash">Squash and merge</option><option value="rebase">Rebase and merge</option></select><button class="btn go" type="submit"' + (blocks.length ? " disabled" : "") + '>Confirm merge</button><button type="button" class="btn" data-act="close-pr">Close pull request</button></form></div>';
-    } else if (p.state === "merged" && br(p.head)) {
-      h += '<div class="mergebox"><div class="check"><span class="ok st-merged">✓</span> 머지 완료. 다 쓴 브랜치는 삭제해도 안전함</div><div><button type="button" class="btn" data-act="delete-branch" data-arg="' + esc(p.head) + '">Delete branch</button></div></div>';
-    } else if (p.state === "merged") h += '<div class="ev">● 브랜치 <span class="mono">' + esc(p.head) + '</span> 삭제됨</div>';
-    else if (p.state === "closed" && br(p.head)) h += '<div><button type="button" class="btn" data-act="reopen-pr">Reopen pull request</button></div>';
+    } else if (p.state === "merged" && !p.headRepo && br(p.head)) {
+      h += '<div class="mergebox"><div class="check"><span class="ok st-merged">✓</span> 머지 완료. 다 쓴 브랜치는 삭제해도 안전함</div><div><button type="button" class="btn" data-act="delete-branch" data-arg="' + esc(headLabel(p)) + '">Delete branch</button></div></div>';
+    } else if (p.state === "merged") h += '<div class="ev">● 브랜치 <span class="mono">' + esc(headLabel(p)) + '</span> 삭제됨</div>';
+    else if (p.state === "closed" && hb(p)) h += '<div><button type="button" class="btn" data-act="reopen-pr">Reopen pull request</button></div>';
     h += '<form data-form="pr-comment" class="tl">' + av(ME) + '<div style="flex:1;min-width:0"><textarea class="inp" id="pc-text" placeholder="코멘트 작성"></textarea><div class="row" style="margin-top:6px;justify-content:flex-end"><button class="btn go" type="submit">Comment</button></div></div></form></div>';
     var cands = people().filter(function (x) { return x !== p.author; }), rs = latestReviews(p);
     h += '<div class="side"><section><h4>Reviewers</h4>' + (cands.length ? cands.map(function (c) {
@@ -1188,12 +1251,17 @@ origin/feature-a  ← 다른 브랜치는 '기록'만 생김 (로컬 브랜치 �
   var site = $("site");
   site.addEventListener("click", function (e) {
     var t = e.target.closest("[data-act]"); if (!t) return;
+    useRepo(viewKey());
     var a = t.dataset.act, arg = t.dataset.arg, v = V(), r = R();
+    if (["add-file", "edit-file", "delete-file", "delete-branch", "toggle-vis", "remove-collab", "delete-rule"].indexOf(a) >= 0 && r && !canWrite()) { err(noWriteMsg()); return afterChange(); }
     if (a === "home") go({ page: "home" });
     else if (a === "new-repo") go({ page: "new" });
-    else if (a === "open-repo") go({ page: "repo", tab: "code", sub: null });
+    else if (a === "open-repo") { go({ page: "repo", tab: "code", sub: null, branch: "main", repoKey: arg && S.repos[arg] ? arg : "home" }); }
     else if (a === "tab") go({ page: "repo", tab: arg, sub: null });
     else if (a === "star") r.starred = !r.starred;
+    else if (a === "fork") { var fk = createFork(viewKey()); go({ page: "repo", tab: "code", sub: null, branch: "main", repoKey: "fork" }); ok("내 계정에 fork 를 만듦: " + ownerOf(fk) + "/" + fk.name + " (forked from " + ownerOf(S.repos[fk.parent]) + "/" + S.repos[fk.parent].name + "). 이제 여기에 push 하고 원본으로 PR 을 보냄"); }
+    else if (a === "sync-fork") syncFork(viewKey());
+    else if (a === "contribute") { var pk = R().parent; go({ page: "repo", tab: "pulls", sub: { type: "compare", base: "main", head: "@" + viewKey() + ":" + arg }, repoKey: pk, branch: "main" }); ok("원본 저장소(" + ownerOf(S.repos[pk]) + "/" + S.repos[pk].name + ")의 PR 작성 화면을 열었음 (compare across forks)"); }
     else if (a === "switch-branch") go({ branch: arg, sub: null });
     else if (a === "code-root") go({ sub: null });
     else if (a === "open-file") go({ sub: { type: "file", path: arg } });
@@ -1235,6 +1303,7 @@ origin/feature-a  ← 다른 브랜치는 '기록'만 생김 (로컬 브랜치 �
   });
   site.addEventListener("change", function (e) {
     var t = e.target;
+    if (t.dataset.change || t.dataset.pick) useRepo(viewKey());
     if (t.dataset.change === "cmp") {
       var tt = $("pr-title"), bb = $("pr-body");
       go({ sub: { type: "compare", base: $("cmp-base").value, head: $("cmp-head").value, title: tt ? tt.value : "", body: bb ? bb.value : "" } });
@@ -1263,12 +1332,14 @@ origin/feature-a  ← 다른 브랜치는 '기록'만 생김 (로컬 브랜치 �
   site.addEventListener("submit", function (e) {
     var f = e.target.closest("[data-form]"); if (!f) return;
     e.preventDefault();
+    useRepo(viewKey());
     var k = f.dataset.form, v = V(), r = R();
+    if (["create-branch", "commit-file", "release", "rename", "invite", "rule", "merge", "resolve"].indexOf(k) >= 0 && r && !canWrite()) { err(noWriteMsg()); return afterChange(); }
     if (k === "create-repo") {
       var name = $("nr-name").value.trim();
       if (!/^[\w.-]+$/.test(name)) { err("저장소 이름에는 영문·숫자·- _ . 만 쓸 수 있음"); return afterChange(); }
       var priv = $("nr-pri").checked, readme = $("nr-readme").checked;
-      S.repo = { name: name, desc: $("nr-desc").value.trim(), private: priv, branches: { main: { files: {}, commits: [] } }, issues: [], prs: [], releases: [], collabs: [], rules: {}, num: 0, starred: false, recent: {} };
+      S.repo = S.repos.home = { name: name, desc: $("nr-desc").value.trim(), private: priv, branches: { main: { files: {}, commits: [] } }, issues: [], prs: [], releases: [], collabs: [], rules: {}, num: 0, starred: false, recent: {} };
       if (readme) addCommit("main", "Initial commit", { "README.md": "# " + name + (S.repo.desc ? "\n" + S.repo.desc : "") });
       go({ page: "repo", tab: "code", branch: "main", sub: null }); ok("저장소 " + name + " 생성됨");
     } else if (k === "create-branch") {
@@ -1302,7 +1373,7 @@ origin/feature-a  ← 다른 브랜치는 '기록'만 생김 (로컬 브랜치 �
       var tx = $("ic-text").value.trim(); if (!tx) return;
       issue(v.sub.num).timeline.push({ k: "comment", who: ME, text: tx });
     } else if (k === "create-pr") {
-      var s = v.sub, np = makePR({ title: $("pr-title").value.trim(), body: $("pr-body").value, base: $("cmp-base").value, head: $("cmp-head").value, reviewers: picked("pr-rv"), wantChanges: $("cmp-head").value === "fix/travel-expense" });
+      var hs0 = parseSpec($("cmp-head").value), s = v.sub, np = makePR({ title: $("pr-title").value.trim(), body: $("pr-body").value, base: $("cmp-base").value, head: hs0.name, headRepo: hs0.repo, reviewers: picked("pr-rv"), wantChanges: $("cmp-head").value === "fix/travel-expense" });
       np.reviewers.forEach(function (x) { np.timeline.push({ k: "ev", who: ME, text: x + " 님에게 리뷰를 요청함" }); });
       go({ sub: { type: "pr", num: np.num } }); ok("PR #" + np.num + " 생성됨"); void s;
     } else if (k === "resolve") {
@@ -1375,7 +1446,12 @@ origin/feature-a  ← 다른 브랜치는 '기록'만 생김 (로컬 브랜치 �
   function lUnstaged() { return dk(S.local.index, S.local.work, true); }
   function lAll() { return dk(lHead().files, S.local.work, true); }
   function lDirty() { return lAll().length > 0; }
-  function repoUrl() { return "https://practicehub.local/" + OWNER + "/" + (R() ? R().name : REPO) + ".git"; }
+  function repoUrl() { return R() ? repoUrlOf(R()) : "https://practicehub.local/" + OWNER + "/" + REPO + ".git"; }
+  function findRepoByUrl(u) {
+    u = (u || "").trim().replace(/\/+$/, "").replace(/\.git$/, "");
+    return Object.keys(S.repos).filter(function (k) { var tail = "/" + ownerOf(S.repos[k]) + "/" + S.repos[k].name; return u.slice(-tail.length) === tail; })[0] || null;
+  }
+  function upRepo() { return S.local && S.local.upKey && S.repos[S.local.upKey] ? S.repos[S.local.upKey] : null; }
   function setOf(arr) { var o = {}; arr.forEach(function (c) { o[c] = 1; }); return o; }
   function lSync(n) {
     n = n || S.local.head;
@@ -1385,13 +1461,14 @@ origin/feature-a  ← 다른 브랜치는 '기록'만 생김 (로컬 브랜치 �
     return { pub: false, ahead: l.commits.filter(function (c) { return !rs[c]; }).length, behind: r.commits.filter(function (c) { return !ls[c]; }).length };
   }
   function lClone(url) {
-    if (!R() || !br("main") || !br("main").commits.length) return err("복제할 저장소가 없거나 비어 있음. [웹 사이트] 모드에서 README 포함 레포를 먼저 만들어야 함.");
-    var u = (url || "").trim().replace(/\/+$/, "");
-    if (!new RegExp("/" + R().name.replace(/[.]/g, "\\.") + "(\\.git)?$").test(u)) return err("저장소를 찾을 수 없음: " + (u || "(빈 주소)") + " → 주소 끝이 /" + R().name + ".git 이어야 함");
-    var m = br("main"), had = S.local && lStale() ? S.local.url : null;
-    S.local = { head: "main", branches: { main: { commits: m.commits.slice(), files: clone(m.files), upstream: true } }, work: clone(m.files), index: clone(m.files), url: repoUrl() };
+    var key = findRepoByUrl(url);
+    if (!key) return err("저장소를 찾을 수 없음: " + ((url || "").trim() || "(빈 주소)") + " → 웹 저장소 화면의 주소(…/소유자/저장소이름.git)를 확인함");
+    useRepo(key);
+    if (!br("main") || !br("main").commits.length) return err("복제할 저장소가 비어 있음. [웹 사이트] 모드에서 README 포함 레포를 먼저 만들어야 함.");
+    var m = br("main"), had = S.local && S.local.url && S.local.url !== repoUrl() && S.local.repoKey === key ? S.local.url : null;
+    S.local = { head: "main", branches: { main: { commits: m.commits.slice(), files: clone(m.files), upstream: true } }, work: clone(m.files), index: clone(m.files), url: repoUrl(), repoKey: key, upKey: R().parent || null };
     var v0 = vsState(); v0.file = null; v0.buf = null; v0.reclone = false;
-    ok("클론 완료 → 내 컴퓨터의 ~/Documents/" + R().name + " 폴더에 복사됨" + (had ? ". 예전 저장소 폴더는 더 이상 쓰지 않음 (확인 후 보관·삭제)" : "")); feed(ME, "저장소를 내 컴퓨터로 클론함");
+    ok("클론 완료 → 내 컴퓨터의 ~/Documents/" + R().name + " 폴더에 복사됨" + (R().parent ? ". fork 라서 원본이 upstream 으로 자동 등록됨 (origin = 내 fork " + ownerOf(R()) + "/" + R().name + ", upstream = 원본 " + ownerOf(S.repos[R().parent]) + "/" + S.repos[R().parent].name + ")" : "") + (had ? ". 예전 저장소 폴더는 더 이상 쓰지 않음 (확인 후 보관·삭제)" : "")); feed(ME, "저장소를 내 컴퓨터로 클론함");
   }
   function lStale() { return !!(S.local && S.local.url && R() && S.local.url !== repoUrl()); }
   function staleBlock() { if (lStale()) { err("이 폴더는 예전 저장소(" + S.local.url + ")에 연결돼 있음. 저장소가 바뀌었으니 pull·push 하지 말고, 새 주소로 새 폴더에 클론해야 함."); return true; } return false; }
@@ -1419,6 +1496,7 @@ origin/feature-a  ← 다른 브랜치는 '기록'만 생김 (로컬 브랜치 �
   }
   function lPush() {
     if (inMerge() || staleBlock()) return false;
+    if (!canWrite()) { err("remote: Permission to " + ownerOf(S.repo) + "/" + S.repo.name + ".git denied to " + OWNER + ". (403) → 원본엔 쓰기 권한이 없음. Fork 한 내 저장소로 push 한 뒤 원본으로 PR 을 보냄"); return false; }
     var L = S.local, n = L.head, l = lbr(n), s = lSync(n), rule = S.repo.rules[n];
     if (s.pub) {
       S.repo.branches[n] = { files: clone(l.files), commits: l.commits.slice() }; l.upstream = true; S.repo.recent[n] = 1; S.flags["pushed:" + n] = true;
@@ -1429,7 +1507,8 @@ origin/feature-a  ← 다른 브랜치는 '기록'만 생김 (로컬 브랜치 �
     if (rule && rule.requirePR) { err("Push 거절됨: " + n + " 는 보호된 브랜치(PR 필수)임. 새 브랜치를 만들어 커밋한 뒤 Publish → PR 로 올려야 함."); return false; }
     var r = S.repo.branches[n], rs = setOf(r.commits), newc = l.commits.filter(function (c) { return !rs[c]; });
     r.commits = l.commits.slice(); r.files = clone(l.files); S.repo.recent[n] = 1; S.flags["pushed:" + n] = true;
-    S.repo.prs.forEach(function (p) { if (p.state === "open" && p.head === n) newc.forEach(function (c) { p.timeline.push({ k: "commit", id: c, msg: S.commits[c].msg, who: S.commits[c].author }); }); });
+    Object.keys(S.repos).forEach(function (k) { if (S.repos[k] !== S.repo) S.repos[k].prs.forEach(function (p) { if (p.state === "open" && p.headRepo === S.repoKey && p.head === n) newc.forEach(function (c) { p.timeline.push({ k: "commit", id: c, msg: S.commits[c].msg, who: S.commits[c].author }); }); }); });
+    S.repo.prs.forEach(function (p) { if (p.state === "open" && p.head === n && !p.headRepo) newc.forEach(function (c) { p.timeline.push({ k: "commit", id: c, msg: S.commits[c].msg, who: S.commits[c].author }); }); });
     ok(newc.length + "개 커밋을 origin/" + n + " 에 Push 함"); feed(ME, "origin/" + n + " 에 Push 함"); return true;
   }
   function lPull() {
@@ -1459,12 +1538,20 @@ origin/feature-a  ← 다른 브랜치는 '기록'만 생김 (로컬 브랜치 �
     keep.forEach(function (x) { if (x[1] === undefined) delete L.work[x[0]]; else L.work[x[0]] = x[1]; });
     ok("원격 커밋 " + remoteOnly.length + "개를 받아옴 (Pull)" + (s.ahead ? ". 내 커밋과 합쳐 머지 커밋이 생김" : "") + (keep.length ? ". 커밋 안 한 내 변경(겹치지 않는 파일)은 그대로 남음" : "")); return true;
   }
-  function lFetch() { if (staleBlock()) return; var s = lSync(); ok(s.pub ? "이 브랜치는 아직 원격에 없음 (Publish 필요)" : "Fetch 완료: 받을 커밋 " + s.behind + "개, 올릴 커밋 " + s.ahead + "개"); }
+  function lFetch() { if (staleBlock()) return; var s = lSync(), up0 = upRepo(); if (up0 && lbr("main")) { var bh = aheadBr(up0.branches.main, lbr("main")).length; if (bh) { ok("Fetch 완료: upstream/main(원본)에 받을 커밋 " + bh + "개 → 분기 병합으로 upstream/main 을 합치거나, 웹에서 Sync fork 후 Pull"); return; } } ok(s.pub ? "이 브랜치는 아직 원격에 없음 (Publish 필요)" : "Fetch 완료: 받을 커밋 " + s.behind + "개, 올릴 커밋 " + s.ahead + "개"); }
   function lSwitch(n) {
     var L = S.local;
     if (n === L.head) return;
     if (inMerge()) return;
     if (lDirty()) return err("커밋하지 않은 변경이 있어 브랜치를 바꿀 수 없음. 먼저 커밋하거나 Stash(임시 저장)함.");
+    if (/^upstream\//.test(n)) {
+      var un = n.slice(9), ub = upRepo() && upRepo().branches[un];
+      if (!ub) return err("upstream 에 그 브랜치가 없음: " + un);
+      if (lbr(un)) return err("같은 이름의 로컬 브랜치(" + un + ")가 이미 있음. 그 브랜치로 가거나, 다른 이름으로 새 브랜치를 만듦");
+      L.branches[un] = { commits: ub.commits.slice(), files: clone(ub.files), upstream: false };
+      L.head = un; L.work = clone(ub.files); L.index = clone(ub.files);
+      return ok("원본(upstream)의 " + un + " 브랜치를 로컬로 가져옴. 내 fork(origin)에는 아직 없음 → 필요하면 새 이름으로 브랜치를 만들어 Publish");
+    }
     if (!lbr(n)) { var r = S.repo.branches[n]; if (!r) return err("브랜치가 없음: " + n); L.branches[n] = { commits: r.commits.slice(), files: clone(r.files), upstream: true }; }
     L.head = n; L.work = clone(lbr(n).files); L.index = clone(lbr(n).files); ok(n + " 브랜치로 체크아웃함");
   }
@@ -1494,7 +1581,7 @@ origin/feature-a  ← 다른 브랜치는 '기록'만 생김 (로컬 브랜치 �
     if (!silent) { S.flags["aborted:" + f + ">" + L.head] = true; ok("병합을 중단(Abort)하고 병합 전 상태로 되돌림"); }
   }
   function lMerge(from) {
-    var L = S.local, n = L.head, h = lHead(), isR = /^origin\//.test(from), f = isR ? S.repo.branches[from.slice(7)] : lbr(from);
+    var L = S.local, n = L.head, h = lHead(), isR = /^origin\//.test(from), isU = /^upstream\//.test(from), f = isU ? (upRepo() && upRepo().branches[from.slice(9)]) : isR ? S.repo.branches[from.slice(7)] : lbr(from);
     if (inMerge()) return;
     if (!f) return err("브랜치가 없음: " + from);
     if (from === n) return err("자기 자신에게는 merge 할 수 없음");
@@ -1695,7 +1782,9 @@ origin/feature-a  ← 다른 브랜치는 '기록'만 생김 (로컬 브랜치 �
     { t: "Q. Current·Incoming 헷갈림", from: "질문", quiz: { id: "q12", opts: ["내 브랜치에서 pull 하다 충돌 → Incoming 은 원격(동료가 올린 것)", "내 브랜치에서 pull 하다 충돌 → Incoming 은 내 로컬 커밋", "어느 경우든 Current 는 항상 원격"], ans: 0, exp: "Current = 지금 서 있는 브랜치(내 로컬), Incoming = 들어오는 쪽(원격). 단 rebase 중에는 반대. 표시 줄 뒤의 브랜치 이름을 꼭 확인." },
       r: function () { return "accept current change 와 incoming change 가 헷갈려요."; }, w: "컨플릭트 실습 '누구 것을 남길까' 와 실전 요청에서 반복 연습 가능.", s: ["보기 중 하나를 고름"], ok: qz("q12") },
     { t: "Q. Unable to pull … would be overwritten", from: "질문", quiz: { id: "q13", opts: ["저장소가 고장 나서 다시 클론해야 함", "커밋 안 한 내 수정과 원격 변경이 같은 파일이라 덮일까 봐 막은 것. 커밋·Stash·Discard 중 하나 후 다시 Pull", "강제로 Pull 하면 됨"], ans: 1, exp: "Git 이 내 수정을 지키려고 막은 것임. 살릴 수정이면 커밋 후 Pull, 아직 이른 수정이면 Stash → Pull → Restore(pop), 버릴 수정이면 Discard 후 Pull. 겹치지 않는 파일만 고쳤다면 Pull 이 그대로 됨." },
-      r: function () { return "데스크톱 앱에서 'Unable to pull when changes are present on your branch. The following files would be overwritten: syscall.c' 오류가 떠요."; }, w: "VS Code·데스크톱 실전 요청 'pull 거절(덮어쓰기)' 상황으로 연습.", s: ["보기 중 하나를 고름"], ok: qz("q13") }
+      r: function () { return "데스크톱 앱에서 'Unable to pull when changes are present on your branch. The following files would be overwritten: syscall.c' 오류가 떠요."; }, w: "VS Code·데스크톱 실전 요청 'pull 거절(덮어쓰기)' 상황으로 연습.", s: ["보기 중 하나를 고름"], ok: qz("q13") },
+    { t: "Q. fork 에서 원본으로 PR", from: "질문", quiz: { id: "q14", opts: ["불가능함. 같은 저장소 안에서만 PR 가능", "가능함. 원본 저장소에서 base = 원본:main, compare = 내fork:브랜치 로 PR 을 만듦", "fork 를 지우고 다시 만들어야 함"], ans: 1, exp: "저장소가 다른 PR(compare across forks)이 Fork 의 핵심임. 내 fork 에 push → 원본에 PR → 원본 관리자가 머지. 원본이 바뀌면 Sync fork 로 따라감." },
+      r: function () { return "fork 한 곳에서 다른 곳(원본)으로 PR 을 보낼 수 있나요?"; }, w: "[Fork 실습] 트랙에서 처음부터 끝까지 연습 가능.", s: ["보기 중 하나를 고름"], ok: qz("q14") }
   ];
   function keepDone(list, key) { list.forEach(function (m, i) { var raw = m.ok; m.ok = function () { return latch(key + i, raw); }; }); }
   keepDone(M, "M"); keepDone(MV, "MV"); keepDone(MD, "MD");
@@ -1703,10 +1792,11 @@ origin/feature-a  ← 다른 브랜치는 '기록'만 생김 (로컬 브랜치 �
   setLoc(M, M.map(function () { return ["원격"]; }));
   setLoc(MV, [["원격"], ["원격→로컬"], ["로컬"], ["로컬"], ["로컬"], ["로컬"], ["로컬→원격"], ["원격→로컬"], ["로컬"], ["원격"]]);
   setLoc(MD, [["원격"], ["원격→로컬"], ["로컬"], ["로컬"], ["로컬"], ["로컬→원격"], ["원격"], ["원격→로컬"], ["로컬"], ["원격"]]);
-  setLoc(MQ, [null, ["로컬", "로컬→원격"], null, ["원격"], ["원격", "로컬→원격"], null, null, null, null, null, ["로컬→원격"], ["원격→로컬"], ["로컬"], ["로컬", "로컬→원격"], null, null]);
+  setLoc(MQ, [null, ["로컬", "로컬→원격"], null, ["원격"], ["원격", "로컬→원격"], null, null, null, null, null, ["로컬→원격"], ["원격→로컬"], ["로컬"], ["로컬", "로컬→원격"], null, null, null]);
   var LOC_TIP = { "로컬": "내 컴퓨터에서만 일어남 (원격엔 변화 없음)", "원격": "GitHub(웹)에서 일어남", "로컬→원격": "내 컴퓨터 → GitHub 로 올림 (push·Publish)", "원격→로컬": "GitHub → 내 컴퓨터로 받음 (clone·pull)" };
   function locBadges(loc) { return loc ? '<div class="locs-badges">' + loc.map(function (l) { return '<span class="loc loc-' + (l === "로컬" ? "l" : l === "원격" ? "r" : l === "로컬→원격" ? "up" : "down") + '" title="' + LOC_TIP[l] + '">' + l + '</span>'; }).join("") + '</div>' : ""; }
-  function renderLocTable() {
+  function renderLocTable() { var cur = S.repoKey; useRepo(localKey()); try { renderLocTable0(); } finally { useRepo(cur); } }
+  function renderLocTable0() {
     var box = $("locs"); if (!box) return;
     if (!R()) { box.innerHTML = '<div class="kv2">원격 레포가 아직 없음</div>'; return; }
     var names = Object.keys(R().branches); if (S.local) Object.keys(S.local.branches).forEach(function (n) { if (names.indexOf(n) < 0) names.push(n); });
@@ -1729,13 +1819,13 @@ origin/feature-a  ← 다른 브랜치는 '기록'만 생김 (로컬 브랜치 �
   /* ---------- 컨플릭트 실습 ---------- */
   function ensureBase(needLocal) {
     if (!R()) {
-      S.repo = { name: REPO, desc: "", private: true, branches: { main: { files: {}, commits: [] } }, issues: [], prs: [], releases: [], collabs: [{ who: "김주무관", ok: true }], rules: {}, num: 0, starred: false, recent: {} };
+      S.repo = S.repos.home = { name: REPO, desc: "", private: true, branches: { main: { files: {}, commits: [] } }, issues: [], prs: [], releases: [], collabs: [{ who: "김주무관", ok: true }], rules: {}, num: 0, starred: false, recent: {} };
       addCommit("main", "Initial commit", { "README.md": "# " + REPO });
       feed(ME, "연습용 원격 레포를 자동으로 만듦");
     } else if (!br("main").commits.length) addCommit("main", "Initial commit", { "README.md": "# " + R().name });
     if (!R().collabs.some(function (c) { return c.who === "김주무관"; })) R().collabs.push({ who: "김주무관", ok: true });
     if (needLocal) {
-      if (!S.local || lStale()) { var m = br("main"); S.local = { head: "main", branches: { main: { commits: m.commits.slice(), files: clone(m.files), upstream: true } }, work: clone(m.files), index: clone(m.files), url: repoUrl() }; feed(ME, "저장소를 내 컴퓨터로 클론함"); }
+      if (!S.local || lStale()) { var m = br("main"); S.local = { head: "main", branches: { main: { commits: m.commits.slice(), files: clone(m.files), upstream: true } }, work: clone(m.files), index: clone(m.files), url: repoUrl(), repoKey: "home" }; feed(ME, "저장소를 내 컴퓨터로 클론함"); }
       lAbort(true);
       S.local.work = clone(lHead().files); S.local.index = clone(lHead().files);
     }
@@ -1863,6 +1953,89 @@ origin/feature-a  ← 다른 브랜치는 '기록'만 생김 (로컬 브랜치 �
       r: function () { return "git rebase main 을 하다 충돌이 나면, Current 는 어느 쪽일까요?"; }, w: "Pull 설정을 rebase 로 쓰는 팀(pull --rebase)도 많아 알아 두면 좋음.", s: ["보기 중 하나를 고름"], ok: function () { return !!S.flags["quiz:c5"]; } }
   ];
   setLoc(MC, [null, ["로컬"], ["로컬"], null, ["로컬→원격", "원격→로컬", "로컬"], ["로컬"], ["원격"], ["원격→로컬", "로컬", "로컬→원격"], null, null, ["원격→로컬", "로컬"], null]);
+  /* ---------- Fork ---------- */
+  function ensureUpstream() {
+    if (S.repos.up) return S.repos.up;
+    var cur = S.repoKey;
+    S.repos.up = { owner: "kim-team", name: "team-tool", desc: "김주무관 팀 공용 도구", private: false, branches: { main: { files: {}, commits: [] } }, issues: [], prs: [], releases: [], collabs: [], rules: {}, num: 0, starred: false, recent: {} };
+    useRepo("up");
+    addCommit("main", "Initial commit", { "README.md": "# team-tool\n팀 공용 도구입니다.\n사용법: 셜명서 참조\n문의: 김주무관", "tool.py": "def run():\n    return 'ok'" }, "김주무관");
+    S.repo.branches["release/v1"] = { files: clone(br("main").files), commits: br("main").commits.slice() };
+    addCommit("release/v1", "v1 배포 준비", withFile(br("release/v1").files, "VERSION", "1.0.0"), "김주무관");
+    useRepo(cur);
+    feed("김주무관", "팀 저장소 kim-team/team-tool 을 공개함");
+    return S.repos.up;
+  }
+  function createFork(src) {
+    src = src || "up";
+    if (S.repos.fork && S.repos.fork.parent === src) return S.repos.fork;
+    var f = clone(S.repos[src]);
+    f.owner = OWNER; f.parent = src; f.prs = []; f.issues = []; f.releases = []; f.collabs = []; f.rules = {}; f.num = 0; f.recent = {}; f.private = false; f.desc = "";
+    S.repos.fork = f; feed(ME, ownerOf(S.repos[src]) + "/" + S.repos[src].name + " 를 내 계정으로 fork 함");
+    return f;
+  }
+  function syncFork(k) {
+    var cur = S.repoKey; useRepo(k);
+    var f = S.repo, up = S.repos[f.parent], fm = f.branches.main, pm = up.branches.main, behind = aheadBr(pm, fm), ahead = aheadBr(fm, pm);
+    if (!behind.length) { useRepo(cur); return ok("이미 원본과 같음 (Sync 할 커밋 없음)"); }
+    if (!ahead.length) { fm.commits = pm.commits.slice(); fm.files = clone(pm.files); S.flags["synced:" + k] = true; useRepo(cur); return ok("Sync fork 완료: 원본의 새 커밋 " + behind.length + "개를 내 fork main 에 반영함"); }
+    var mr = mergeTrees(commonTree(fm.commits, pm.commits), fm.files, pm.files, "main (내 fork)", ownerOf(up) + ":main");
+    if (mr.conflicts.length) { useRepo(cur); return err("Sync fork 불가: 충돌(" + mr.conflicts.join(", ") + "). 내 컴퓨터에서 upstream/main 을 merge 해 해결한 뒤 push 해야 함"); }
+    behind.forEach(function (c) { fm.commits.push(c); });
+    addCommit("main", "Merge branch 'main' of " + ownerOf(up) + "/" + up.name, mr.files);
+    S.flags["synced:" + k] = true; useRepo(cur); ok("Sync fork 완료: 원본의 새 커밋 " + behind.length + "개를 합침 (머지 커밋 생성)");
+  }
+  function cloneForkLocal() {
+    var cur = S.repoKey; useRepo("fork");
+    var m = br("main"); S.local = { head: "main", branches: { main: { commits: m.commits.slice(), files: clone(m.files), upstream: true } }, work: clone(m.files), index: clone(m.files), url: repoUrl(), repoKey: "fork", upKey: S.repo.parent };
+    useRepo(cur);
+  }
+  function forkLocal() { return !!S.local && S.local.repoKey === "fork"; }
+  function vsdk(vs, dk) { return function () { return S.mode === "desktop" ? dk : vs; }; }
+  var MF = [
+    { t: "Q. Fork·Clone·Branch", from: "질문", quiz: { id: "f1", opts: ["Fork = 다른 사람 저장소를 내 GitHub 계정으로 복사 / Clone = 저장소를 내 컴퓨터로 복사 / Branch = 한 저장소 안의 갈래", "셋 다 같은 말", "Fork = 내 컴퓨터로 복사, Clone = GitHub 에 복사"], ans: 0, exp: "Fork 는 GitHub(원격)끼리의 복사라 내 계정에 원본과 연결된 새 저장소가 생김. Clone 은 원격 → 내 컴퓨터(로컬). Branch 는 같은 저장소 안의 작업 갈래. 원본에 쓰기 권한이 없을 때 Fork → Clone → Branch → PR 순서로 기여함." },
+      r: function () { return "Fork, Clone, Branch 는 각각 무엇인가요?"; }, w: "권한 없는 저장소에 기여하는 표준 방법이 Fork + PR 임.", s: ["보기 중 하나를 고름"], ok: function () { return !!S.flags["quiz:f1"]; } },
+    { t: "Fork 하기", key: "f2", mode: "web", from: "김주무관", r: function () { return "제 팀 저장소 kim-team/team-tool 에 기여하고 싶다고요? 쓰기 권한은 드릴 수 없어서, Fork 해서 내 계정으로 복사한 뒤 작업해 주세요. (파일 편집을 눌러 보면 막히는 것도 확인해 보세요)"; },
+      w: "Fork = 원본을 내 GitHub 계정으로 복사. 원본과 연결이 남아 있어 나중에 PR 을 보내거나 원본 변경을 받아올 수 있음.",
+      setup: function () { ensureBase(false); ensureUpstream(); if (S.repos.fork) { delete S.repos.fork; if (forkLocal()) S.local = null; } S.mode = "web"; go({ page: "repo", tab: "code", sub: null, branch: "main", repoKey: "up" }); return "팀 저장소 kim-team/team-tool 을 열었음 (쓰기 권한 없음)"; },
+      s: ["[웹 사이트] 에서 kim-team/team-tool 저장소 열기 (대시보드 목록)", "(확인) README.md → ✎ 편집 → 쓰기 권한 없음(403) 안내", "오른쪽 위 [⑂ Fork] 클릭", "jeonnam-dev/team-tool (forked from kim-team/team-tool) 이 생긴 것 확인"],
+      ok: function () { return latch("f2", function () { return !!S.repos.fork && S.repos.fork.parent === "up"; }); } },
+    { t: "내 fork 클론", key: "f3", mode: "local", r: function () { return "Fork 한 내 저장소(jeonnam-dev/team-tool)를 내 컴퓨터로 클론하세요. 원본(kim-team)이 아니라 내 fork 주소여야 push 할 수 있습니다."; },
+      w: "fork 를 클론하면 origin = 내 fork, upstream = 원본으로 자동 등록됨(데스크톱 앱 기준). 원본을 클론하면 push 가 403 으로 막힘.",
+      setup: function () { ensureUpstream(); createFork("up"); if (S.mode === "web") S.mode = "vscode"; return "내 fork(jeonnam-dev/team-tool)를 준비함. 이제 클론함"; },
+      s: vsdk(["탐색기 [새 폴더로 복제] (또는 ··· → Git 저장소 복제)", "목록에서 '내 fork' 주소의 [입력칸에 넣기] → [Git 저장소 복제]", "안내 메시지에서 origin = 내 fork, upstream = 원본 확인"], ["메뉴 [파일] → Clone repository...", "목록에서 jeonnam-dev/team-tool (fork) 선택 → [Clone]"]),
+      ok: function () { return latch("f3", function () { return forkLocal(); }); } },
+    { t: "fork 에서 작업 → push", key: "f4", mode: "local", r: function () { return "로컬에 fix/typo 브랜치를 만들어 README.md 의 '셜명서' 오타를 '설명서'로 고쳐 커밋하고, 내 fork(origin)에 Publish 하세요."; },
+      w: "push 대상은 원본이 아니라 내 fork(origin) 임. 원본엔 권한이 없으니 PR 로 보냄.",
+      setup: function () { ensureUpstream(); createFork("up"); if (!forkLocal()) cloneForkLocal(); var cur = S.repoKey; useRepo("fork"); delete S.repo.branches["fix/typo"]; useRepo(cur); delete S.local.branches["fix/typo"]; setHead("main"); if (S.mode === "web") S.mode = "vscode"; return "내 fork 클론(로컬 main)을 준비함"; },
+      s: vsdk(["상태바 ⎇ → 새 분기 fix/typo", "탐색기 README.md → '셜명서' 를 '설명서' 로 고쳐 저장", "+ 스테이징 → ✓ 커밋", "[☁ Publish Branch] (내 fork 로 올라감)"], ["[Current branch ▾] → New branch → fix/typo", "[Open in editor] → README.md 오타 수정 → 저장", "Summary 입력 → Commit", "[Publish branch] (내 fork 로 올라감)"]),
+      ok: function () { return latch("f4", function () { var f = S.repos.fork, b = f && f.branches["fix/typo"], t = b && b.files["README.md"]; return !!t && t.indexOf("설명서") >= 0 && t.indexOf("셜명서") < 0; }); } },
+    { t: "원본으로 PR 보내기", key: "f5", mode: "web", r: function () { return "이제 원본 저장소로 PR 을 보내세요: base kim-team/team-tool:main ← compare jeonnam-dev:fix/typo. 원본 쓰기 권한이 없어도 PR 은 보낼 수 있고, 머지는 김주무관이 합니다."; },
+      w: "저장소가 다른 PR(compare across forks). 내 fork 화면의 [Contribute → Open pull request] 를 누르면 원본의 PR 작성 화면이 열림.",
+      setup: function () { ensureUpstream(); createFork("up"); var cur = S.repoKey; useRepo("fork"); if (!br("fix/typo")) { S.repo.branches["fix/typo"] = { files: clone(br("main").files), commits: br("main").commits.slice() }; addCommit("fix/typo", "README 오타 수정", withFile(br("fix/typo").files, "README.md", br("fix/typo").files["README.md"].replace("셜명서", "설명서"))); } useRepo("up"); S.repo.prs.forEach(function (p) { if (p.state === "open" && p.headRepo === "fork" && p.head === "fix/typo") p.state = "closed"; }); useRepo(cur); S.mode = "web"; go({ page: "repo", tab: "code", sub: null, branch: "main", repoKey: "fork" }); return "내 fork 에 fix/typo 브랜치가 있는 상태로 fork 화면을 열었음"; },
+      s: ["[웹 사이트] → 내 fork(jeonnam-dev/team-tool) Code 탭", "노란 배너 [Contribute → Open pull request] (또는 원본 → Pull requests → New pull request → compare 에서 jeonnam-dev:fix/typo)", "base 가 kim-team/team-tool 인지 확인 → [Create pull request]", "잠시 뒤 김주무관이 승인·머지하는지 확인"],
+      ok: function () { return latch("f5", function () { var u = S.repos.up; return !!u && u.prs.some(function (p) { return p.headRepo === "fork" && p.head === "fix/typo"; }); }); } },
+    { t: "Q. 권한 없어도 PR?", from: "질문", quiz: { id: "f6", opts: ["원본 쓰기 권한이 있어야 PR 을 보낼 수 있음", "권한이 없어도 fork 에서 PR 을 보낼 수 있음. 머지는 원본 관리자가 함", "fork 에서는 PR 을 보낼 수 없음"], ans: 1, exp: "fork → PR 은 오픈소스 기여의 기본 방식임. PR 은 '합쳐 달라는 요청'이라 누구나 보낼 수 있고, 합칠지는 원본 관리자가 정함. 내 fork 브랜치에 push 를 더 하면 PR 에 자동으로 붙음." },
+      r: function () { return "원본 저장소에 쓰기 권한이 없어도 PR 을 보낼 수 있나요?"; }, w: "방금 직접 해 봤음.", s: ["보기 중 하나를 고름"], ok: function () { return !!S.flags["quiz:f6"]; } },
+    { t: "Sync fork (원본 따라가기)", key: "f7", mode: "web", from: "김주무관", r: function () { return "원본 main 에 제가 새 커밋을 올려서 당신 fork 가 뒤처졌어요(N commits behind). 내 fork 웹 화면에서 [Sync fork] 로 최신화해 주세요."; },
+      w: "fork 는 자동으로 따라오지 않음. 웹의 Sync fork 또는 로컬에서 upstream/main 을 merge 후 push 로 맞춤.",
+      setup: function () { ensureUpstream(); createFork("up"); var cur = S.repoKey; useRepo("up"); S.flags.f7team = addCommit("main", "사용 설명 보강", withFile(br("main").files, "USAGE.md", "1. run() 호출\n2. 결과 확인"), "김주무관"); useRepo(cur); delete S.flags["synced:fork"]; feed("김주무관", "원본 main 에 커밋을 올림"); S.mode = "web"; go({ page: "repo", tab: "code", sub: null, branch: "main", repoKey: "fork" }); return "원본에 새 커밋이 생겨 내 fork 가 " + aheadBr(S.repos.up.branches.main, S.repos.fork.branches.main).length + "개 뒤처진 상태임"; },
+      s: ["[웹 사이트] → 내 fork Code 탭", "배너의 'N개 커밋 뒤처짐' 확인 → [⟳ Sync fork]"],
+      ok: function () { return latch("f7", function () { var f = S.repos.fork; return !!f && !!S.flags.f7team && f.branches.main.commits.indexOf(S.flags.f7team) >= 0; }); } },
+    { t: "로컬 main 도 최신화", key: "f8", mode: "local", r: function () { return "웹의 내 fork 는 최신이 됐지만 내 컴퓨터의 main 은 아직 옛날 상태입니다. 로컬 main 에서 Pull 하세요. (Sync 안 했다면 upstream/main 을 merge 해도 됨)"; },
+      w: "fork 동기화는 두 단계: 원본 → 내 fork(웹 Sync), 내 fork → 내 컴퓨터(Pull). 또는 로컬에서 upstream/main 을 바로 merge 한 뒤 내 fork 로 push.",
+      setup: function () { ensureUpstream(); createFork("up"); if (!forkLocal()) cloneForkLocal(); setHead("main"); if (S.mode === "web") S.mode = "vscode"; return "내 fork 클론의 main 으로 맞춰 둠"; },
+      s: vsdk(["상태바 ⎇ 가 main 인지 확인", "··· → 끌어오기(Pull) (또는 ··· → 분기 병합 → ⇡ upstream/main)"], ["Current branch 가 main 인지 확인", "[Pull origin] (또는 메뉴 [브랜치] → Merge into current branch → upstream/main)"]),
+      ok: function () { return latch("f8", function () { return forkLocal() && !!S.flags.f7team && !!lbr("main") && lbr("main").commits.indexOf(S.flags.f7team) >= 0; }); } },
+    { t: "원본의 특정 브랜치만 가져오기", key: "f9", mode: "local", r: function () { return "원본의 release/v1 브랜치만 내 fork 에 dev 라는 이름으로 따로 두고 싶습니다. upstream/release/v1 을 가져와서 → 거기서 dev 브랜치를 만들고 → 내 fork(origin)에 Publish 하세요."; },
+      w: "명령어로는: git switch -c dev upstream/release/v1 → git push -u origin dev. 원본의 다른 브랜치는 가져오지 않아도 됨.",
+      setup: function () { ensureUpstream(); createFork("up"); if (!forkLocal()) cloneForkLocal(); var cur = S.repoKey; useRepo("fork"); delete S.repo.branches.dev; useRepo(cur); delete S.local.branches.dev; delete S.local.branches["release/v1"]; setHead("main"); if (S.mode === "web") S.mode = "vscode"; return "내 fork 클론(main)을 준비함. 원본엔 release/v1 브랜치가 있음"; },
+      s: vsdk(["상태바 ⎇ → ⇡ upstream/release/v1 (원본) 선택 → 로컬로 가져옴", "상태바 ⎇ → 새 분기 이름 dev 입력 → Enter", "[☁ Publish Branch] → 내 fork 에 dev 생성"], ["[Current branch ▾] → upstream (원본) 브랜치의 upstream/release/v1", "[New branch] → dev → Create branch", "[Publish branch] → 내 fork 에 dev 생성"]),
+      ok: function () { return latch("f9", function () { var f = S.repos.fork, u = S.repos.up, d = f && f.branches.dev, rv = u && u.branches["release/v1"]; return !!d && !!rv && d.commits.indexOf(rv.commits[rv.commits.length - 1]) >= 0; }); } },
+    { t: "Q. origin 과 upstream", from: "질문", quiz: { id: "f10", opts: ["origin = 내 fork(내가 push 하는 곳), upstream = 원본(받아오기만 하는 곳)", "origin = 원본, upstream = 내 fork", "둘 다 원본"], ans: 0, exp: "fork 를 클론하면 origin 은 내 fork, upstream 은 원본으로 둠. push 는 origin 으로, 원본 최신 내용은 upstream 에서 받음(fetch/merge). 원본에 반영은 PR 로." },
+      r: function () { return "fork 를 클론했을 때 origin 과 upstream 은 각각 어디인가요?"; }, w: "VS Code 분기 병합 목록의 ⇡ upstream/… 이 원본 브랜치임.", s: ["보기 중 하나를 고름"], ok: function () { return !!S.flags["quiz:f10"]; } }
+  ];
+  setLoc(MF, [null, ["원격"], ["원격→로컬"], ["로컬", "로컬→원격"], ["원격"], null, ["원격"], ["원격→로컬"], ["원격→로컬", "로컬", "로컬→원격"], null]);
   function prepareLocal() {
     if (!hasRepo()) return;
     if (current(MV) === 7 && !S.flags.vTeam) S.flags.vTeam = teamPushMain("김주무관");
@@ -2113,7 +2286,7 @@ origin/feature-a  ← 다른 브랜치는 '기록'만 생김 (로컬 브랜치 �
     if (!L || v.reclone) {
       h += '<div class="vs-pad">' + (L ? '<p><b>새 폴더로 복제</b></p><p class="vs-dim">지금 폴더는 그대로 두고, 새 저장소를 새 폴더로 받음. <button type="button" class="vs-link" data-l="vs-reclone">취소</button></p>' : '<p>열린 폴더가 없음.</p><p class="vs-dim">원격 저장소를 내 컴퓨터로 복제(Clone)해서 시작함.</p>') +
         '<form data-lform="clone" class="vs-col"><input class="vs-inp" id="vs-url" placeholder="저장소 URL 입력" spellcheck="false"><button class="vs-btn" type="submit">Git 저장소 복제</button></form>';
-      if (R()) h += '<p class="vs-dim">웹 레포 주소<br><span class="mono">' + esc(repoUrl()) + '</span><br><button type="button" class="vs-link" data-l="fill-url">입력칸에 넣기</button></p>';
+      Object.keys(S.repos).forEach(function (k) { var rr = S.repos[k]; if (!rr.branches.main || !rr.branches.main.commits.length) return; h += '<p class="vs-dim">' + (rr.parent ? "내 fork" : ownerOf(rr) === OWNER ? "내 저장소" : "팀 저장소 (쓰기 권한 없음)") + '<br><span class="mono">' + esc(repoUrlOf(rr)) + '</span><br><button type="button" class="vs-link" data-l="fill-url" data-arg="' + k + '">입력칸에 넣기</button></p>'; });
       return h + '</div>';
     }
     if (lStale()) h += '<div class="vs-merge">이 폴더는 <b>예전 저장소</b>에 연결돼 있음<br><span class="mono">' + esc(L.url) + '</span><br>새 저장소: <span class="mono">' + esc(repoUrl()) + '</span><br><button type="button" class="vs-btn sm" data-l="vs-reclone">새 폴더로 복제</button></div>';
@@ -2172,9 +2345,9 @@ origin/feature-a  ← 다른 브랜치는 '기록'만 생김 (로컬 브랜치 �
   function vsPicker() {
     var L = S.local;
     if (vsState().pick === "merge") {
-      var others = Object.keys(L.branches).filter(function (n) { return n !== L.head; }).concat(Object.keys(S.repo.branches).map(function (n) { return "origin/" + n; }));
+      var others = Object.keys(L.branches).filter(function (n) { return n !== L.head; }).concat(Object.keys(S.repo.branches).map(function (n) { return "origin/" + n; }), upRepo() ? Object.keys(upRepo().branches).map(function (n) { return "upstream/" + n; }) : []);
       return '<div class="vs-pick"><div class="vs-pi-h"><b>merge</b>: 고른 브랜치를 현재 로컬 브랜치 <b>' + esc(L.head) + '</b> 에 합침 (⎇ 로컬 브랜치 · ☁ 원격 브랜치 origin/…). 결과는 로컬에만 생김</div>' +
-        (others.length ? others.map(function (n) { return '<button type="button" class="vs-pi" data-l="merge" data-arg="' + esc(n) + '">' + (/^origin\//.test(n) ? "☁ " : "⎇ ") + esc(n) + ' → ' + esc(L.head) + '</button>'; }).join("") : '<div class="vs-pi-h vs-dim">합칠 다른 로컬 브랜치가 없음</div>') +
+        (others.length ? others.map(function (n) { return '<button type="button" class="vs-pi" data-l="merge" data-arg="' + esc(n) + '">' + (/^upstream\//.test(n) ? "⇡ " : /^origin\//.test(n) ? "☁ " : "⎇ ") + esc(n) + ' → ' + esc(L.head) + '</button>'; }).join("") : '<div class="vs-pi-h vs-dim">합칠 다른 로컬 브랜치가 없음</div>') +
         '<button type="button" class="vs-pi vs-dim" data-l="vs-pick">닫기 (Esc)</button></div>';
     }
     var rem = Object.keys(S.repo.branches).filter(function (n) { return !lbr(n); });
@@ -2182,6 +2355,7 @@ origin/feature-a  ← 다른 브랜치는 '기록'만 생김 (로컬 브랜치 �
       '<div class="vs-dim vs-pi-h">+ 새 분기 만들기: 위 칸에 이름 입력 · 아래에서 고르면 체크아웃</div>' +
       Object.keys(L.branches).map(function (n) { return '<button type="button" class="vs-pi" data-l="switch" data-arg="' + esc(n) + '">⎇ ' + esc(n) + (n === L.head ? "  (현재)" : "") + '</button>'; }).join("") +
       rem.map(function (n) { return '<button type="button" class="vs-pi" data-l="switch" data-arg="' + esc(n) + '">☁ origin/' + esc(n) + '</button>'; }).join("") +
+      (upRepo() ? Object.keys(upRepo().branches).map(function (n) { return '<button type="button" class="vs-pi" data-l="switch" data-arg="upstream/' + esc(n) + '">⇡ upstream/' + esc(n) + ' (원본)</button>'; }).join("") : "") +
       '<button type="button" class="vs-pi vs-dim" data-l="vs-pick">닫기 (Esc)</button></div>';
   }
 
@@ -2200,7 +2374,7 @@ origin/feature-a  ← 다른 브랜치는 '기록'만 생김 (로컬 브랜치 �
       var rem = Object.keys(S.repo.branches).filter(function (n) { return !lbr(n); }), s = lSync();
       h += '<details class="dd"><summary class="dk-seg"><small>Current branch</small><b>⎇ ' + esc(L.head) + ' ▾</b></summary><div class="menu"><button type="button" class="btn go sm" data-l="dk-newbr">New branch</button>' +
         Object.keys(L.branches).map(function (n) { return '<button type="button" class="mi" data-l="switch" data-arg="' + esc(n) + '">' + (n === L.head ? "✓ " : "   ") + esc(n) + '</button>'; }).join("") +
-        (rem.length ? '<span class="kv" style="font-size:.75rem">원격 브랜치</span>' + rem.map(function (n) { return '<button type="button" class="mi" data-l="switch" data-arg="' + esc(n) + '">origin/' + esc(n) + '</button>'; }).join("") : "") + '</div></details>';
+        (rem.length ? '<span class="kv" style="font-size:.75rem">원격 브랜치</span>' + rem.map(function (n) { return '<button type="button" class="mi" data-l="switch" data-arg="' + esc(n) + '">origin/' + esc(n) + '</button>'; }).join("") : "") + (upRepo() ? '<span class="kv" style="font-size:.75rem">upstream (원본) 브랜치</span>' + Object.keys(upRepo().branches).map(function (n) { return '<button type="button" class="mi" data-l="switch" data-arg="upstream/' + esc(n) + '">upstream/' + esc(n) + '</button>'; }).join("") : "") + '</div></details>';
       var act = L.merging ? ["noop", "병합 중…", "충돌을 먼저 해결함"] : s.pub ? ["push", "Publish branch", "이 브랜치를 원격에 게시"] : s.behind ? ["pull", "Pull origin ↓" + s.behind, "원격의 새 커밋 받기"] : s.ahead ? ["push", "Push origin ↑" + s.ahead, "내 커밋 올리기"] : ["fetch", "Fetch origin", "원격 변경 확인"];
       h += '<button type="button" class="dk-seg" data-l="' + act[0] + '"><small>' + act[2] + '</small><b>' + act[1] + '</b></button>';
     } else h += '<div class="dk-seg"><small>Current branch</small><b>-</b></div>';
@@ -2236,7 +2410,7 @@ origin/feature-a  ← 다른 브랜치는 '기록'만 생김 (로컬 브랜치 �
         }).join("") +
         '<div class="row"><button type="button" class="btn go" data-l="dk-continue"' + (left2.length ? " disabled" : "") + '>Continue merge</button><button type="button" class="btn danger" data-l="abort">Abort merge</button></div></div>';
     } else if (d.mergeOpen) {
-      var oth = Object.keys(L.branches).filter(function (n) { return n !== L.head; }).concat(Object.keys(S.repo.branches).map(function (n) { return "origin/" + n; }));
+      var oth = Object.keys(L.branches).filter(function (n) { return n !== L.head; }).concat(Object.keys(S.repo.branches).map(function (n) { return "origin/" + n; }), upRepo() ? Object.keys(upRepo().branches).map(function (n) { return "upstream/" + n; }) : []);
       h += '<div class="dk-dialog"><h3>Merge into ' + esc(L.head) + ' (로컬)</h3><p class="kv">고른 브랜치(로컬 또는 origin/… 원격)를 현재 <b>로컬</b> 브랜치 <b class="mono">' + esc(L.head) + '</b> 에 합침. 원격에는 Push 해야 반영됨.</p>' +
         (oth.length ? oth.map(function (n) { return '<button type="button" class="btn" data-l="merge" data-arg="' + esc(n) + '">' + esc(n) + ' → ' + esc(L.head) + '</button>'; }).join("") : '<p class="kv">합칠 다른 로컬 브랜치가 없음</p>') +
         '<div><button type="button" class="btn" data-l="dk-merge">Cancel</button></div></div>';
@@ -2263,7 +2437,7 @@ origin/feature-a  ← 다른 브랜치는 '기록'만 생김 (로컬 브랜치 �
   function dkCloneBox() {
     if (!hasRepo()) return '<h3>저장소 시작하기</h3><p class="kv">클론할 원격 저장소가 없음. [웹 사이트] 모드에서 README 포함 레포를 먼저 만들어야 함.</p>';
     return '<form data-lform="dk-clone" class="dk-dialog"><h3>Clone a repository</h3><p class="kv">내 계정의 저장소 목록</p>' +
-      '<label class="radio"><input type="radio" name="dk-repo" checked><span class="mono">' + OWNER + '/' + esc(R().name) + '</span></label>' +
+      Object.keys(S.repos).filter(function (k) { return S.repos[k].branches.main && S.repos[k].branches.main.commits.length; }).map(function (k, i) { var rr = S.repos[k]; return '<label class="radio"><input type="radio" name="dk-repo" value="' + k + '"' + (i === 0 ? " checked" : "") + '><span class="mono">' + esc(ownerOf(rr) + "/" + rr.name) + '</span>' + (rr.parent ? ' <span class="badge">fork</span>' : ownerOf(rr) !== OWNER ? ' <span class="badge">팀 저장소</span>' : "") + '</label>'; }).join("") +
       '<div class="field"><span class="lbl">Local path</span><span class="mono kv">~/Documents/' + esc(R().name) + '</span></div><div class="row"><button class="btn go" type="submit">Clone</button>' + (S.local ? '<button class="btn" type="button" data-l="dk-clone">Cancel</button>' : "") + '</div></form>';
   }
   function dkEditor() {
@@ -2279,11 +2453,12 @@ origin/feature-a  ← 다른 브랜치는 '기록'만 생김 (로컬 브랜치 �
   function vsSaveBuf() { var v = vsState(); if (v.file && v.buf != null) { S.local.work[v.file] = keepEol(S.local.work[v.file], v.buf); v.buf = null; ok(v.file + " 저장됨 → 작업 폴더에 반영"); } }
   site.addEventListener("click", function (e) {
     var t = e.target.closest("[data-l]"); if (!t || t.disabled) return;
+    useRepo(localKey());
     var a = t.dataset.l, arg = t.dataset.arg, L = S.local, v = vsState(), d = dkState();
     flash = null;
     var dd = t.closest("details"); if (dd && dd.open && t.tagName !== "SUMMARY") dd.open = false;
     if (a === "vs-view") v.view = arg;
-    else if (a === "fill-url") { var inp = $("vs-url"); if (inp) inp.value = repoUrl(); return; }
+    else if (a === "fill-url") { var inp = $("vs-url"); if (inp) inp.value = arg && S.repos[arg] ? repoUrlOf(S.repos[arg]) : repoUrl(); return; }
     else if (a === "vs-newfile") v.newFile = !v.newFile;
     else if (a === "vs-open") { if (L.work[arg] === undefined) return; if (v.file !== arg) { vsSaveBuf(); flash = null; } v.file = arg; v.buf = null; }
     else if (a === "vs-save") vsSaveBuf();
@@ -2326,6 +2501,7 @@ origin/feature-a  ← 다른 브랜치는 '기록'만 생김 (로컬 브랜치 �
   site.addEventListener("change", function (e) {
     var t = e.target;
     if (t.dataset.lpick !== undefined) { dkState().off[t.dataset.lpick] = !t.checked; return; }
+    if (t.dataset.lchange) useRepo(localKey());
     if (t.dataset.lchange === "dk-efile") { dkState().efile = t.value; afterChange(); }
   });
   site.addEventListener("input", function (e) {
@@ -2336,10 +2512,11 @@ origin/feature-a  ← 다른 브랜치는 '기록'만 생김 (로컬 브랜치 �
   site.addEventListener("submit", function (e) {
     var f = e.target.closest("[data-lform]"); if (!f) return;
     e.preventDefault();
+    useRepo(localKey());
     var k = f.dataset.lform, v = vsState(), d = dkState();
     flash = null;
     if (k === "clone") lClone($("vs-url").value);
-    else if (k === "dk-clone") { lClone(repoUrl()); d.clone = false; }
+    else if (k === "dk-clone") { var ck = (f.querySelector('input[name="dk-repo"]:checked') || {}).value || "home"; lClone(repoUrlOf(S.repos[ck])); d.clone = false; }
     else if (k === "vs-newfile") { var nm = $("vs-fname").value.trim(); if (lNewFile(nm)) { v.file = nm; v.buf = null; v.newFile = false; ok(nm + " 만듦. 내용 입력 후 저장함"); } }
     else if (k === "vs-newbr") { vsSaveBuf(); if (lNewBranch($("vs-brname").value)) v.pick = false; }
     else if (k === "vs-commit") {
@@ -2388,18 +2565,19 @@ origin/feature-a  ← 다른 브랜치는 '기록'만 생김 (로컬 브랜치 �
   });
 
   function afterChange(preserve) {
+    useRepo("home");
     if (R()) { prepare(); prepareLocal(); }
     var keep = {}, focusId = null, sel = null;
     if (preserve) {
       Array.prototype.forEach.call($("site").querySelectorAll("input[id],textarea[id],select[id]"), function (el) { keep[el.id] = el.type === "checkbox" || el.type === "radio" ? el.checked : el.value; });
       var ae = document.activeElement; if (ae && ae.id && $("site").contains(ae)) { focusId = ae.id; try { sel = [ae.selectionStart, ae.selectionEnd]; } catch (x) {} }
     }
-    renderRail(); renderSite(); save();
+    renderRail(); useRepo(S.mode === "web" ? viewKey() : localKey()); renderSite(); useRepo("home"); save();
     if (preserve) {
       Object.keys(keep).forEach(function (id) { var el = $(id); if (!el) return; if (el.type === "checkbox" || el.type === "radio") el.checked = keep[id]; else el.value = keep[id]; });
       if (focusId && $(focusId)) { $(focusId).focus(); try { if (sel) $(focusId).setSelectionRange(sel[0], sel[1]); } catch (x) {} }
     }
-    if (R()) scheduleBots();
+    if (Object.keys(S.repos).length) scheduleBots();
   }
   var armed = false;
   $("reset").addEventListener("click", function () {
