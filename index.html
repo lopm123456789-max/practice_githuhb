@@ -211,6 +211,48 @@ h2.pt span { color: var(--muted); }
 .vs-hunk .cur, .vs-hunk .inc { padding: 4px 8px; display: flex; flex-direction: column; }
 .vs-hunk .cur { background: rgba(70,160,110,0.22); } .vs-hunk .inc { background: rgba(70,130,210,0.22); }
 .vs-hunk small { opacity: 0.6; font-size: 11px; }
+.msg-mini { all: unset; cursor: pointer; display: block; background: rgba(255,255,255,0.07); border-radius: 10px; padding: 10px 12px; font-size: 0.85rem; color: var(--rail-ink); }
+.msg-mini:hover { background: rgba(255,255,255,0.12); }
+.msgr { position: fixed; right: 16px; bottom: calc(16px + env(safe-area-inset-bottom, 0px)); width: 370px; max-height: min(72vh, 640px); background: var(--surface); color: var(--ink); border: 1px solid var(--line); border-radius: 14px; box-shadow: 0 12px 36px rgba(0,0,0,0.22); display: flex; flex-direction: column; z-index: 40; overflow: hidden; }
+.msgr.min { width: auto; max-width: min(370px, calc(100vw - 32px)); border-radius: 999px; }
+@media (max-width: 600px) { .msgr { right: 8px; left: 8px; width: auto; max-height: 60vh; } .msgr.min { left: auto; } }
+.msgr-pill { all: unset; cursor: pointer; display: flex; align-items: center; gap: 10px; padding: 8px 14px 8px 8px; position: relative; }
+.msgr-pill span { display: flex; flex-direction: column; min-width: 0; }
+.msgr-pill small { color: var(--muted); font-size: 0.75rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 240px; }
+.msgr-pill .dot { position: absolute; right: 8px; top: 8px; width: 9px; height: 9px; border-radius: 50%; background: var(--closed); }
+.msgr-head { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-bottom: 1px solid var(--line); }
+.msgr-tt { display: flex; flex-direction: column; line-height: 1.25; }
+.msgr-tt small { color: var(--muted); font-size: 0.74rem; }
+.msgr-ic { background: var(--sunk); border: 1px solid var(--line); border-radius: 6px; width: 28px; height: 28px; cursor: pointer; font-size: 0.9rem; }
+.c-av { width: 28px; height: 28px; border-radius: 50%; color: #fff; display: inline-grid; place-items: center; font-size: 0.75rem; font-weight: 700; flex: none; position: relative; }
+.c-av.lg { width: 34px; height: 34px; font-size: 0.85rem; }
+.c-av .on { position: absolute; right: -1px; bottom: -1px; width: 10px; height: 10px; border-radius: 50%; background: #3cb371; border: 2px solid var(--surface); }
+.msgr-body { flex: 1; overflow-y: auto; padding: 10px 12px; display: flex; flex-direction: column; gap: 8px; min-height: 120px; }
+.msgr-sys { align-self: center; font-size: 0.72rem; color: var(--muted); background: var(--sunk); border-radius: 999px; padding: 2px 10px; text-align: center; }
+.b-row { display: flex; gap: 8px; align-items: flex-start; }
+.b-row.past { opacity: 0.6; }
+.b-col { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.b-col small { font-size: 0.72rem; color: var(--muted); }
+.bubble { background: var(--sunk); border: 1px solid var(--line); border-radius: 4px 12px 12px 12px; padding: 8px 10px; font-size: 0.88rem; overflow-wrap: anywhere; }
+.bubble.cur { background: var(--accent-soft); border-color: transparent; }
+.bubble.hint-b { background: var(--warn-soft); }
+.bubble ol { margin: 0; padding-left: 18px; display: flex; flex-direction: column; gap: 3px; font-size: 0.84rem; }
+.b-me { display: flex; justify-content: flex-end; }
+.bubble.me { background: var(--go); color: var(--go-ink); border-color: transparent; border-radius: 12px 4px 12px 12px; font-size: 0.8rem; }
+.msgr .quiz .btn, .msgr .row .btn { background: var(--sunk); color: var(--ink); border-color: var(--line); }
+.msgr .btn.go { background: var(--go); color: var(--go-ink); border-color: var(--go); }
+.msgr .hint { color: var(--muted); font-size: 0.8rem; margin: 0; }
+.msgr .done-tag { color: var(--open); }
+.msgr .wrong { color: var(--closed); }
+.msgr-ct { all: unset; cursor: pointer; display: flex; align-items: center; gap: 10px; padding: 8px; border-radius: 10px; }
+.msgr-ct:hover, .msgr-ct.on { background: var(--accent-soft); }
+.ct-tx { display: flex; flex-direction: column; flex: 1; min-width: 0; line-height: 1.3; }
+.ct-tx small { color: var(--muted); font-size: 0.74rem; }
+.ct-st { font-size: 0.74rem; color: var(--muted); text-align: right; display: flex; flex-direction: column; }
+.ct-st em { font-style: normal; color: var(--accent); }
+.msgr-foot { display: flex; gap: 6px; align-items: center; padding: 8px 12px; border-top: 1px solid var(--line); }
+.wrap { padding-bottom: min(62vh, 560px); }
+body.msgr-min .wrap { padding-bottom: 90px; }
 .locs-badges { display: flex; gap: 4px; flex-wrap: wrap; }
 .loc { font-size: 0.72rem; font-weight: 700; padding: 1px 8px; border-radius: 999px; cursor: help; }
 .loc-l { background: #2c5f8a; color: #e6f0fa; } .loc-r { background: #9a5a1c; color: #fbefe1; }
@@ -334,7 +376,7 @@ h2.pt span { color: var(--muted); }
     <aside class="rail" aria-label="업무 요청">
       <div class="modes" role="group" aria-label="연습 도구"><button type="button" data-mode="web">웹 사이트</button><button type="button" data-mode="vscode">VS Code</button><button type="button" data-mode="desktop">데스크톱 앱</button><button type="button" data-mode="qa" class="qa-btn">내 질문 실습</button><button type="button" data-mode="conflict" class="qa-btn cf-btn">컨플릭트 실습</button><button type="button" data-mode="fork" class="qa-btn fk-btn">Fork 실습</button></div>
       <div class="prog"><span id="prog-t"></span><div class="bar"><i id="prog-b"></i></div></div>
-      <div class="msg" id="req"></div>
+      <button type="button" class="msg msg-mini" id="req" data-msgr="open">요청은 오른쪽 아래 <b>메시지 창</b>에서 받음 · 열기</button>
       <h3>로컬 ↔ 원격 현황</h3>
       <div class="locs" id="locs"></div>
       <h3>요청 목록</h3>
@@ -516,6 +558,7 @@ origin/feature-a  ← 다른 브랜치는 '기록'만 생김 (로컬 브랜치 �
     </div>
   </details>
 </div>
+<div class="msgr" id="msgr" role="complementary" aria-label="업무 메시지"></div>
 
 <script>
 (function () {
@@ -853,12 +896,57 @@ origin/feature-a  ← 다른 브랜치는 '기록'만 생김 (로컬 브랜치 �
   }
 
   /* ---------- 요청 레일 렌더 ---------- */
-  var ui = { hint: false, steps: false, key: null, view: null };
+  var ui = { hint: false, steps: false, key: null, view: null, msgrMin: window.innerWidth < 640 };
   var TRACK_NAME = { web: "웹 사이트", vscode: "VS Code", desktop: "데스크톱 앱", qa: "내 질문 실습", conflict: "컨플릭트 실습", fork: "Fork 실습" };
   function isStudyKey(k) { return k === "qa" || k === "conflict" || k === "fork"; }
   function isStudyTrack() { return isStudyKey(S.track); }
   function trackList(t) { t = t || S.track; return t === "vscode" ? MV : t === "desktop" ? MD : t === "qa" ? MQ : t === "conflict" ? MC : t === "fork" ? MF : M; }
   function isLocalTrack() { return S.track === "vscode" || S.track === "desktop"; }
+  /* ---------- 메신저 창 ---------- */
+  var CH = { web: ["이 팀장", "웹 사이트 · 기본 미션"], vscode: ["박 매니저", "VS Code · 로컬 미션"], desktop: ["최 매니저", "데스크톱 앱 · 로컬 미션"], qa: ["질문 노트", "내가 물어본 것"], conflict: ["김주무관", "컨플릭트 미션"], fork: ["kim-team", "Fork 미션"] };
+  var CH_COLOR = { web: "#245f8f", vscode: "#2f8a55", desktop: "#a8423a", qa: "#7a6a20", conflict: "#a35a1f", fork: "#3d6aa8" };
+  function chatAv(who) { var c = { "팀장": "#245f8f", "김주무관": "#a35a1f", "이주무관": "#7247a8", "박주무관": "#2f8a55", "질문": "#7a6a20", "안내": "#5d6862" }[who] || "#5d6862"; return '<span class="c-av" style="background:' + c + '" aria-hidden="true">' + esc((who || "?").slice(0, 1)) + '</span>'; }
+  function trackAv(k) { return '<span class="c-av lg" style="background:' + CH_COLOR[k] + '" aria-hidden="true">' + esc(CH[k][0].slice(0, 1)) + '<i class="on"></i></span>'; }
+  function renderMsgr(item, eyebrow, isDone, body, list, show) {
+    var box = $("msgr"); if (!box) return;
+    var k = S.track, key = ui.key;
+    if (ui.msgrSeen !== key && ui.msgrMin) ui.msgrUnread = true;
+    if (!ui.msgrMin) { ui.msgrSeen = key; ui.msgrUnread = false; }
+    box.className = "msgr" + (ui.msgrMin ? " min" : ""); document.body.classList.toggle("msgr-min", !!ui.msgrMin);
+    if (ui.msgrMin) {
+      box.innerHTML = '<button type="button" class="msgr-pill" data-msgr="open" aria-label="메시지 창 열기">' + trackAv(k) + '<span><b>' + esc(CH[k][0]) + '</b><small>' + esc(item.from + ": " + item.r).slice(0, 38) + '…</small></span>' + (ui.msgrUnread ? '<i class="dot" aria-label="새 메시지"></i>' : "") + '</button>';
+      return;
+    }
+    var done = list.filter(function (m) { return m.ok(); }).length;
+    var h = '<div class="msgr-head">' + trackAv(k) + '<div class="msgr-tt"><b>' + esc(CH[k][0]) + '</b><small>' + esc(CH[k][1]) + '</small></div><span style="flex:1"></span><button type="button" class="msgr-ic" data-msgr="list" title="담당자 목록" aria-label="담당자 목록">☰</button><button type="button" class="msgr-ic" data-msgr="min" title="최소화" aria-label="최소화">–</button></div>';
+    h += '<div class="msgr-body" id="msgr-body">';
+    if (ui.msgrList) {
+      h += '<div class="msgr-sys">담당자</div>' + ["web", "vscode", "desktop", "qa", "conflict", "fork"].map(function (t) {
+        var L = trackList(t), d = L.filter(function (m) { return m.ok(); }).length;
+        return '<button type="button" class="msgr-ct' + (t === k ? " on" : "") + '" data-msgr="track" data-arg="' + t + '">' + trackAv(t) + '<span class="ct-tx"><b>' + esc(CH[t][0]) + '</b><small>' + esc(CH[t][1]) + '</small></span><span class="ct-st">' + (t === k ? '<em>대화 중</em>' : "") + d + "/" + L.length + ' 완료</span></button>';
+      }).join("");
+    } else {
+      var from0 = Math.max(0, Math.min(show, list.length) - 2);
+      for (var i = from0; i < Math.min(show, list.length); i++) {
+        var pm = list[i];
+        if (!pm.ok()) continue;
+        var txt = pm.r(); h += '<div class="b-row past">' + chatAv(pm.from || "팀장") + '<div class="b-col"><small>' + esc(pm.from || "팀장") + '</small><div class="bubble">' + esc(txt.length > 70 ? txt.slice(0, 70) + "…" : txt) + '</div></div></div><div class="b-me"><span class="bubble me">처리 완료했습니다 ✓</span></div>';
+      }
+      h += body;
+    }
+    h += '</div><div class="msgr-foot"><button type="button" class="btn sm" data-rail="hint">' + (ui.hint ? "힌트 닫기" : "힌트 받기") + '</button><button type="button" class="btn sm" data-rail="steps">' + (ui.steps ? "순서 닫기" : "지시 다시 보기") + '</button><span style="flex:1"></span><span class="kv">' + (show < list.length ? (show + 1) + "/" + list.length + " 단계" : done + "/" + list.length + " 완료") + '</span></div>';
+    box.innerHTML = h;
+    var bd = $("msgr-body"); if (bd && !ui.msgrList) bd.scrollTop = bd.scrollHeight;
+  }
+  function msgrClick(e) {
+    var b = e.target.closest("[data-msgr]"); if (!b) return false;
+    var a = b.dataset.msgr;
+    if (a === "open") ui.msgrMin = false;
+    else if (a === "min") ui.msgrMin = true;
+    else if (a === "list") ui.msgrList = !ui.msgrList;
+    else if (a === "track") { var t = b.dataset.arg; if (isStudyKey(t)) S.track = t; else S.mode = S.track = t; ui.msgrList = false; ui.view = null; flash = null; }
+    afterChange(); return true;
+  }
   function renderRail() {
     Array.prototype.forEach.call(document.querySelectorAll("[data-mode]"), function (b) { var on = isStudyKey(b.dataset.mode) ? S.track === b.dataset.mode : b.dataset.mode === S.mode; b.classList.toggle("on", on); b.setAttribute("aria-pressed", on ? "true" : "false"); });
     var list = trackList(), cur = current(list), done = list.filter(function (m) { return m.ok(); }).length;
@@ -879,7 +967,7 @@ origin/feature-a  ← 다른 브랜치는 '기록'만 생김 (로컬 브랜치 �
       var m = list[show]; item = { from: m.from || "팀장", r: m.r(), w: m.w, s: typeof m.s === "function" ? m.s() : m.s, loc: m.key === "c6" && S.flags.c6q ? S.flags.c6q.loc : m.loc }; eyebrow = TRACK_NAME[S.track] + " · 기본 " + (show + 1) + " · " + m.t; isDone = m.ok(); key = S.track + "m" + show;
     }
     if (key !== ui.key) { ui.hint = ui.steps = false; ui.key = key; }
-    var h = '<span class="eyebrow">' + esc(eyebrow) + '</span>' + locBadges(item.loc) + '<span class="who">' + esc(item.from) + '</span><p>' + esc(item.r) + '</p>';
+    var h = '<div class="msgr-sys">' + esc(eyebrow) + '</div>' + locBadges(item.loc) + '<div class="b-row">' + chatAv(item.from) + '<div class="b-col"><small>' + esc(item.from) + '</small><div class="bubble cur">' + esc(item.r) + '</div></div></div>';
     var mq = show < list.length ? list[show] : null;
     if (mq && mq.quiz) {
       if (isDone) h += '<p class="hint">정답: ' + esc(mq.quiz.opts[mq.quiz.ans]) + '</p><p class="hint">' + esc(mq.quiz.exp) + '</p>';
@@ -888,15 +976,14 @@ origin/feature-a  ← 다른 브랜치는 '기록'만 생김 (로컬 브랜치 �
         if (ui.wrong === key) h += '<p class="wrong">오답임. 힌트를 보고 다시 골라 보기.</p>';
       }
     }
-    h += '<div class="row"><button type="button" class="btn sm" data-rail="hint">' + (ui.hint ? "힌트 닫기" : "힌트 보기") + '</button><button type="button" class="btn sm" data-rail="steps">' + (ui.steps ? "클릭 경로 닫기" : "클릭 경로 보기") + '</button></div>';
     if (mq && mq.setup) h += '<div class="row"><button type="button" class="btn go sm" data-rail="setup">' + (isDone ? "다시 해보기" : "상황 만들기") + '</button><span class="hint" style="font-size:.78rem">' + (mq.mode === "web" ? "웹 화면에서 진행" : "VS Code 또는 데스크톱 앱 화면에서 진행") + '</span></div>';
-    if (ui.hint) h += '<p class="hint">' + esc(item.w) + '</p>';
+    if (ui.hint) h += '<div class="b-row">' + chatAv(item.from) + '<div class="b-col"><small>' + esc(item.from) + ' · 힌트</small><div class="bubble hint-b">' + esc(item.w) + '</div></div></div>';
     if (isStudyTrack()) h += '<p class="hint" style="font-size:.76rem;opacity:.75">화면 전환은 위 [웹 사이트]·[VS Code]·[데스크톱 앱] 버튼으로 함 (이 트랙은 유지됨. 같은 버튼을 한 번 더 누르면 그 모드의 기본 트랙으로 이동)</p>';
-    if (ui.steps) h += '<ol>' + item.s.map(function (s) { return "<li>" + esc(s) + "</li>"; }).join("") + '</ol>';
+    if (ui.steps) h += '<div class="b-row">' + chatAv(item.from) + '<div class="b-col"><small>' + esc(item.from) + ' · 진행 순서</small><div class="bubble"><ol>' + item.s.map(function (s) { return "<li>" + esc(s) + "</li>"; }).join("") + '</ol></div></div></div>';
     if (show >= list.length && S.track !== "qa") h += '<div class="row">' + (isDone ? '<span class="done-tag">처리 완료</span><button type="button" class="btn go sm" data-rail="next">다음 요청 받기</button>' : '<button type="button" class="btn sm" data-rail="skip">다른 요청으로 바꾸기</button>') + '</div>';
     else if (isDone) h += '<span class="done-tag">처리 완료</span>';
     if (S.mode !== S.track && !isStudyTrack()) h += '<p class="hint">지금 오른쪽 화면은 ' + TRACK_NAME[S.mode] + ' 모드임. 요청은 ' + TRACK_NAME[S.track] + ' 기준이며, 위 버튼으로 돌아갈 수 있음.</p>';
-    $("req").innerHTML = h;
+    renderMsgr(item, eyebrow, isDone, h, list, show);
     var rows = list.map(function (m, i) { return { t: m.t, ok: m.ok(), i: i }; }).concat(isStudyTrack() ? [] : [{ t: "실전 요청 (무작위·무제한)", ok: false, i: list.length }]);
     $("qlist").innerHTML = rows.map(function (x) {
       return '<li class="' + (x.ok ? "done" : x.i === cur ? "cur" : "") + '"><span class="mk">' + (x.ok ? "✓" : x.i < list.length ? x.i + 1 : "∞") + '</span><button type="button" data-rail="view" data-i="' + x.i + '"' + (x.i === list.length && cur < list.length ? " disabled" : "") + '>' + esc(x.t) + '</button></li>';
@@ -904,8 +991,9 @@ origin/feature-a  ← 다른 브랜치는 '기록'만 생김 (로컬 브랜치 �
     renderLocTable();
     $("feed").innerHTML = S.feed.length ? S.feed.map(function (f) { return "<div><b>" + esc(f.who) + "</b> " + esc(f.text) + "</div>"; }).join("") : "<div>아직 알림 없음</div>";
   }
-  document.querySelector(".rail").addEventListener("click", function (e) {
+  function railClick(e) {
     useRepo("home");
+    if (msgrClick(e)) return;
     var md = e.target.closest("[data-mode]");
     if (md) { if (isStudyKey(md.dataset.mode)) S.track = md.dataset.mode; else if (isStudyTrack() && md.dataset.mode !== S.mode) S.mode = md.dataset.mode; else S.mode = S.track = md.dataset.mode; ui.view = null; flash = null; return afterChange(); }
     var b = e.target.closest("[data-rail]"); if (!b) return;
@@ -928,7 +1016,9 @@ origin/feature-a  ← 다른 브랜치는 '기록'만 생김 (로컬 브랜치 �
     else if (a === "quiz") { var mqz = trackList()[current(trackList())]; if (ui.view !== null) mqz = trackList()[ui.view]; if (mqz && mqz.quiz) { if (+b.dataset.i === mqz.quiz.ans) { S.flags["quiz:" + mqz.quiz.id] = true; ui.wrong = null; } else ui.wrong = ui.key; } }
     else if (a === "view") { var i = +b.dataset.i, L = trackList().length; ui.view = (i === current(trackList()) || i === L) ? null : i; }
     afterChange();
-  });
+  }
+  document.querySelector(".rail").addEventListener("click", railClick);
+  $("msgr").addEventListener("click", railClick);
 
   /* ---------- 사이트 렌더 ---------- */
   var V = function () { return S.v; };
@@ -1117,11 +1207,11 @@ origin/feature-a  ← 다른 브랜치는 '기록'만 생김 (로컬 브랜치 �
     return h + '</div>';
   }
   function escCR(t) { return esc(t).replace(/\r/g, '<span class="cr" title="CR (윈도우 줄바꿈 문자)">␍</span>'); }
-  function diffHTML(baseFiles, headFiles) {
+  function diffHTML(baseFiles, headFiles, editBr, prNum) {
     var keys = Object.keys(Object.assign({}, baseFiles, headFiles)).sort().filter(function (k) { return baseFiles[k] !== headFiles[k]; });
     if (!keys.length) return '<div class="empty">변경된 파일이 없음</div>';
     return keys.map(function (k) {
-      var h = '<div class="box" style="margin-bottom:10px"><div class="box-head"><span class="mono">' + esc(k) + '</span><span class="kv">' + (!(k in baseFiles) ? "새 파일" : !(k in headFiles) ? "삭제" : "수정") + '</span></div><div class="diff">';
+      var h = '<div class="box" style="margin-bottom:10px"><div class="box-head"><span class="mono">' + esc(k) + '</span><span class="row"><span class="kv">' + (!(k in baseFiles) ? "새 파일" : !(k in headFiles) ? "삭제" : "수정") + '</span>' + (editBr && k in headFiles ? '<button type="button" class="btn sm" data-act="edit-head" data-arg="' + esc(k) + '" data-br="' + esc(editBr) + '" data-pr="' + prNum + '" title="' + esc(editBr) + ' 브랜치에서 이 파일 편집">✎ 편집</button>' : "") + '</span></div><div class="diff">';
       var a = k in baseFiles ? baseFiles[k].split("\n") : [], b = k in headFiles ? headFiles[k].split("\n") : [];
       var sameTop = 0; while (sameTop < a.length && sameTop < b.length && a[sameTop] === b[sameTop]) sameTop++;
       var sameBot = 0; while (sameBot < a.length - sameTop && sameBot < b.length - sameTop && a[a.length - 1 - sameBot] === b[b.length - 1 - sameBot]) sameBot++;
@@ -1175,7 +1265,7 @@ origin/feature-a  ← 다른 브랜치는 '기록'만 생김 (로컬 브랜치 �
     var h = '<h2 class="pt">' + esc(p.title) + ' <span>#' + p.num + '</span></h2><div class="row" style="margin-bottom:6px"><span class="state ' + stc + '">' + { open: "Open", merged: "Merged", closed: "Closed" }[stc] + '</span><span class="kv"><b>' + esc(p.author) + '</b> 님이 <span class="mono">' + esc(headLabel(p)) + '</span> → <span class="mono">' + esc(p.base) + '</span> ' + (p.state === "merged" ? "머지 완료" : "머지 요청") + '</span></div>';
     h += '<div class="subtabs"><button type="button" class="tab' + (filesTab ? "" : " on") + '" data-act="pr-tab" data-arg="conv">Conversation</button><button type="button" class="tab' + (filesTab ? " on" : "") + '" data-act="pr-tab" data-arg="files">Files changed</button></div>';
     if (filesTab) {
-      h += p.state === "open" && hb(p) ? diffHTML(br(p.base).files, hb(p).files) : '<div class="empty">' + (p.state === "merged" ? "이미 머지됨" : "닫힌 PR") + '</div>';
+      h += p.state === "open" && hb(p) ? diffHTML(br(p.base).files, hb(p).files, !p.headRepo && canWrite() ? p.head : null, p.num) : '<div class="empty">' + (p.state === "merged" ? "이미 머지됨" : "닫힌 PR") + '</div>';
       if (p.state === "open") {
         var own = p.author === ME;
         h += '<form data-form="review" class="box" style="margin-top:14px"><div class="box-head"><b>Review changes</b></div><div style="padding:12px 14px"><textarea class="inp" id="rv-text" placeholder="리뷰 의견"></textarea>' +
@@ -1263,7 +1353,7 @@ origin/feature-a  ← 다른 브랜치는 '기록'만 생김 (로컬 브랜치 �
     else if (a === "sync-fork") syncFork(viewKey());
     else if (a === "contribute") { var pk = R().parent; go({ page: "repo", tab: "pulls", sub: { type: "compare", base: "main", head: "@" + viewKey() + ":" + arg }, repoKey: pk, branch: "main" }); ok("원본 저장소(" + ownerOf(S.repos[pk]) + "/" + S.repos[pk].name + ")의 PR 작성 화면을 열었음 (compare across forks)"); }
     else if (a === "switch-branch") go({ branch: arg, sub: null });
-    else if (a === "code-root") go({ sub: null });
+    else if (a === "code-root") go({ sub: null, returnPr: null });
     else if (a === "open-file") go({ sub: { type: "file", path: arg } });
     else if (a === "edit-file") go({ sub: { type: "edit", path: arg } });
     else if (a === "add-file") go({ sub: { type: "edit", path: null } });
@@ -1283,6 +1373,7 @@ origin/feature-a  ← 다른 브랜치는 '기록'만 생김 (로컬 브랜치 �
       else { i.state = "open"; i.reason = null; i.timeline.push({ k: "ev", who: ME, text: "이슈를 다시 엶" }); }
     }
     else if (a === "open-pr") go({ tab: "pulls", sub: { type: "pr", num: +arg } });
+    else if (a === "edit-head") go({ tab: "code", branch: t.dataset.br, sub: { type: "edit", path: arg }, returnPr: +t.dataset.pr });
     else if (a === "resolve-pr") { v.sub.resolve = true; v.sub.files = false; flash = null; }
     else if (a === "resolve-cancel") { v.sub.resolve = false; flash = null; }
     else if (a === "pr-tab") { v.sub.files = arg === "files"; flash = null; }
@@ -1365,6 +1456,7 @@ origin/feature-a  ← 다른 브랜치는 '기록'만 생김 (로컬 브랜치 �
       var files = clone(br(target).files); files[path] = body;
       var cid = addCommit(target, msg, files); r.recent[target] = 1;
       if (toNew) { go({ branch: target, tab: "pulls", sub: { type: "compare", base: v.branch === target ? "main" : S.v.branch, head: target } }); S.v.sub.base = "main"; ok("새 브랜치 " + target + " 에 커밋함. 이어서 PR을 작성함."); }
+      else if (v.returnPr && pr(v.returnPr)) { var rpn = v.returnPr; go({ tab: "pulls", sub: { type: "pr", num: rpn, files: true }, returnPr: null }); ok(target + " 에 커밋함 (" + cid + "). 열려 있는 PR #" + rpn + " 에 자동으로 추가됨"); }
       else { go({ sub: { type: "file", path: path } }); ok(target + " 에 커밋함 (" + cid + ")"); }
     } else if (k === "create-issue") {
       var ni = makeIssue({ title: $("ni-title").value.trim(), body: $("ni-body").value.trim(), assignees: picked("ni-as"), labels: picked("ni-lb") });
