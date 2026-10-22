@@ -2090,7 +2090,7 @@ origin/feature-a  ← 다른 브랜치는 '기록'만 생김 (로컬 브랜치 �
     { t: "Fork 하기", key: "f2", mode: "web", from: "김주무관", r: function () { return "제 팀 저장소 kim-team/team-tool 에 기여하고 싶다고요? 쓰기 권한은 드릴 수 없어서, Fork 해서 내 계정으로 복사한 뒤 작업해 주세요. (파일 편집을 눌러 보면 막히는 것도 확인해 보세요)"; },
       w: "Fork = 원본을 내 GitHub 계정으로 복사. 원본과 연결이 남아 있어 나중에 PR 을 보내거나 원본 변경을 받아올 수 있음.",
       setup: function () { ensureBase(false); ensureUpstream(); if (S.repos.fork) { delete S.repos.fork; if (forkLocal()) S.local = null; } S.mode = "web"; go({ page: "repo", tab: "code", sub: null, branch: "main", repoKey: "up" }); return "팀 저장소 kim-team/team-tool 을 열었음 (쓰기 권한 없음)"; },
-      s: ["[웹 사이트] 에서 kim-team/team-tool 저장소 열기 (대시보드 목록)", "(확인) README.md → ✎ 편집 → 쓰기 권한 없음(403) 안내", "오른쪽 위 [⑂ Fork] 클릭", "jeonnam-dev/team-tool (forked from kim-team/team-tool) 이 생긴 것 확인"],
+      s: ["[웹 사이트] → 왼쪽 위 로고(대시보드) → 내 저장소 목록의 kim-team/team-tool 클릭 (Fork 미션을 고르면 자동으로 생김)", "(확인) README.md → ✎ 편집 → 쓰기 권한 없음(403) 안내", "오른쪽 위 [⑂ Fork] 클릭", "jeonnam-dev/team-tool (forked from kim-team/team-tool) 이 생긴 것 확인"],
       ok: function () { return latch("f2", function () { return !!S.repos.fork && S.repos.fork.parent === "up"; }); } },
     { t: "내 fork 클론", key: "f3", mode: "local", r: function () { return "Fork 한 내 저장소(jeonnam-dev/team-tool)를 내 컴퓨터로 클론하세요. 원본(kim-team)이 아니라 내 fork 주소여야 push 할 수 있습니다."; },
       w: "fork 를 클론하면 origin = 내 fork, upstream = 원본으로 자동 등록됨(데스크톱 앱 기준). 원본을 클론하면 push 가 403 으로 막힘.",
@@ -2658,6 +2658,7 @@ origin/feature-a  ← 다른 브랜치는 '기록'만 생김 (로컬 브랜치 �
 
   function afterChange(preserve) {
     useRepo("home");
+    if (S.track === "fork" && !S.repos.up) { ensureUpstream(); if (S.repos.home) useRepo("home"); else { S.repo = null; S.repoKey = "home"; } }
     if (R()) { prepare(); prepareLocal(); }
     var keep = {}, focusId = null, sel = null;
     if (preserve) {
