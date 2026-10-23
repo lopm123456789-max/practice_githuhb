@@ -555,6 +555,16 @@ origin/feature-a  ← 다른 브랜치는 '기록'만 생김 (로컬 브랜치 �
         </tbody></table></div>
         <ul><li>원본에 직접 push 하면 403 으로 거절됨 → 항상 내 fork 로 push</li><li>머지는 원본 관리자가 함. PR 이 열려 있는 동안 내 fork 브랜치에 push 하면 PR 에 자동으로 붙음</li><li>연습: 왼쪽 [Fork 실습] 트랙</li></ul>
       </section>
+      <section><h3>Q16. 남의 저장소가 GitHub Desktop 클론 목록에 안 보임</h3>
+        <p>Clone repository 의 <b>GitHub.com 탭</b>은 내 계정이 <b>소유</b>하거나 <b>Collaborator·조직 멤버</b>인 저장소만 보여 줌. 남의 저장소는 원래 안 나옴.</p>
+        <div class="tbl"><table><thead><tr><th>상황</th><th>해결</th></tr></thead><tbody>
+          <tr><td>공개 저장소</td><td>[파일] → Clone repository → <b>URL 탭</b> → 주소(https://github.com/소유자/저장소) 또는 소유자/저장소 입력 → Clone</td></tr>
+          <tr><td>비공개 저장소</td><td>소유자에게 Collaborator 초대 요청 → 메일·github.com/notifications 에서 <b>초대 수락</b> → 목록에 나옴 (수락 전엔 Repository not found)</td></tr>
+          <tr><td>조직 저장소</td><td>조직 멤버 확인, 조직이 앱 접근을 막았으면 Settings → Applications 에서 GitHub Desktop 접근 요청</td></tr>
+          <tr><td>방금 초대 수락함</td><td>목록 오른쪽 새로고침 버튼 또는 앱 재로그인</td></tr>
+        </tbody></table></div>
+        <ul><li>클론은 읽기용임. push 하려면 Collaborator 권한, 권한이 없으면 Fork 후 PR</li><li>VS Code 는 목록 없이 Git: Clone 에 주소를 바로 넣음</li></ul>
+      </section>
     </div>
   </details>
 </div>
@@ -1876,7 +1886,9 @@ origin/feature-a  ← 다른 브랜치는 '기록'만 생김 (로컬 브랜치 �
     { t: "Q. Unable to pull … would be overwritten", from: "질문", quiz: { id: "q13", opts: ["저장소가 고장 나서 다시 클론해야 함", "커밋 안 한 내 수정과 원격 변경이 같은 파일이라 덮일까 봐 막은 것. 커밋·Stash·Discard 중 하나 후 다시 Pull", "강제로 Pull 하면 됨"], ans: 1, exp: "Git 이 내 수정을 지키려고 막은 것임. 살릴 수정이면 커밋 후 Pull, 아직 이른 수정이면 Stash → Pull → Restore(pop), 버릴 수정이면 Discard 후 Pull. 겹치지 않는 파일만 고쳤다면 Pull 이 그대로 됨." },
       r: function () { return "데스크톱 앱에서 'Unable to pull when changes are present on your branch. The following files would be overwritten: syscall.c' 오류가 떠요."; }, w: "VS Code·데스크톱 실전 요청 'pull 거절(덮어쓰기)' 상황으로 연습.", s: ["보기 중 하나를 고름"], ok: qz("q13") },
     { t: "Q. fork 에서 원본으로 PR", from: "질문", quiz: { id: "q14", opts: ["불가능함. 같은 저장소 안에서만 PR 가능", "가능함. 원본 저장소에서 base = 원본:main, compare = 내fork:브랜치 로 PR 을 만듦", "fork 를 지우고 다시 만들어야 함"], ans: 1, exp: "저장소가 다른 PR(compare across forks)이 Fork 의 핵심임. 내 fork 에 push → 원본에 PR → 원본 관리자가 머지. 원본이 바뀌면 Sync fork 로 따라감." },
-      r: function () { return "fork 한 곳에서 다른 곳(원본)으로 PR 을 보낼 수 있나요?"; }, w: "[Fork 실습] 트랙에서 처음부터 끝까지 연습 가능.", s: ["보기 중 하나를 고름"], ok: qz("q14") }
+      r: function () { return "fork 한 곳에서 다른 곳(원본)으로 PR 을 보낼 수 있나요?"; }, w: "[Fork 실습] 트랙에서 처음부터 끝까지 연습 가능.", s: ["보기 중 하나를 고름"], ok: qz("q14") },
+    { t: "Q. 데스크톱 앱에 남의 저장소가 안 보임", from: "질문", quiz: { id: "q15", opts: ["앱 오류라 재설치해야 함", "Clone 목록은 내 소유·Collaborator·조직 저장소만 보여 줌. 남의 공개 저장소는 [URL] 탭에 주소를 넣고, 비공개면 초대를 먼저 수락함", "Fork 하지 않으면 절대 클론할 수 없음"], ans: 1, exp: "GitHub Desktop 의 GitHub.com 탭은 내 계정과 관련된 저장소 목록임. 공개 저장소는 누구나 URL 로 클론 가능. 비공개는 초대 수락(메일·github.com/notifications) 전엔 Repository not found. push 까지 하려면 Collaborator 권한 또는 Fork 필요." },
+      r: function () { return "github.com/jye-1123/KJG-SW-AI-W09 가 GitHub Desktop 클론 목록에 안 보이는 이유와 해결 방법은?"; }, w: "[데스크톱 앱] 실전 요청에서 '김주무관 저장소 URL 로 클론' 상황으로 연습 가능.", s: ["보기 중 하나를 고름"], ok: qz("q15") }
   ];
   function keepDone(list, key) { list.forEach(function (m, i) { var raw = m.ok; m.ok = function () { return latch(key + i, raw); }; }); }
   keepDone(M, "M"); keepDone(MV, "MV"); keepDone(MD, "MD");
@@ -1884,7 +1896,7 @@ origin/feature-a  ← 다른 브랜치는 '기록'만 생김 (로컬 브랜치 �
   setLoc(M, M.map(function () { return ["원격"]; }));
   setLoc(MV, [["원격"], ["원격→로컬"], ["로컬"], ["로컬"], ["로컬"], ["로컬"], ["로컬→원격"], ["원격→로컬"], ["로컬"], ["원격"]]);
   setLoc(MD, [["원격"], ["원격→로컬"], ["로컬"], ["로컬"], ["로컬"], ["로컬→원격"], ["원격"], ["원격→로컬"], ["로컬"], ["원격"]]);
-  setLoc(MQ, [null, ["로컬", "로컬→원격"], null, ["원격"], ["원격", "로컬→원격"], null, null, null, null, null, ["로컬→원격"], ["원격→로컬"], ["로컬"], ["로컬", "로컬→원격"], null, null, null]);
+  setLoc(MQ, [null, ["로컬", "로컬→원격"], null, ["원격"], ["원격", "로컬→원격"], null, null, null, null, null, ["로컬→원격"], ["원격→로컬"], ["로컬"], ["로컬", "로컬→원격"], null, null, null, ["원격→로컬"]]);
   var LOC_TIP = { "로컬": "내 컴퓨터에서만 일어남 (원격엔 변화 없음)", "원격": "GitHub(웹)에서 일어남", "로컬→원격": "내 컴퓨터 → GitHub 로 올림 (push·Publish)", "원격→로컬": "GitHub → 내 컴퓨터로 받음 (clone·pull)" };
   function locBadges(loc) { return loc ? '<div class="locs-badges">' + loc.map(function (l) { return '<span class="loc loc-' + (l === "로컬" ? "l" : l === "원격" ? "r" : l === "로컬→원격" ? "up" : "down") + '" title="' + LOC_TIP[l] + '">' + l + '</span>'; }).join("") + '</div>' : ""; }
   function renderLocTable() { var cur = S.repoKey; useRepo(localKey()); try { renderLocTable0(); } finally { useRepo(cur); } }
@@ -2134,9 +2146,10 @@ origin/feature-a  ← 다른 브랜치는 '기록'만 생김 (로컬 브랜치 �
     if (current(MD) === 7 && !S.flags.dTeam) S.flags.dTeam = teamPushMain("김주무관");
   }
   function newLocalQuest() {
-    var types = ["feat", "pull", "pr", "lmerge", "rpr", "pushok", "pushhold", "prupdate", "pushhide", "switchrepo", "crlf", "selcommit", "gitignore", "whichside", "pulldirty"], last = S.lq && S.lq.type;
+    var types = ["feat", "pull", "pr", "lmerge", "rpr", "pushok", "pushhold", "prupdate", "pushhide", "switchrepo", "crlf", "selcommit", "gitignore", "whichside", "pulldirty", "cloneurl"], last = S.lq && S.lq.type;
+    if (S.local && S.local.repoKey !== "home") ensureBase(true);
     var type = pick(types.filter(function (t) { return t !== last; })), q = { type: type, n: S.lqDone + 1, from: "팀장" };
-    if (type === "pushok" || type === "pushhold" || type === "prupdate" || type === "pushhide" || type === "switchrepo" || type === "crlf" || type === "selcommit" || type === "gitignore" || type === "whichside" || type === "pulldirty") { genAskQuest(q); S.lq = q; return; }
+    if (type === "pushok" || type === "pushhold" || type === "prupdate" || type === "pushhide" || type === "switchrepo" || type === "crlf" || type === "selcommit" || type === "gitignore" || type === "whichside" || type === "pulldirty" || type === "cloneurl") { genAskQuest(q); S.lq = q; return; }
     if (type === "lmerge" || type === "rpr") {
       var cands = FEATS.filter(function (f) { var b = "feature/" + f[0] + (type === "lmerge" ? "-draft" : "-pr"); return !lbr(b) && !br(b); }), g = cands.length ? pick(cands) : [pick(FEATS)[0] + (S.seqL = (S.seqL || 0) + 1), "추가"];
       q.br = "feature/" + g[0] + (type === "lmerge" ? "-draft" : "-pr"); q.file = g[0] + "-" + type + ".md";
@@ -2241,6 +2254,11 @@ origin/feature-a  ← 다른 브랜치는 '기록'만 생김 (로컬 브랜치 �
       q.r = lead + (q.how === "commit" ? "내 수정(write 구현)도 살려야 하니, 먼저 커밋한 뒤 Pull 해서 합치고 Push 까지 해 주세요." : q.how === "stash" ? "내 수정은 아직 커밋하기 이릅니다. 임시 저장(Stash) → Pull → 다시 꺼내기(Pop/Restore) 해서, 받은 내용 위에 내 수정이 커밋 안 된 채 남게 해 주세요." : "내 수정은 실험이라 버려도 됩니다. 변경을 버리고(Discard) Pull 해서 원격과 똑같이 맞춰 주세요.");
       q.w = "커밋 안 한 내 수정과 원격 변경이 같은 파일이라, 그대로 pull 하면 내 수정이 덮일 수 있어 Git 이 막음. 살릴 거면 커밋, 잠시 미룰 거면 Stash(임시 저장), 필요 없으면 Discard. 잘 모르겠으면 Stash 가 가장 안전함.";
       q.loc = q.how === "commit" ? ["로컬", "원격→로컬", "로컬→원격"] : ["로컬", "원격→로컬"];
+    } else if (q.type === "cloneurl") {
+      ensureUpstream(); useRepo("home"); q.url = repoUrlOf(S.repos.up); q.from = "김주무관";
+      q.r = "제 저장소 " + q.url + " 를 내 컴퓨터에 클론해서 tool.py 를 한번 봐 주세요. 공개 저장소라 클론은 됩니다. 데스크톱 앱 목록에 안 보인다면 URL 로 넣어 보세요.";
+      q.w = "GitHub Desktop 의 GitHub.com 목록에는 내 계정이 소유하거나 Collaborator·조직 멤버인 저장소만 나옴. 남의 공개 저장소는 URL 탭에 주소(또는 소유자/저장소)를 넣으면 됨. 비공개라면 초대 수락 전엔 'Repository not found' 가 뜸. 클론은 읽기용이라 push 하려면 Collaborator 초대나 Fork 가 필요함.";
+      q.loc = ["원격→로컬"];
     } else if (q.type === "whichside") {
       genWhich(q, Math.random() < 0.5, Math.random() < 0.5);
     } else if (q.type === "crlf") {
@@ -2311,6 +2329,7 @@ origin/feature-a  ← 다른 브랜치는 '기록'만 생김 (로컬 브랜치 �
       if (q.how === "stash") return !!S.flags.stashed && !S.local.stash && S.local.head === q.br && wf.indexOf(q.mineTxt) >= 0 && wf.indexOf(q.theirTxt) >= 0 && !hasMarkers(wf);
       return S.local.head === q.br && !lDirty() && wf === rb.files[q.file];
     });
+    if (q.type === "cloneurl") return latch("lq" + q.n + "cu", function () { return !!S.local && S.local.repoKey === "up"; });
     if (q.type === "whichside") return latch("lq" + q.n + "ws", function () { return whichOk(q); });
     if (q.type === "crlf") { var rc = br(q.br), fc = rc && rc.files["config.ini"]; return !!fc && fc.indexOf("\r") < 0 && fc === q.want; }
     if (q.type === "selcommit") { var rs2 = br(q.br); return !!rs2 && rs2.files[q.file] === q.code && !("debug.log" in rs2.files) && !("메모_개인.txt" in rs2.files); }
@@ -2336,6 +2355,7 @@ origin/feature-a  ← 다른 브랜치는 '기록'만 생김 (로컬 브랜치 �
       if (q.how === "stash") return first.concat(vs ? ["··· → 변경 내용 임시 저장 (Stash)", pullV, "··· → 임시 저장 꺼내기 (Pop Stash) 또는 아래 [꺼내기 (Pop)]", "탐색기에서 " + q.file + " 에 두 변경이 다 있는지 확인 (커밋은 안 함)"] : ["Changes 아래 [Stash all changes] (또는 메뉴 [브랜치] → Stash all changes)", pullV, "Stashed Changes 의 [Restore]", "Changes 에 내 수정이 다시 보이는지 확인 (커밋은 안 함)"]);
       return first.concat(vs ? [q.file + " 옆 ↶ (변경 내용 취소)", pullV] : [q.file + " 옆 ↶ 또는 [Discard all changes]", pullV]);
     }
+    if (q.type === "cloneurl") return vs ? ["소스 제어 ··· → Git 저장소 복제 (새 폴더)…", "주소칸에 " + q.url + " 입력 → [Git 저장소 복제]", "탐색기에 tool.py 가 보이는지 확인 (상태 표시줄 저장소 이름 team-tool)"] : ["메뉴 [파일] → Clone repository...", "(확인) GitHub.com 탭 목록엔 kim-team/team-tool 이 없음 = 내 저장소가 아니라서", "[URL] 탭 → " + q.url + " (또는 kim-team/team-tool) 입력 → [Clone]", "Current repository 가 team-tool 로 바뀌었는지 확인"];
     if (q.type === "whichside") return whichSteps(q);
     if (q.type === "crlf") return vs ? ["탐색기에서 config.ini 열기 → 맨 아래 상태바의 [CRLF] 확인", "(방법 1) 상태바 [CRLF] 클릭 → LF 로 바뀜", "(방법 2) [+ 새 파일] .gitattributes → '* text=auto' 입력 → 저장", "소스 제어에서 바뀐 내용 확인 → + 스테이징 → ✓ 커밋", "[☁ Publish Branch]"] : ["Changes 에서 config.ini 클릭 → '줄바꿈 변경' 경고와 모든 줄이 바뀐 diff 확인", "[Open in editor] → (새 파일) .gitattributes → '* text=auto' → 저장", "config.ini diff 가 timeout 한 줄로 줄었는지 확인", "Summary 입력 → Commit (.gitattributes 도 함께 체크)", "[Publish branch]"];
     if (q.type === "selcommit") return vs ? ["소스 제어에서 변경 사항 3개 확인", q.file + " 옆 + 만 눌러 스테이징 (나머지는 그대로 둠)", "메시지 입력 → ✓ 커밋 (스테이징된 것만 커밋됨)", "상태바의 [☁ 게시 필요] 또는 ··· → 밀어넣기(Push) 로 Publish (남은 변경이 있으면 큰 버튼은 '커밋'으로 보임) → 커밋 안 한 파일은 로컬에만 남음"] : ["Changes 에서 debug.log, 메모_개인.txt 체크 해제", q.file + " 만 체크된 상태로 Summary 입력 → Commit", "[Publish branch] → 체크 안 한 파일은 로컬에만 남음"];
@@ -2528,9 +2548,15 @@ origin/feature-a  ← 다른 브랜치는 '기록'만 생김 (로컬 브랜치 �
   }
   function dkCloneBox() {
     if (!hasRepo()) return '<h3>저장소 시작하기</h3><p class="kv">클론할 원격 저장소가 없음. [웹 사이트] 모드에서 README 포함 레포를 먼저 만들어야 함.</p>';
-    return '<form data-lform="dk-clone" class="dk-dialog"><h3>Clone a repository</h3><p class="kv">내 계정의 저장소 목록</p>' +
-      Object.keys(S.repos).filter(function (k) { return S.repos[k].branches.main && S.repos[k].branches.main.commits.length; }).map(function (k, i) { var rr = S.repos[k]; return '<label class="radio"><input type="radio" name="dk-repo" value="' + k + '"' + (i === 0 ? " checked" : "") + '><span class="mono">' + esc(ownerOf(rr) + "/" + rr.name) + '</span>' + (rr.parent ? ' <span class="badge">fork</span>' : ownerOf(rr) !== OWNER ? ' <span class="badge">팀 저장소</span>' : "") + '</label>'; }).join("") +
-      '<div class="field"><span class="lbl">Local path</span><span class="mono kv">~/Documents/' + esc(R().name) + '</span></div><div class="row"><button class="btn go" type="submit">Clone</button>' + (S.local ? '<button class="btn" type="button" data-l="dk-clone">Cancel</button>' : "") + '</div></form>';
+    var d = dkState(), url = d.cloneTab === "url", mine = Object.keys(S.repos).filter(function (k) { var rr = S.repos[k]; return rr.branches.main && rr.branches.main.commits.length && ownerOf(rr) === OWNER; });
+    var h = '<form data-lform="dk-clone" class="dk-dialog"><h3>Clone a repository</h3><div class="row" role="tablist">' +
+      '<button type="button" class="btn sm' + (url ? "" : " go") + '" role="tab" aria-selected="' + !url + '" data-l="dk-ctab" data-arg="gh">GitHub.com</button>' +
+      '<button type="button" class="btn sm' + (url ? " go" : "") + '" role="tab" aria-selected="' + url + '" data-l="dk-ctab" data-arg="url">URL</button></div>';
+    if (url) h += '<label class="field"><span class="lbl">Repository URL or GitHub username and repository</span><input id="dk-url" class="mono" placeholder="https://…/소유자/저장소.git 또는 소유자/저장소" autocomplete="off"></label>' +
+      '<p class="kv">다른 사람의 공개 저장소는 목록에 안 나오니 여기에 주소를 넣음. 비공개 저장소는 Collaborator 초대를 수락해야 클론됨.</p>';
+    else h += '<p class="kv">내 계정(jeonnam-dev)이 소유하거나 Collaborator·조직 멤버인 저장소만 보임. 남의 저장소는 [URL] 탭 사용</p>' +
+      mine.map(function (k, i) { var rr = S.repos[k]; return '<label class="radio"><input type="radio" name="dk-repo" value="' + k + '"' + (i === 0 ? " checked" : "") + '><span class="mono">' + esc(ownerOf(rr) + "/" + rr.name) + '</span>' + (rr.parent ? ' <span class="badge">fork</span>' : "") + '</label>'; }).join("");
+    return h + '<div class="field"><span class="lbl">Local path</span><span class="mono kv">~/Documents/' + (url ? "(저장소 이름)" : esc(R().name)) + '</span></div><div class="row"><button class="btn go" type="submit">Clone</button>' + (S.local ? '<button class="btn" type="button" data-l="dk-clone">Cancel</button>' : "") + '</div></form>';
   }
   function dkEditor() {
     var d = dkState(), L = S.local, files = Object.keys(L.work).sort();
@@ -2584,6 +2610,7 @@ origin/feature-a  ← 다른 브랜치는 '기록'만 생김 (로컬 브랜치 �
     else if (a === "open-pr-web") openPRWeb();
     else if (a === "dk-clone") d.clone = !d.clone;
     else if (a === "dk-tab") d.tab = arg;
+    else if (a === "dk-ctab") d.cloneTab = arg;
     else if (a === "dk-sel") { d.sel = arg; d.editor = d.newbr = false; }
     else if (a === "dk-editor") { d.editor = !d.editor; d.newbr = false; }
     else if (a === "dk-newbr") { d.newbr = !d.newbr; d.editor = false; }
@@ -2608,7 +2635,7 @@ origin/feature-a  ← 다른 브랜치는 '기록'만 생김 (로컬 브랜치 �
     var k = f.dataset.lform, v = vsState(), d = dkState();
     flash = null;
     if (k === "clone") lClone($("vs-url").value);
-    else if (k === "dk-clone") { var ck = (f.querySelector('input[name="dk-repo"]:checked') || {}).value || "home"; lClone(repoUrlOf(S.repos[ck])); d.clone = false; }
+    else if (k === "dk-clone") { var uu = $("dk-url"), ck = (f.querySelector('input[name="dk-repo"]:checked') || {}).value || "home"; if (uu) { var u0 = uu.value.trim(); if (/^[\w.-]+\/[\w.-]+$/.test(u0)) u0 = "https://practicehub.local/" + u0 + ".git"; lClone(u0); if (flash && flash.t === "ok") d.clone = false; } else { lClone(repoUrlOf(S.repos[ck])); d.clone = false; } }
     else if (k === "vs-newfile") { var nm = $("vs-fname").value.trim(); if (lNewFile(nm)) { v.file = nm; v.buf = null; v.newFile = false; ok(nm + " 만듦. 내용 입력 후 저장함"); } }
     else if (k === "vs-newbr") { vsSaveBuf(); if (lNewBranch($("vs-brname").value)) v.pick = false; }
     else if (k === "vs-commit") {
