@@ -167,6 +167,26 @@ textarea.inp { min-height: 110px; resize: vertical; font-family: var(--f-mono); 
 .check .ok { color: var(--open); font-weight: 700; } .check .no { color: var(--closed); font-weight: 700; }
 
 .files-table .item { align-items: center; }
+.due { font-size: .72rem; border-radius: 999px; padding: 0 7px; background: var(--sunk); color: var(--muted); border: 1px solid var(--line); white-space: nowrap; }
+.due.over { background: var(--err-soft); color: var(--closed); border-color: var(--closed); font-weight: 600; }
+.prio { font-size: .72rem; border-radius: 4px; padding: 0 6px; font-weight: 600; white-space: nowrap; }
+.pr-0 { background: #b23b33; color: #fff; } .pr-1 { background: #f2c2bc; color: #7a231c; } .pr-2 { background: #f4e8c8; color: #6b4e05; } .pr-3 { background: var(--sunk); color: var(--muted); }
+.ms-bar { height: 6px; background: var(--sunk); border-radius: 3px; margin: 6px 0 2px; overflow: hidden; border: 1px solid var(--line); } .ms-bar i { display: block; height: 100%; background: var(--go); }
+.pj-board { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 10px; }
+.pj-col { background: var(--sunk); border: 1px solid var(--line); border-radius: 8px; padding: 8px; min-width: 0; }
+.pj-ch { margin-bottom: 6px; font-size: .85rem; }
+.pj-card { background: var(--surface); border: 1px solid var(--line); border-radius: 6px; padding: 8px; margin-bottom: 6px; font-size: .84rem; overflow-wrap: anywhere; }
+.sm-sel { width: auto; max-width: 100%; padding: 2px 6px; font-size: .78rem; margin-top: 6px; }
+.pj-f { display: flex; gap: 6px; align-items: center; margin: 4px 0; } .pj-f span { width: 52px; color: var(--muted); font-size: .76rem; } .pj-f .inp { padding: 2px 6px; font-size: .8rem; }
+.repo-tbl, .tbl { overflow-x: auto; } .tbl table { border-collapse: collapse; width: 100%; font-size: .84rem; } .tbl th, .tbl td { border-bottom: 1px solid var(--line); padding: 6px; text-align: left; vertical-align: top; }
+.code-lines { font-family: var(--f-mono); font-size: .82rem; overflow-x: auto; padding: 6px 0; }
+.cl { display: flex; white-space: pre; } .cl span { padding: 0 12px; } .cl.sel { background: var(--warn-soft); }
+.ln { background: none; border: 0; color: var(--muted); font: inherit; min-width: 40px; text-align: right; padding: 0 8px; cursor: pointer; border-right: 1px solid var(--line); }
+.ln:hover { color: var(--accent); text-decoration: underline; }
+.perma { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-bottom: 8px; padding: 8px 10px; border: 1px solid var(--line); border-radius: 6px; background: var(--accent-soft); } .perma .inp { flex: 1; min-width: 200px; font-size: .75rem; }
+.link.wrap { display: inline; max-width: 100%; white-space: normal; overflow-wrap: anywhere; text-align: left; padding: 0; }
+.wk .wk-h { margin: 12px 0 6px; } .wk .wk-p { margin: 4px 0; } .wk .wk-li { margin: 2px 0 2px 8px; } .readme.wk { white-space: normal; }
+.modes .pm-btn { grid-column: span 6; } .modes .pm-btn.on { background: #6b4fa0; border-color: #6b4fa0; }
 .file-view { padding: 12px 14px; white-space: pre-wrap; font-family: var(--f-mono); font-size: 0.82rem; overflow-x: auto; }
 .readme { padding: 14px 18px; white-space: pre-wrap; overflow-wrap: anywhere; }
 .diff { font-family: var(--f-mono); font-size: 0.8rem; overflow-x: auto; }
@@ -374,7 +394,7 @@ body.msgr-min .wrap { padding-bottom: 90px; }
   </div>
   <div class="grid">
     <aside class="rail" aria-label="업무 요청">
-      <div class="modes" role="group" aria-label="연습 도구"><button type="button" data-mode="web">웹 사이트</button><button type="button" data-mode="vscode">VS Code</button><button type="button" data-mode="desktop">데스크톱 앱</button><button type="button" data-mode="qa" class="qa-btn">내 질문 실습</button><button type="button" data-mode="conflict" class="qa-btn cf-btn">컨플릭트 실습</button><button type="button" data-mode="fork" class="qa-btn fk-btn">Fork 실습</button></div>
+      <div class="modes" role="group" aria-label="연습 도구"><button type="button" data-mode="web">웹 사이트</button><button type="button" data-mode="vscode">VS Code</button><button type="button" data-mode="desktop">데스크톱 앱</button><button type="button" data-mode="qa" class="qa-btn">내 질문 실습</button><button type="button" data-mode="conflict" class="qa-btn cf-btn">컨플릭트 실습</button><button type="button" data-mode="fork" class="qa-btn fk-btn">Fork 실습</button><button type="button" data-mode="pm" class="qa-btn pm-btn">협업 관리 실습 (이슈·프로젝트·위키)</button></div>
       <div class="prog"><span id="prog-t"></span><div class="bar"><i id="prog-b"></i></div></div>
       <button type="button" class="msg msg-mini" id="req" data-msgr="open">요청은 오른쪽 아래 <b>메시지 창</b>에서 받음 · 열기</button>
       <h3>로컬 ↔ 원격 현황</h3>
@@ -565,6 +585,24 @@ origin/feature-a  ← 다른 브랜치는 '기록'만 생김 (로컬 브랜치 �
         </tbody></table></div>
         <ul><li>클론은 읽기용임. push 하려면 Collaborator 권한, 권한이 없으면 Fork 후 PR</li><li>VS Code 는 목록 없이 Git: Clone 에 주소를 바로 넣음</li></ul>
       </section>
+      <section><h3>Q17. 현업 이슈 관리: 할당·마감·우선순위·커밋 연결·위키</h3>
+        <pre>버그 발생 → 이슈(템플릿) → 담당자·라벨·마일스톤 → 보드(Status·Priority·Due)
+        → 이슈에서 Create a branch → 커밋 "… #번호" (참조) → PR "Fixes #번호" → main 머지
+        → 이슈 자동 Closed → 보드 자동 Done → 위키에 장애 기록 (이슈·커밋·코드 permalink 링크)</pre>
+        <div class="tbl"><table><thead><tr><th>하고 싶은 것</th><th>GitHub 기능</th><th>위치</th></tr></thead><tbody>
+          <tr><td>담당자 지정</td><td>Assignees</td><td>이슈 오른쪽</td></tr>
+          <tr><td>마감일</td><td>Milestone(Due date) · 보드의 Due 칸</td><td>Issues → Milestones / Projects</td></tr>
+          <tr><td>우선순위·진행 상태</td><td>Projects 의 Priority·Status 칸</td><td>Projects 탭 (Board·Table)</td></tr>
+          <tr><td>양식 통일</td><td>이슈 템플릿 (.github/ISSUE_TEMPLATE)</td><td>Settings → Features → Set up templates</td></tr>
+          <tr><td>작업 브랜치 연결</td><td>Development → Create a branch</td><td>이슈 오른쪽</td></tr>
+          <tr><td>커밋 ↔ 이슈 연결</td><td>메시지에 #번호 (참조) / Fixes·Closes #번호 (main 들어가면 닫힘)</td><td>커밋 메시지·PR 본문</td></tr>
+          <tr><td>보드 자동 이동</td><td>Workflows: Item closed·PR merged → Done (기본 켜짐)</td><td>Projects → Workflows</td></tr>
+          <tr><td>코드 줄 공유</td><td>Permalink (커밋 SHA 고정 주소)</td><td>파일 줄 번호 클릭 → Copy permalink</td></tr>
+          <tr><td>지식 기록</td><td>Wiki (별도 저장소 repo.wiki.git)</td><td>Wiki 탭</td></tr>
+          <tr><td>내 일만 보기</td><td>검색 is:open assignee:@me</td><td>Issues 검색창</td></tr>
+        </tbody></table></div>
+        <ul><li>요령: 이슈 1건 = 브랜치 1개 = PR 1개, PR 본문에 Fixes #번호 를 쓰는 습관</li><li>그 밖에 현업에서 많이 씀: PR 템플릿, CODEOWNERS(파일별 자동 리뷰어), GitHub Actions(자동 테스트), Discussions(질의응답)</li></ul>
+      </section>
     </div>
   </details>
 </div>
@@ -598,7 +636,7 @@ origin/feature-a  ← 다른 브랜치는 '기록'만 생김 (로컬 브랜치 �
   var R = function () { return S.repo; };
   function br(n) { return S.repo ? S.repo.branches[n] : undefined; }
   /* 여러 저장소: home(내 기본 저장소), up(팀원 원본), fork(내 fork) */
-  function useRepo(k) { if (S.repos && S.repos[k]) { S.repo = S.repos[k]; S.repoKey = k; } }
+  function useRepo(k) { if (S.repos && S.repos[k]) { S.repo = S.repos[k]; S.repoKey = k; extRepo(S.repo); } }
   function viewKey() { return S.v.repoKey && S.repos[S.v.repoKey] ? S.v.repoKey : "home"; }
   function localKey() { return S.local && S.local.repoKey && S.repos[S.local.repoKey] ? S.local.repoKey : "home"; }
   function ownerOf(r) { return (r && r.owner) || OWNER; }
@@ -849,7 +887,7 @@ origin/feature-a  ← 다른 브랜치는 '기록'만 생김 (로컬 브랜치 �
   function pick(a) { return a[Math.floor(Math.random() * a.length)]; }
   function freeFeat() { var c = FEATS.filter(function (f) { return !br("feature/" + f[0]) && !R().prs.some(function (p) { return p.head === "feature/" + f[0]; }); }); return c.length ? pick(c) : [pick(FEATS)[0] + R().num, "추가 기능"]; }
   function newQuest() {
-    var pool = ["issue", "flow", "review", "triage", "release"];
+    var pool = ["issue", "flow", "review", "triage", "release", "pmplan", "pmfix", "pmwiki"];
     if (collaborators().indexOf("이주무관") < 0) pool.push("invite");
     var last = S.quest && S.quest.type, c = pool.filter(function (x) { return x !== last; });
     var type = pick(c), q = { type: type, n: S.questDone + 1, startNum: R().num, from: "팀장" };
@@ -880,6 +918,31 @@ origin/feature-a  ← 다른 브랜치는 '기록'만 생김 (로컬 브랜치 �
       q.r = "이슈 #" + dup.num + " 은 #" + orig.num + " 이랑 같은 건이네요. 중복이라고 코멘트 남기고 Close as not planned로 닫아 주세요.";
       q.w = "닫는 이유가 두 가지임: completed(해결함) / not planned(안 하기로 함·중복). 중복은 not planned 로 닫음.";
       q.s = ["Issues → #" + dup.num, "코멘트 칸에 'Duplicate of #" + orig.num + "' 입력 → [Comment]", "[Close as not planned]"];
+    } else if (type === "pmplan" || type === "pmfix" || type === "pmwiki") {
+      var PI = [["민원 접수 화면 저장 버튼 오류", "bug"], ["주간 보고 자동 집계 기능", "enhancement"], ["출장 신청서 날짜 검증 누락", "bug"], ["부서 코드표 최신화", "documentation"]], pi = pick(PI), r0 = R();
+      if (type === "pmplan") {
+        var msT = "정기 배포 " + (r0.milestones.length + 1) + "차", due0 = addDays(7 + Math.floor(Math.random() * 20));
+        r0.milestones.push({ title: msT, due: due0, desc: "" }); if (!r0.project) makeProject(r0);
+        var ip = makeIssue({ title: pi[0], body: "팀원이 등록한 건입니다.", labels: [pi[1]], author: "김주무관" });
+        q.num = ip.num; q.ms = msT; q.prio = pick(["긴급", "높음", "보통"]); q.from = "팀장";
+        q.r = "김주무관이 올린 이슈 #" + ip.num + "(" + pi[0] + ") 정리 부탁해요. 담당은 나, 마일스톤은 '" + msT + "', 업무 보드에 넣고 Status Todo, Priority " + q.prio + ", Due 는 " + due0 + " 로요.";
+        q.w = "트리아지(분류) = 들어온 이슈에 담당자·마일스톤·우선순위·기한을 붙이는 일. 보드에 올려야 팀 전체가 진행 상황을 봄.";
+        q.s = ["Issues → #" + ip.num, "Assignees: 나 / Milestone: " + msT, "Projects 의 [+ 업무 보드에 추가] (보드가 없으면 Projects 탭에서 New project)", "Status Todo · Priority " + q.prio + " · Due " + due0];
+      } else if (type === "pmfix") {
+        var ix = makeIssue({ title: pi[0], body: "## 증상\n" + pi[0] + "\n## 재현 방법\n1. 화면 열기\n2. 저장", labels: ["bug"], assignees: [ME], author: "김주무관" });
+        if (r0.project && !projItem(r0, "issue", ix.num)) r0.project.items.push({ kind: "issue", num: ix.num, status: "Todo", prio: "높음", due: addDays(5), seen: "open" });
+        q.num = ix.num; q.from = "김주무관";
+        q.r = "이슈 #" + ix.num + "(" + pi[0] + ") 처리해 주세요. 이슈 화면에서 브랜치를 만들어 수정하고, PR 본문에 Fixes #" + ix.num + " 를 넣어 머지해서 이슈가 자동으로 닫히게 해 주세요. 직접 Close 버튼은 누르지 말고요.";
+        q.w = "이슈 → Create a branch → 커밋 → PR(Fixes #번호) → 머지 → 이슈 자동 닫힘 → 보드 Done. 현업의 기본 한 바퀴임.";
+        q.s = ["Issues → #" + ix.num + " → Development [Create a branch]", "그 브랜치에서 파일 수정 커밋 (메시지에 #" + ix.num + " 붙이면 참조도 남음)", "New pull request → 본문 Fixes #" + ix.num, "승인(보호 규칙 시) → [Confirm merge] → 이슈 Closed 확인"];
+      } else {
+        var iw = makeIssue({ title: pi[0], body: "운영 중 발생한 장애", labels: ["bug"], assignees: [ME], author: "김주무관" });
+        var fx = addCommit("main", pi[0] + " 수정 (fixes #" + iw.num + ")", withFile(br("main").files, "fix_" + iw.num + ".py", "# " + pi[0] + "\ndef fixed():\n    return True"), "김주무관"); refScan(r0);
+        q.num = iw.num; q.after = {}; Object.keys(r0.wiki.pages).forEach(function (n) { q.after[n] = r0.wiki.pages[n].length; }); q.from = "팀장";
+        q.r = "#" + iw.num + " 장애(" + pi[0] + ")는 커밋 " + fx + " 로 해결됐어요. 위키에 '장애 기록' 페이지를 만들고(또는 기존 장애 기록에 추가) 이슈 주소와 고친 코드 줄 permalink 를 붙여 주세요.";
+        q.w = "이슈는 닫히면 목록에서 사라지지만 위키는 팀 지식으로 남음. 링크를 붙여 두면 다음 담당자가 원인 코드까지 바로 감.";
+        q.s = ["Code 탭(브랜치 main) → fix_" + iw.num + ".py 열기 → 줄 번호 클릭 → [🔗 Copy permalink]", "Wiki → [New page] (제목에 '장애 기록') 또는 기존 페이지 [Edit]", "이슈 주소 …/issues/" + iw.num + " 와 [📋 복사한 주소 붙여넣기] → [Save page]"];
+      }
     } else if (type === "release") {
       var ver = "v1." + R().releases.length + ".0"; q.tag = ver;
       q.r = "정기 배포입니다. main 기준 " + ver + " 릴리즈 발행해 주세요. 제목은 '" + ver + " 정기 배포'로요.";
@@ -900,6 +963,9 @@ origin/feature-a  ← 다른 브랜치는 '기록'만 생김 (로컬 브랜치 �
       case "review": var p = pr(q.pr); return q.mode === "changes" ? p.reviews.some(function (r) { return r.who === ME && r.state === "CHANGES_REQUESTED"; }) : p.state === "merged" && p.reviews.some(function (r) { return r.who === ME && r.state === "APPROVED"; });
       case "triage": var i = issue(q.dup); return i.state === "closed" && i.reason === "not_planned" && i.timeline.some(function (t) { return t.k === "comment" && t.who === ME; });
       case "release": return R().releases.some(function (r) { return r.tag === q.tag; });
+      case "pmplan": var ip2 = issue(q.num), it2 = ip2 && projItem(R(), "issue", q.num); return !!it2 && ip2.assignees.indexOf(ME) >= 0 && ip2.milestone === q.ms && it2.status === "Todo" && it2.prio === q.prio && !!it2.due;
+      case "pmfix": var ix2 = issue(q.num); return !!ix2 && ix2.state === "closed" && ix2.reason === "completed" && ix2.timeline.some(function (t) { return t.k === "ev" && /자동으로/.test(t.text); });
+      case "pmwiki": return pmWikiOk(R(), q.after) && Object.keys(R().wiki.pages).some(function (n) { var rv = R().wiki.pages[n]; return rv[rv.length - 1].text.indexOf("/issues/" + q.num) >= 0; });
       case "invite": return collaborators().indexOf("이주무관") >= 0;
     }
     return false;
@@ -907,15 +973,15 @@ origin/feature-a  ← 다른 브랜치는 '기록'만 생김 (로컬 브랜치 �
 
   /* ---------- 요청 레일 렌더 ---------- */
   var ui = { hint: false, steps: false, key: null, view: null, msgrMin: window.innerWidth < 640 };
-  var TRACK_NAME = { web: "웹 사이트", vscode: "VS Code", desktop: "데스크톱 앱", qa: "내 질문 실습", conflict: "컨플릭트 실습", fork: "Fork 실습" };
-  function isStudyKey(k) { return k === "qa" || k === "conflict" || k === "fork"; }
+  var TRACK_NAME = { web: "웹 사이트", vscode: "VS Code", desktop: "데스크톱 앱", qa: "내 질문 실습", conflict: "컨플릭트 실습", fork: "Fork 실습", pm: "협업 관리 실습" };
+  function isStudyKey(k) { return k === "qa" || k === "conflict" || k === "fork" || k === "pm"; }
   function isStudyTrack() { return isStudyKey(S.track); }
-  function trackList(t) { t = t || S.track; return t === "vscode" ? MV : t === "desktop" ? MD : t === "qa" ? MQ : t === "conflict" ? MC : t === "fork" ? MF : M; }
+  function trackList(t) { t = t || S.track; return t === "vscode" ? MV : t === "desktop" ? MD : t === "qa" ? MQ : t === "conflict" ? MC : t === "fork" ? MF : t === "pm" ? MP : M; }
   function isLocalTrack() { return S.track === "vscode" || S.track === "desktop"; }
   /* ---------- 메신저 창 ---------- */
-  var CH = { web: ["이 팀장", "웹 사이트 · 기본 미션"], vscode: ["박 매니저", "VS Code · 로컬 미션"], desktop: ["최 매니저", "데스크톱 앱 · 로컬 미션"], qa: ["질문 노트", "내가 물어본 것"], conflict: ["김주무관", "컨플릭트 미션"], fork: ["kim-team", "Fork 미션"] };
-  var CH_COLOR = { web: "#245f8f", vscode: "#2f8a55", desktop: "#a8423a", qa: "#7a6a20", conflict: "#a35a1f", fork: "#3d6aa8" };
-  function chatAv(who) { var c = { "팀장": "#245f8f", "김주무관": "#a35a1f", "이주무관": "#7247a8", "박주무관": "#2f8a55", "질문": "#7a6a20", "안내": "#5d6862" }[who] || "#5d6862"; return '<span class="c-av" style="background:' + c + '" aria-hidden="true">' + esc((who || "?").slice(0, 1)) + '</span>'; }
+  var CH = { web: ["이 팀장", "웹 사이트 · 기본 미션"], vscode: ["박 매니저", "VS Code · 로컬 미션"], desktop: ["최 매니저", "데스크톱 앱 · 로컬 미션"], qa: ["질문 노트", "내가 물어본 것"], conflict: ["김주무관", "컨플릭트 미션"], fork: ["kim-team", "Fork 미션"], pm: ["코치", "이슈·프로젝트·위키 미션"] };
+  var CH_COLOR = { web: "#245f8f", vscode: "#2f8a55", desktop: "#a8423a", qa: "#7a6a20", conflict: "#a35a1f", fork: "#3d6aa8", pm: "#6b4fa0" };
+  function chatAv(who) { var c = { "팀장": "#245f8f", "김주무관": "#a35a1f", "이주무관": "#7247a8", "박주무관": "#2f8a55", "질문": "#7a6a20", "코치": "#6b4fa0", "안내": "#5d6862" }[who] || "#5d6862"; return '<span class="c-av" style="background:' + c + '" aria-hidden="true">' + esc((who || "?").slice(0, 1)) + '</span>'; }
   function trackAv(k) { return '<span class="c-av lg" style="background:' + CH_COLOR[k] + '" aria-hidden="true">' + esc(CH[k][0].slice(0, 1)) + '<i class="on"></i></span>'; }
   function renderMsgr(item, eyebrow, isDone, body, list, show) {
     var box = $("msgr"); if (!box) return;
@@ -931,7 +997,7 @@ origin/feature-a  ← 다른 브랜치는 '기록'만 생김 (로컬 브랜치 �
     var h = '<div class="msgr-head">' + trackAv(k) + '<div class="msgr-tt"><b>' + esc(CH[k][0]) + '</b><small>' + esc(CH[k][1]) + '</small></div><span style="flex:1"></span><button type="button" class="msgr-ic" data-msgr="list" title="담당자 목록" aria-label="담당자 목록">☰</button><button type="button" class="msgr-ic" data-msgr="min" title="최소화" aria-label="최소화">–</button></div>';
     h += '<div class="msgr-body" id="msgr-body">';
     if (ui.msgrList) {
-      h += '<div class="msgr-sys">담당자</div>' + ["web", "vscode", "desktop", "qa", "conflict", "fork"].map(function (t) {
+      h += '<div class="msgr-sys">담당자</div>' + ["web", "vscode", "desktop", "qa", "conflict", "fork", "pm"].map(function (t) {
         var L = trackList(t), d = L.filter(function (m) { return m.ok(); }).length;
         return '<button type="button" class="msgr-ct' + (t === k ? " on" : "") + '" data-msgr="track" data-arg="' + t + '">' + trackAv(t) + '<span class="ct-tx"><b>' + esc(CH[t][0]) + '</b><small>' + esc(CH[t][1]) + '</small></span><span class="ct-st">' + (t === k ? '<em>대화 중</em>' : "") + d + "/" + L.length + ' 완료</span></button>';
       }).join("");
@@ -954,7 +1020,7 @@ origin/feature-a  ← 다른 브랜치는 '기록'만 생김 (로컬 브랜치 �
     if (a === "open") ui.msgrMin = false;
     else if (a === "min") ui.msgrMin = true;
     else if (a === "list") ui.msgrList = !ui.msgrList;
-    else if (a === "track") { var t = b.dataset.arg; if (isStudyKey(t)) S.track = t; else S.mode = S.track = t; ui.msgrList = false; ui.view = null; flash = null; }
+    else if (a === "track") { var t = b.dataset.arg; if (t === "pm") { S.track = t; S.mode = "web"; } else if (isStudyKey(t)) S.track = t; else S.mode = S.track = t; ui.msgrList = false; ui.view = null; flash = null; }
     afterChange(); return true;
   }
   function renderRail() {
@@ -966,6 +1032,7 @@ origin/feature-a  ← 다른 브랜치는 '기록'만 생김 (로컬 브랜치 �
     var show = ui.view !== null ? ui.view : cur, item, eyebrow, isDone, key, q;
     if (show >= list.length && isStudyTrack()) {
       item = S.track === "qa" ? { from: "안내", r: "질문하신 내용을 모두 실습함. 아래 '자주 묻는 질문'에서 다시 정리해 볼 수 있음.", w: "새로 궁금한 점이 생기면 Claude에게 물어보면 이 트랙에 추가할 수 있음.", s: ["화면 아래 '자주 묻는 질문' 펼치기"] }
+        : S.track === "pm" ? { from: "안내", r: "템플릿 → 마일스톤 → 이슈 할당 → 검색 → 보드 → 이슈 브랜치 → 커밋 참조 → Fixes 자동 닫기 → permalink → 위키까지 한 바퀴를 돌았음. [웹 사이트] 실전 요청에도 같은 상황이 무작위로 나옴.", w: "현업 요령: 이슈 1건 = 브랜치 1개 = PR 1개. PR 본문에 Fixes #번호 를 쓰는 습관만 들여도 보드·마일스톤이 저절로 정리됨.", s: ["요청 목록에서 항목을 눌러 [다시 해보기]로 반복 가능"] }
         : S.track === "fork" ? { from: "안내", r: "Fork → 클론 → 내 fork 에 push → 원본으로 PR → Sync fork → 특정 브랜치 가져오기까지 모두 해 봄. 요청 목록에서 항목을 눌러 [다시 해보기]로 반복할 수 있음.", w: "실무 요령: push 는 항상 내 fork(origin), 원본 최신화는 upstream, 원본 반영은 PR.", s: ["요청 목록에서 다시 해볼 항목 클릭 → [다시 해보기]"] }
         : { from: "안내", r: "컨플릭트 상황을 모두 겪어 봄. 요청 목록에서 항목을 눌러 [다시 해보기]로 몇 번이든 반복할 수 있음.", w: "실무 요령: 작업 전 pull, 브랜치는 작게 자주 머지, 충돌이 나면 당황하지 말고 Abort 후 상의.", s: ["요청 목록에서 다시 해볼 항목 클릭 → [다시 해보기]"] };
       eyebrow = TRACK_NAME[S.track] + " · 완료"; isDone = true; key = S.track + "-done";
@@ -1005,7 +1072,7 @@ origin/feature-a  ← 다른 브랜치는 '기록'만 생김 (로컬 브랜치 �
     useRepo("home");
     if (msgrClick(e)) return;
     var md = e.target.closest("[data-mode]");
-    if (md) { if (isStudyKey(md.dataset.mode)) S.track = md.dataset.mode; else if (isStudyTrack() && md.dataset.mode !== S.mode) S.mode = md.dataset.mode; else S.mode = S.track = md.dataset.mode; ui.view = null; flash = null; return afterChange(); }
+    if (md) { if (md.dataset.mode === "pm") { S.track = "pm"; S.mode = "web"; } else if (isStudyKey(md.dataset.mode)) S.track = md.dataset.mode; else if (isStudyTrack() && md.dataset.mode !== S.mode) S.mode = md.dataset.mode; else S.mode = S.track = md.dataset.mode; ui.view = null; flash = null; return afterChange(); }
     var b = e.target.closest("[data-rail]"); if (!b) return;
     var a = b.dataset.rail, loc = isLocalTrack();
     if (a === "hint") ui.hint = !ui.hint;
@@ -1047,8 +1114,10 @@ origin/feature-a  ← 다른 브랜치는 '기록'만 생김 (로컬 브랜치 �
     if (!R() || v.page === "home") return u;
     u += ownerOf(R()) + "/" + R().name;
     var s = v.sub || {};
-    if (v.tab === "code") { if (s.type === "file") u += "/blob/" + v.branch + "/" + s.path; else if (s.type === "edit") u += (s.path ? "/edit/" : "/new/") + v.branch + (s.path ? "/" + s.path : ""); else if (v.branch !== "main") u += "/tree/" + v.branch; }
-    if (v.tab === "issues") u += "/issues" + (s.type === "issue" ? "/" + s.num : s.type === "new" ? "/new" : "");
+    if (v.tab === "code") { if (s.type === "file") u += "/blob/" + (s.at || v.branch) + "/" + s.path + (s.line ? "#L" + s.line : ""); else if (s.type === "commits") u += "/commits/" + v.branch; else if (s.type === "commit") u += "/commit/" + s.id; else if (s.type === "edit") u += (s.path ? "/edit/" : "/new/") + v.branch + (s.path ? "/" + s.path : ""); else if (v.branch !== "main") u += "/tree/" + v.branch; }
+    if (v.tab === "issues") u += s.type === "milestones" ? "/milestones" : "/issues" + (s.type === "issue" ? "/" + s.num : s.type === "new" ? "/new" + (s.tpl ? "?template=" + s.tpl.replace(TPL_DIR, "") : s.tpl === "" ? "" : "/choose") : "");
+    if (v.tab === "projects") u += "/projects/1";
+    if (v.tab === "wiki") u += "/wiki" + (s.page ? "/" + s.page.replace(/ /g, "-") : "");
     if (v.tab === "pulls") u += s.type === "pr" ? "/pull/" + s.num + (s.files ? "/files" : "") : s.type === "compare" ? "/compare/" + (s.base || "main") + "..." + (s.head || "") : "/pulls";
     if (v.tab === "releases") u += "/releases" + (s.type === "new" ? "/new" : "");
     if (v.tab === "settings") u += "/settings" + (s.sec && s.sec !== "general" ? "/" + s.sec : "");
@@ -1095,7 +1164,7 @@ origin/feature-a  ← 다른 브랜치는 '기록'만 생김 (로컬 브랜치 �
     var openI = r.issues.filter(function (i) { return i.state === "open"; }).length, openP = r.prs.filter(function (p) { return p.state === "open"; }).length;
     var h = '<div class="repo-head"><div class="repo-name">' + ICON.file + '<a data-act="home">' + esc(ownerOf(r)) + '</a> / <a data-act="tab" data-arg="code"><b>' + esc(r.name) + '</b></a><span class="badge">' + (r.private ? "Private" : "Public") + '</span>' + (!canWrite() ? '<span class="badge">읽기 전용 (쓰기 권한 없음)</span>' : "") + (r.parent && S.repos[r.parent] ? '<span class="kv" style="font-size:.8rem;width:100%">forked from <button type="button" class="link" data-act="open-repo" data-arg="' + r.parent + '">' + esc(ownerOf(S.repos[r.parent]) + "/" + S.repos[r.parent].name) + '</button></span>' : "") + '</div>' +
       '<div class="row">' + (ownerOf(r) !== OWNER ? '<button type="button" class="btn sm" data-act="fork">⑂ Fork' + (S.repos.fork && S.repos.fork.parent === viewKey() ? ' (이미 함)' : '') + '</button>' : "") + '<button type="button" class="btn sm" data-act="star">' + (r.starred ? "★ Starred" : "☆ Star") + ' <span class="count">' + (r.starred ? 1 : 0) + '</span></button></div></div>';
-    var tabs = [["code", "Code", ""], ["issues", "Issues", openI], ["pulls", "Pull requests", openP], ["releases", "Releases", r.releases.length || ""]].concat(canWrite() ? [["settings", "Settings", ""]] : []);
+    var tabs = [["code", "Code", ""], ["issues", "Issues", openI], ["pulls", "Pull requests", openP], ["projects", "Projects", r.project ? 1 : ""], ["wiki", "Wiki", ""], ["releases", "Releases", r.releases.length || ""]].concat(canWrite() ? [["settings", "Settings", ""]] : []);
     if (v.tab === "settings" && !canWrite()) v.tab = "code";
     h += '<nav class="tabs">' + tabs.map(function (t) { return '<button type="button" class="tab' + (v.tab === t[0] ? " on" : "") + '" data-act="tab" data-arg="' + t[0] + '">' + t[1] + (t[2] !== "" ? '<span class="count">' + t[2] + '</span>' : "") + '</button>'; }).join("") + '</nav>';
     if (!br(v.branch)) v.branch = "main";
@@ -1103,6 +1172,8 @@ origin/feature-a  ← 다른 브랜치는 '기록'만 생김 (로컬 브랜치 �
     else if (v.tab === "issues") h += tabIssues();
     else if (v.tab === "pulls") h += tabPulls();
     else if (v.tab === "releases") h += tabReleases();
+    else if (v.tab === "projects") h += tabProjects();
+    else if (v.tab === "wiki") h += tabWiki();
     else h += tabSettings();
     return h;
   }
@@ -1120,11 +1191,16 @@ origin/feature-a  ← 다른 브랜치는 '기록'만 생김 (로컬 브랜치 �
     if (S.flags.qaSeen && vb === "main" && !("qa.txt" in br("main").files) && !S.flags.qaMain) { S.flags.qaMain = true; setTimeout(function () { renderRail(); save(); }, 0); }
     var v = V(), s = v.sub || {}, b = br(v.branch), h = "";
     if (s.type === "edit") return editView(s.path);
+    if (s.type === "commits") return commitsView();
+    if (s.type === "commit") return commitView(s.id);
     if (s.type === "file") {
-      var c = b.files[s.path];
-      if (c === undefined) { v.sub = null; return tabCode(); }
-      return '<div class="row" style="margin-bottom:10px">' + branchMenu() + '<span class="mono"><button type="button" class="link" data-act="code-root">' + esc(R().name) + '</button> / ' + esc(s.path) + '</span></div>' +
-        '<div class="box"><div class="box-head"><span class="mono">' + esc(s.path) + '</span><div class="row"><button type="button" class="btn sm" data-act="edit-file" data-arg="' + esc(s.path) + '">✎ 편집</button><button type="button" class="btn sm danger" data-act="delete-file" data-arg="' + esc(s.path) + '">삭제</button></div></div><div class="file-view">' + (esc(c) || '<span class="kv">(빈 파일)</span>') + '</div></div>';
+      var atC = s.at && S.commits[s.at], c = atC ? atC.tree[s.path] : b.files[s.path];
+      if (c === undefined) { v.sub = null; if (s.at) err("커밋 " + s.at + " 에는 " + s.path + " 파일이 없음"); return tabCode(); }
+      var shaNow = s.at || b.commits[b.commits.length - 1], link = s.line ? permalink(R(), shaNow, s.path, s.line) : "";
+      return '<div class="row" style="margin-bottom:10px">' + (atC ? '<span class="badge mono">commit ' + esc(s.at) + '</span>' : branchMenu()) + '<span class="mono"><button type="button" class="link" data-act="code-root">' + esc(R().name) + '</button> / ' + esc(s.path) + '</span></div>' +
+        (atC ? '<div class="banner"><span>커밋 <b class="mono">' + esc(s.at) + '</b> 시점의 파일임 (permalink). 이후 코드가 바뀌어도 이 내용은 그대로임</span><button type="button" class="btn sm" data-act="code-root">최신 main 보기</button></div>' : "") +
+        (s.line ? '<div class="perma"><span><b>L' + s.line + '</b> 선택됨</span><button type="button" class="btn sm go" data-act="copy-link">🔗 Copy permalink</button><button type="button" class="btn sm" data-act="line-issue">Reference in new issue</button>' + (ui.clip === link ? '<input class="inp mono" readonly value="' + esc(link) + '" aria-label="복사한 주소" onclick="this.select()">' : "") + '</div>' : "") +
+        '<div class="box"><div class="box-head"><span class="mono">' + esc(s.path) + '</span><div class="row">' + (atC ? "" : '<button type="button" class="btn sm" data-act="edit-file" data-arg="' + esc(s.path) + '">✎ 편집</button><button type="button" class="btn sm danger" data-act="delete-file" data-arg="' + esc(s.path) + '">삭제</button>') + '</div></div>' + fileLines(c, s.line) + '<div class="kv" style="padding:4px 14px 8px;font-size:.75rem">줄 번호를 누르면 그 줄의 고정 링크(permalink)를 복사할 수 있음</div></div>';
     }
     if (!R().parent) Object.keys(R().branches).forEach(function (n) {
       if (n === "main" || n !== v.branch && !R().recent[n]) return;
@@ -1138,7 +1214,7 @@ origin/feature-a  ← 다른 브랜치는 '기록'만 생김 (로컬 브랜치 �
     }
     var names = Object.keys(R().branches), lastId = b.commits[b.commits.length - 1], last = S.commits[lastId];
     h += '<div class="row" style="justify-content:space-between;margin-bottom:10px"><div class="row">' + branchMenu() + '<span class="kv">' + names.length + ' branches · ' + R().releases.length + ' tags</span></div><button type="button" class="btn sm" data-act="add-file">+ Add file</button></div>';
-    h += '<div class="box files-table"><div class="box-head"><span class="row">' + (last ? av(last.author) + " <b>" + esc(last.author) + "</b> " + esc(last.msg) : "커밋 없음") + '</span><span class="mono kv">' + (last ? last.id + " · " : "") + b.commits.length + ' commits</span></div>';
+    h += '<div class="box files-table"><div class="box-head"><span class="row">' + (last ? av(last.author) + " <b>" + esc(last.author) + "</b> " + esc(last.msg) : "커밋 없음") + '</span><span class="mono kv">' + (last ? last.id + " · " : "") + '<button type="button" class="link" data-act="commits">' + b.commits.length + ' commits</button></span></div>';
     var files = Object.keys(b.files).sort();
     h += files.length ? files.map(function (f) { return '<div class="item">' + ICON.file + '<button type="button" class="link mono" data-act="open-file" data-arg="' + esc(f) + '">' + esc(f) + '</button></div>'; }).join("") : '<div class="empty">파일이 없음. [+ Add file]로 첫 파일을 만들어 보기.</div>';
     h += '</div>';
@@ -1163,26 +1239,36 @@ origin/feature-a  ← 다른 브랜치는 '기록'만 생김 (로컬 브랜치 �
     var s = V().sub || {};
     if (s.type === "new") return newIssueView();
     if (s.type === "issue") return issueView(issue(s.num));
-    var st = s.state || "open", list = R().issues.filter(function (i) { return st === "open" ? i.state === "open" : i.state !== "open"; }).slice().reverse();
-    var nOpen = R().issues.filter(function (i) { return i.state === "open"; }).length;
-    var h = '<div class="row" style="justify-content:flex-end;margin-bottom:10px"><button type="button" class="btn go" data-act="new-issue">New issue</button></div>';
-    h += '<div class="box"><div class="box-head"><div class="row"><button type="button" class="link" data-act="issue-filter" data-arg="open">' + (st === "open" ? "<b>" : "") + nOpen + ' Open' + (st === "open" ? "</b>" : "") + '</button><button type="button" class="link" data-act="issue-filter" data-arg="closed">' + (st !== "open" ? "<b>" : "") + (R().issues.length - nOpen) + ' Closed' + (st !== "open" ? "</b>" : "") + '</button></div></div>';
+    if (s.type === "milestones") return milestonesView();
+    var q = s.q || (s.state === "closed" ? "is:closed" : "is:open"), st = /is:closed/.test(q) ? "closed" : "open";
+    var base = R().issues, qNoState = q.replace(/\bis:(open|closed)\b/g, "").trim();
+    var list = issueFilter(base, q).slice().reverse();
+    var nOpen = issueFilter(base, "is:open " + qNoState).length, nClosed = issueFilter(base, "is:closed " + qNoState).length;
+    var h = '<form data-form="issue-search" class="row" style="margin-bottom:10px"><input class="inp mono" id="is-q" value="' + esc(q) + '" aria-label="이슈 검색" style="flex:1;width:auto;min-width:160px"><button class="btn sm" type="submit">검색</button><button type="button" class="btn sm" data-act="ms-list">⚑ Milestones <span class="count">' + R().milestones.length + '</span></button><button type="button" class="btn go" data-act="new-issue">New issue</button></form>';
+    h += '<div class="row" style="gap:6px;margin-bottom:8px;font-size:.8rem"><span class="kv">빠른 필터:</span>' + [["is:open assignee:@me", "내 담당"], ["is:open no:assignee", "담당자 없음"], ["is:open label:bug", "버그"], ["is:open no:milestone", "마일스톤 없음"]].map(function (f) { return '<button type="button" class="link" data-act="issue-q" data-arg="' + f[0] + '">' + f[1] + '</button>'; }).join(" · ") + '</div>';
+    h += '<div class="box"><div class="box-head"><div class="row"><button type="button" class="link" data-act="issue-q" data-arg="' + esc(("is:open " + qNoState).trim()) + '">' + (st === "open" ? "<b>" : "") + nOpen + ' Open' + (st === "open" ? "</b>" : "") + '</button><button type="button" class="link" data-act="issue-q" data-arg="' + esc(("is:closed " + qNoState).trim()) + '">' + (st !== "open" ? "<b>" : "") + nClosed + ' Closed' + (st !== "open" ? "</b>" : "") + '</button></div></div>';
     h += list.length ? list.map(function (i) {
       var cls = i.state === "open" ? "st-open" : i.reason === "not_planned" ? "st-np" : "st-merged";
-      return '<div class="item"><span class="' + cls + '">' + ICON.issue + '</span><div style="min-width:0"><button type="button" class="link t" data-act="open-issue" data-arg="' + i.num + '">' + esc(i.title) + '</button>' + labels(i.labels) + '<div class="sub">#' + i.num + ' · ' + esc(i.author) + ' 작성' + (i.assignees.length ? ' · 담당 ' + i.assignees.map(esc).join(", ") : "") + '</div></div></div>';
-    }).join("") : '<div class="empty">' + (st === "open" ? "열린 이슈가 없음" : "닫힌 이슈가 없음") + '</div>';
+      return '<div class="item"><span class="' + cls + '">' + ICON.issue + '</span><div style="min-width:0"><button type="button" class="link t" data-act="open-issue" data-arg="' + i.num + '">' + esc(i.title) + '</button>' + labels(i.labels) + '<div class="sub">#' + i.num + ' · ' + esc(i.author) + ' 작성' + (i.assignees.length ? ' · 담당 ' + i.assignees.map(esc).join(", ") : "") + (i.milestone ? ' · ⚑ ' + esc(i.milestone) : "") + '</div></div></div>';
+    }).join("") : '<div class="empty">' + (q !== "is:open" && q !== "is:closed" ? "조건에 맞는 이슈가 없음" : st === "open" ? "열린 이슈가 없음" : "닫힌 이슈가 없음") + '</div>';
     return h + '</div>';
   }
   function pickers(prefix, opts, sel) { return opts.map(function (o) { return '<label class="opt"><input type="checkbox" data-pick="' + prefix + '" value="' + esc(o) + '"' + (sel.indexOf(o) >= 0 ? " checked" : "") + '>' + (prefix.indexOf("lb") >= 0 ? labels([o]) : esc(o)) + '</label>'; }).join(""); }
   function newIssueView() {
-    return '<form data-form="create-issue"><div class="two"><div><div class="field"><label for="ni-title">Title</label><input class="inp" id="ni-title" required></div>' +
-      '<div class="field"><label for="ni-body">Description</label><textarea class="inp" id="ni-body" placeholder="재현 방법, 기대 결과 등을 적음"></textarea></div><button class="btn go" type="submit">Submit new issue</button></div>' +
-      '<div class="side"><section><h4>Assignees</h4>' + pickers("ni-as", people(), []) + '</section><section><h4>Labels</h4>' + pickers("ni-lb", LABELS, []) + '</section></div></div></form>';
+    var s = V().sub, tps = templates();
+    if (tps.length && s.tpl === undefined) return templateChooser(tps);
+    var t = s.tpl ? tps.filter(function (x) { return x.file === s.tpl; })[0] || { title: "", body: "", labels: [] } : { title: "", body: "", labels: [] };
+    var body = s.body ? (t.body ? t.body + "\n" + s.body : s.body) : t.body;
+    return '<form data-form="create-issue"><div class="two"><div>' + (t.name ? '<p class="kv">양식: <b>' + esc(t.name) + '</b></p>' : "") + '<div class="field"><label for="ni-title">Title</label><input class="inp" id="ni-title" value="' + esc(t.title) + '" required></div>' +
+      '<div class="field"><label for="ni-body">Description</label><textarea class="inp" id="ni-body" rows="' + (body ? 12 : 4) + '" placeholder="재현 방법, 기대 결과 등을 적음">' + esc(body) + '</textarea></div><button class="btn go" type="submit">Submit new issue</button></div>' +
+      '<div class="side"><section><h4>Assignees</h4>' + pickers("ni-as", people(), []) + '</section><section><h4>Labels</h4>' + pickers("ni-lb", LABELS, t.labels) + '</section>' +
+      '<section><h4>Projects</h4>' + (R().project ? '<label class="opt"><input type="checkbox" id="ni-pj" checked>' + esc(R().project.title) + '</label>' : '<span class="kv">없음</span>') + '</section><section><h4>Milestone</h4>' + (R().milestones.length ? msSelect("ni-ms", "") : '<span class="kv">없음</span>') + '</section></div></div></form>';
   }
   function timelineHTML(tl) {
     return tl.map(function (t) {
-      if (t.k === "comment") return '<div class="tl">' + av(t.who) + '<div class="comment"><div class="ch"><b>' + esc(t.who) + '</b> commented</div><div class="cb">' + esc(t.text) + '</div></div></div>';
+      if (t.k === "comment") return '<div class="tl">' + av(t.who) + '<div class="comment"><div class="ch"><b>' + esc(t.who) + '</b> commented</div><div class="cb">' + richText(t.text) + '</div></div></div>';
       if (t.k === "review") return '<div class="tl">' + av(t.who) + '<div class="comment"><div class="ch"><b>' + esc(t.who) + '</b><span class="rv-' + t.state + '">' + { APPROVED: "approved these changes", CHANGES_REQUESTED: "requested changes", COMMENTED: "reviewed" }[t.state] + '</span></div>' + (t.text ? '<div class="cb">' + esc(t.text) + '</div>' : "") + '</div></div>';
+      if (t.k === "ref") return '<div class="ev">⎇ <b>' + esc(t.who) + '</b> 이(가) 커밋에서 이 이슈를 참조함 <button type="button" class="link mono" data-act="open-commit" data-arg="' + t.id + '">' + t.id + '</button> ' + esc(t.msg) + ' <span class="kv">(' + esc(t.br) + ')</span></div>';
       if (t.k === "commit") return '<div class="ev">● <b>' + esc(t.who) + '</b> 커밋 추가 <span class="mono">' + t.id + '</span> ' + esc(t.msg) + '</div>';
       return '<div class="ev">● <b>' + esc(t.who) + '</b> ' + esc(t.text) + '</div>';
     }).join("");
@@ -1191,14 +1277,13 @@ origin/feature-a  ← 다른 브랜치는 '기록'만 생김 (로컬 브랜치 �
     if (!i) { V().sub = null; return tabIssues(); }
     var stc = i.state === "open" ? "open" : i.reason === "not_planned" ? "np" : "merged";
     var h = '<h2 class="pt">' + esc(i.title) + ' <span>#' + i.num + '</span></h2><div class="row" style="margin-bottom:14px"><span class="state ' + stc + '">' + (i.state === "open" ? "Open" : i.reason === "not_planned" ? "Closed · not planned" : "Closed") + '</span><span class="kv">' + esc(i.author) + ' 작성</span></div>';
-    h += '<div class="two"><div class="timeline"><div class="tl">' + av(i.author) + '<div class="comment"><div class="ch"><b>' + esc(i.author) + '</b> opened</div><div class="cb">' + (esc(i.body) || '<span class="kv">설명 없음</span>') + '</div></div></div>' + timelineHTML(i.timeline);
+    h += '<div class="two"><div class="timeline"><div class="tl">' + av(i.author) + '<div class="comment"><div class="ch"><b>' + esc(i.author) + '</b> opened</div><div class="cb">' + (richText(i.body) || '<span class="kv">설명 없음</span>') + '</div></div></div>' + timelineHTML(i.timeline);
     h += '<form data-form="issue-comment" class="tl">' + av(ME) + '<div style="flex:1;min-width:0"><textarea class="inp" id="ic-text" placeholder="코멘트 작성"></textarea><div class="row" style="margin-top:6px;justify-content:flex-end">';
     if (i.state === "open") h += '<button type="button" class="btn" data-act="close-issue" data-arg="completed">✓ Close as completed</button><button type="button" class="btn" data-act="close-issue" data-arg="not_planned">⊘ Close as not planned</button>';
     else h += '<button type="button" class="btn" data-act="reopen-issue">Reopen issue</button>';
     h += '<button class="btn go" type="submit">Comment</button></div></div></form></div>';
     h += '<div class="side"><section><h4>Assignees</h4>' + pickers("is-as", people(), i.assignees) + '</section><section><h4>Labels</h4>' + pickers("is-lb", LABELS, i.labels) + '</section>';
-    var linked = R().prs.filter(function (p) { return closingRefs(p.body).indexOf(i.num) >= 0; });
-    h += '<section><h4>Development</h4>' + (linked.length ? linked.map(function (p) { return '<button type="button" class="link" data-act="open-pr" data-arg="' + p.num + '">PR #' + p.num + " " + esc(p.title) + '</button>'; }).join("<br>") : '<span class="kv">연결된 PR 없음</span>') + '</section></div></div>';
+    h += issueSidePM(i) + '</div></div>';
     return h;
   }
 
@@ -1330,6 +1415,7 @@ origin/feature-a  ← 다른 브랜치는 '기록'만 생김 (로컬 브랜치 �
     var h = '<div class="set-grid"><nav class="set-nav">' + [["general", "General"], ["collab", "Collaborators"], ["branches", "Branches"]].map(function (x) { return '<button type="button" class="' + (sec === x[0] ? "on" : "") + '" data-act="set-sec" data-arg="' + x[0] + '">' + x[1] + '</button>'; }).join("") + '</nav><div>';
     if (sec === "general") {
       h += '<h2 class="pt">General</h2><form data-form="rename" class="field" style="max-width:420px"><label for="st-name">Repository name</label><div class="row"><input class="inp" id="st-name" value="' + esc(r.name) + '" style="flex:1;width:auto"><button class="btn" type="submit">Rename</button></div></form>';
+      h += '<div class="field"><span class="lbl">Features</span><div class="box"><div class="item"><span>☑ <b>Wikis</b> <span class="kv">팀 문서·장애 기록</span></span></div><div class="item"><span style="flex:1">☑ <b>Issues</b> <span class="kv">' + (templates().length ? "이슈 템플릿 " + templates().length + "개 있음" : "이슈 템플릿 없음") + '</span></span>' + (templates().length ? "" : '<button type="button" class="btn sm go" data-act="setup-tpl">Set up templates</button>') + '</div><div class="item"><span>☑ <b>Projects</b> <span class="kv">칸반 보드·표</span></span></div></div></div>';
       h += '<div class="field"><span class="lbl">Visibility</span><div class="row"><span>현재 <b>' + (r.private ? "Private" : "Public") + '</b></span><button type="button" class="btn danger sm" data-act="toggle-vis">' + (r.private ? "Public으로 변경" : "Private으로 변경") + '</button></div></div>';
     } else if (sec === "collab") {
       var cand = ["김주무관", "이주무관"].filter(function (c) { return !r.collabs.some(function (x) { return x.who === c; }); });
@@ -1347,19 +1433,359 @@ origin/feature-a  ← 다른 브랜치는 '기록'만 생김 (로컬 브랜치 �
     return h + '</div></div>';
   }
 
+  /* ---------- 협업 관리: 마일스톤·프로젝트 보드·위키·커밋 연결 ---------- */
+  var PRIO = ["긴급", "높음", "보통", "낮음"], STATUS = ["Todo", "In Progress", "Done"], BOT = "github-project-automation";
+  var TPL_DIR = ".github/ISSUE_TEMPLATE/";
+  var TPL_FILES = {
+    "bug_report.md": "---\nname: 버그 리포트\nabout: 오류를 신고함\ntitle: \"[버그] \"\nlabels: bug\n---\n## 증상\n\n## 재현 방법\n1. \n2. \n\n## 기대 결과\n\n## 관련 코드 (permalink)\n\n## 환경 (브라우저·OS)\n",
+    "feature_request.md": "---\nname: 기능 요청\nabout: 새 기능이나 개선을 제안함\ntitle: \"[요청] \"\nlabels: enhancement\n---\n## 배경\n\n## 제안 내용\n\n## 기대 효과\n"
+  };
+  function today() { var d = new Date(); return d.getFullYear() + "-" + ("0" + (d.getMonth() + 1)).slice(-2) + "-" + ("0" + d.getDate()).slice(-2); }
+  function addDays(n) { var d = new Date(Date.now() + n * 864e5); return d.getFullYear() + "-" + ("0" + (d.getMonth() + 1)).slice(-2) + "-" + ("0" + d.getDate()).slice(-2); }
+  function extRepo(r) {
+    if (!r) return;
+    if (!r.milestones) r.milestones = [];
+    if (!r.wiki) r.wiki = { pages: {} };
+    if (!r.refSeen) r.refSeen = {};
+    if (r.project === undefined) r.project = null;
+  }
+  function dueBadge(d, done) { if (!d) return ""; var over = !done && d < today(); return '<span class="due' + (over ? " over" : "") + '">' + (over ? "기한 지남 " : "마감 ") + esc(d) + '</span>'; }
+  function prioBadge(p) { return p ? '<span class="prio pr-' + PRIO.indexOf(p) + '">' + esc(p) + '</span>' : ""; }
+  /* 커밋 메시지의 #번호 → 이슈 타임라인 참조, main 에 들어온 Fixes #번호 → 이슈 자동 닫힘 */
+  function refScan(r) {
+    extRepo(r);
+    Object.keys(r.branches).forEach(function (bn) {
+      r.branches[bn].commits.forEach(function (id) {
+        var c = S.commits[id]; if (!c || !/#\d/.test(c.msg)) return;
+        var re = /#(\d+)/g, m, closes = closingRefs(c.msg);
+        while ((m = re.exec(c.msg))) {
+          var n = +m[1], i = r.issues.filter(function (x) { return x.num === n; })[0]; if (!i) continue;
+          if (!r.refSeen[id + ":" + n]) { r.refSeen[id + ":" + n] = 1; i.timeline.push({ k: "ref", id: id, msg: c.msg, who: c.author, br: bn }); }
+          if (bn === "main" && closes.indexOf(n) >= 0 && !r.refSeen["c" + id + ":" + n]) {
+            r.refSeen["c" + id + ":" + n] = 1;
+            if (i.state === "open") { i.state = "closed"; i.reason = "completed"; i.timeline.push({ k: "ev", who: c.author, text: "커밋 " + id + " 이 main 에 들어와 이 이슈를 자동으로 닫음 (" + c.msg + ")" }); }
+          }
+        }
+      });
+    });
+  }
+  function itemObj(r, it) { return (it.kind === "pr" ? r.prs : r.issues).filter(function (x) { return x.num === it.num; })[0]; }
+  function projItem(r, kind, num) { return r.project ? r.project.items.filter(function (it) { return it.kind === kind && it.num === num; })[0] : null; }
+  function setStatus(r, it, s, who) {
+    if (it.status === s) return;
+    var o = itemObj(r, it), from = it.status || "No Status";
+    it.status = s;
+    if (o) o.timeline.push({ k: "ev", who: who, text: r.project.title + " 보드에서 " + from + " → " + s + " 로 옮김" });
+  }
+  function projSync(r) {
+    var P = r.project; if (!P) return;
+    if (P.wf.autoadd) r.issues.forEach(function (i) { if (i.num > P.autoFrom && i.state === "open" && !projItem(r, "issue", i.num)) { P.items.push({ kind: "issue", num: i.num, status: "", prio: "", due: "", seen: "open" }); setStatus(r, P.items[P.items.length - 1], "Todo", BOT); } });
+    P.items.forEach(function (it) {
+      var o = itemObj(r, it); if (!o || o.state === it.seen) return;
+      var prev = it.seen; it.seen = o.state;
+      if (o.state === "merged" && P.wf.merged) setStatus(r, it, "Done", BOT);
+      else if (o.state !== "open" && P.wf.closed) setStatus(r, it, "Done", BOT);
+      else if (o.state === "open" && prev !== "open" && P.wf.reopened) setStatus(r, it, "Todo", BOT);
+    });
+  }
+  function pmSyncAll() { Object.keys(S.repos).forEach(function (k) { var r = S.repos[k]; extRepo(r); refScan(r); projSync(r); }); }
+  function parseTpl(txt) {
+    var m = (txt || "").match(/^---\n([\s\S]*?)\n---\n?([\s\S]*)$/), o = { name: "", about: "", title: "", labels: [], body: txt || "" };
+    if (!m) return o;
+    m[1].split("\n").forEach(function (ln) { var x = ln.match(/^(\w+):\s*"?(.*?)"?\s*$/); if (x) o[x[1]] = x[1] === "labels" ? x[2].split(/\s*,\s*/).filter(Boolean) : x[2]; });
+    o.body = m[2]; return o;
+  }
+  function templates() { var f = br("main") ? br("main").files : {}; return Object.keys(f).filter(function (k) { return k.indexOf(TPL_DIR) === 0 && /\.md$/.test(k); }).sort().map(function (k) { var t = parseTpl(f[k]); t.file = k; return t; }); }
+  function slugify(t) { return t.replace(/\[[^\]]*\]/g, "").trim().replace(/[^\w가-힣]+/g, "-").replace(/^-+|-+$/g, "").toLowerCase().slice(0, 40); }
+  function repoBase(r) { return "https://practicehub.local/" + ownerOf(r) + "/" + r.name; }
+  function permalink(r, sha0, path, line) { return repoBase(r) + "/blob/" + sha0 + "/" + path + (line ? "#L" + line : ""); }
+  /* 본문 자동 링크: 이슈·PR·커밋은 #번호·SHA, 연습허브 주소, 위키는 [[페이지]] */
+  function richText(t, wiki) {
+    var r = R();
+    return esc(t).replace(/(https:\/\/practicehub\.local\/[^\s<"]+)|\[\[([^\]]+)\]\]|(^|[^\w&])#(\d+)\b|\b([0-9a-f]{7})\b/g, function (all, u, wp, pre, n, sh) {
+      if (u) return '<button type="button" class="link wrap" data-act="nav" data-arg="' + u + '">' + u + '</button>';
+      if (wp) return wiki ? '<button type="button" class="link" data-act="wiki-open" data-arg="' + wp + '">' + wp + '</button>' : all;
+      if (n) {
+        if (wiki || !r) return all;
+        var num = +n, isI = r.issues.some(function (i) { return i.num === num; }), isP = r.prs.some(function (p) { return p.num === num; });
+        return isI || isP ? pre + '<button type="button" class="link" data-act="' + (isI ? "open-issue" : "open-pr") + '" data-arg="' + num + '">#' + num + '</button>' : all;
+      }
+      if (sh && !wiki && S.commits[sh]) return '<button type="button" class="link mono" data-act="open-commit" data-arg="' + sh + '">' + sh + '</button>';
+      return all;
+    });
+  }
+  function wikiHTML(t) {
+    return (t || "").split("\n").map(function (ln) {
+      var m = ln.match(/^(#{1,3}) (.*)$/); if (m) return '<h' + (m[1].length + 2) + ' class="wk-h">' + richText(m[2], true) + '</h' + (m[1].length + 2) + '>';
+      if (/^\s*[-*] /.test(ln)) return '<div class="wk-li">• ' + richText(ln.replace(/^\s*[-*] /, ""), true) + '</div>';
+      return ln.trim() ? '<p class="wk-p">' + richText(ln, true) + '</p>' : "";
+    }).join("");
+  }
+  function wikiFind(r, name) { if (r.wiki.pages[name]) return name; var nk = function (x) { return x.replace(/ /g, "-"); }; return Object.keys(r.wiki.pages).filter(function (k) { return nk(k) === nk(name); })[0] || null; }
+  function navUrl(u) {
+    var m = u.replace(/^https:\/\/practicehub\.local\//, "").match(/^([^\/]+)\/([^\/#?]+)(\/[^?]*)?$/);
+    if (!m) return err("연습허브 주소가 아님: " + u);
+    var key = Object.keys(S.repos).filter(function (k) { return ownerOf(S.repos[k]) === m[1] && S.repos[k].name === m[2].replace(/\.git$/, ""); })[0];
+    if (!key) return err("저장소를 찾을 수 없음: " + m[1] + "/" + m[2]);
+    var rest = m[3] || "", o = { page: "repo", repoKey: key, branch: "main", sub: null, tab: "code" }, x;
+    if ((x = rest.match(/^\/issues\/(\d+)/))) { o.tab = "issues"; o.sub = { type: "issue", num: +x[1] }; }
+    else if ((x = rest.match(/^\/pull\/(\d+)/))) { o.tab = "pulls"; o.sub = { type: "pr", num: +x[1] }; }
+    else if ((x = rest.match(/^\/commit\/(\w+)/))) o.sub = { type: "commit", id: x[1] };
+    else if ((x = rest.match(/^\/blob\/([^\/]+)\/([^#]+)(?:#L(\d+))?/))) {
+      var ref = x[1], p = decodeURIComponent(x[2]), ln = x[3] ? +x[3] : 0;
+      if (S.repos[key].branches[ref]) { o.branch = ref; o.sub = { type: "file", path: p, line: ln }; }
+      else if (S.commits[ref]) o.sub = { type: "file", path: p, at: ref, line: ln };
+      else return err("커밋 " + ref + " 을 찾을 수 없음");
+    }
+    else if ((x = rest.match(/^\/wiki\/?(.*)$/))) { o.tab = "wiki"; o.sub = x[1] ? { page: decodeURIComponent(x[1]) } : null; }
+    else if (/^\/projects/.test(rest)) o.tab = "projects";
+    else if (/^\/milestones/.test(rest)) { o.tab = "issues"; o.sub = { type: "milestones" }; }
+    go(o);
+  }
+
+  /* Issues: 검색 필터 */
+  function issueFilter(list, q) {
+    var toks = q.match(/-?\w+:"[^"]*"|\S+/g) || [];
+    return list.filter(function (i) {
+      return toks.every(function (tk) {
+        var m = tk.match(/^(-?)(\w+):"?([^"]*)"?$/); if (!m) return i.title.indexOf(tk) >= 0;
+        var k = m[2], val = m[3], res = true;
+        if (k === "is") res = val === "open" ? i.state === "open" : val === "closed" ? i.state !== "open" : true;
+        else if (k === "assignee") res = i.assignees.indexOf(val === "@me" ? ME : val) >= 0;
+        else if (k === "author") res = i.author === (val === "@me" ? ME : val);
+        else if (k === "label") res = i.labels.indexOf(val) >= 0;
+        else if (k === "milestone") res = i.milestone === val;
+        else if (k === "no") res = val === "assignee" ? !i.assignees.length : val === "milestone" ? !i.milestone : val === "label" ? !i.labels.length : true;
+        return m[1] ? !res : res;
+      });
+    });
+  }
+  function milestonesView() {
+    var r = R(), s = V().sub;
+    var h = '<div class="row" style="justify-content:space-between;margin-bottom:10px"><button type="button" class="link" data-act="issue-filter" data-arg="open">← Issues</button>' + (canWrite() ? '<button type="button" class="btn go" data-act="new-ms">New milestone</button>' : "") + '</div>';
+    if (s.add) h += '<form data-form="milestone" class="box" style="margin-bottom:14px"><div class="box-head"><b>New milestone</b></div><div style="padding:12px 14px"><div class="field"><label for="ms-title">Title</label><input class="inp" id="ms-title" placeholder="예: 11월 정기 배포" required></div><div class="field"><label for="ms-due">Due date (마감일)</label><input class="inp" type="date" id="ms-due" style="width:auto"></div><div class="field"><label for="ms-desc">Description</label><textarea class="inp" id="ms-desc" rows="2"></textarea></div><div class="row"><button class="btn go" type="submit">Create milestone</button><button class="btn" type="button" data-act="new-ms">Cancel</button></div></div></form>';
+    h += '<div class="box"><div class="box-head"><b>Milestones</b><span class="kv">이슈를 배포·기한 단위로 묶고 마감일을 정함</span></div>';
+    h += r.milestones.length ? r.milestones.map(function (m) {
+      var is = r.issues.filter(function (i) { return i.milestone === m.title; }), cl = is.filter(function (i) { return i.state !== "open"; }).length, pc = is.length ? Math.round(cl / is.length * 100) : 0;
+      return '<div class="item"><div style="flex:1;min-width:0"><button type="button" class="link t" data-act="ms-issues" data-arg="' + esc(m.title) + '">' + esc(m.title) + '</button> ' + dueBadge(m.due, is.length && cl === is.length) + '<div class="ms-bar"><i style="width:' + pc + '%"></i></div><div class="sub">' + pc + '% complete · ' + (is.length - cl) + ' open · ' + cl + ' closed' + (m.desc ? " · " + esc(m.desc) : "") + '</div></div></div>';
+    }).join("") : '<div class="empty">마일스톤이 없음. [New milestone] 으로 배포 일정을 만들어 보기</div>';
+    return h + '</div>';
+  }
+  function templateChooser(tps) {
+    return '<h2 class="pt">어떤 이슈인가요?</h2><p class="kv">저장소의 ' + TPL_DIR + ' 폴더에 있는 양식이 여기 나옴</p><div class="box">' + tps.map(function (t) {
+      return '<div class="item"><div style="flex:1"><b>' + esc(t.name || t.file) + '</b><div class="sub">' + esc(t.about) + '</div></div><button type="button" class="btn go sm" data-act="ni-tpl" data-arg="' + esc(t.file) + '">Get started</button></div>';
+    }).join("") + '<div class="item"><span class="kv" style="flex:1">양식 없이 작성</span><button type="button" class="btn sm" data-act="ni-tpl" data-arg="">Open a blank issue</button></div></div>';
+  }
+  function msSelect(id, cur, extra) { return '<select class="inp" id="' + id + '"' + (extra || "") + '><option value="">No milestone</option>' + R().milestones.map(function (m) { return '<option' + (m.title === cur ? " selected" : "") + '>' + esc(m.title) + '</option>'; }).join("") + '</select>'; }
+  function issueSidePM(i) {
+    var r = R(), P = r.project, it = projItem(r, "issue", i.num), h = '';
+    h += '<section><h4>Projects</h4>';
+    if (!P) h += '<span class="kv">프로젝트 없음 · </span><button type="button" class="link" data-act="tab" data-arg="projects">Projects 탭에서 만들기</button>';
+    else if (!it) h += canWrite() ? '<button type="button" class="btn sm" data-act="pj-add-issue" data-arg="' + i.num + '">+ ' + esc(P.title) + ' 에 추가</button>' : '<span class="kv">없음</span>';
+    else {
+      var ix = P.items.indexOf(it);
+      h += '<div class="kv"><b>' + esc(P.title) + '</b></div>' +
+        '<label class="pj-f"><span>Status</span><select class="inp" data-change="pj-status" data-arg="' + ix + '"><option value="">No Status</option>' + STATUS.map(function (s0) { return '<option' + (it.status === s0 ? " selected" : "") + '>' + s0 + '</option>'; }).join("") + '</select></label>' +
+        '<label class="pj-f"><span>Priority</span><select class="inp" data-change="pj-prio" data-arg="' + ix + '"><option value="">-</option>' + PRIO.map(function (p) { return '<option' + (it.prio === p ? " selected" : "") + '>' + p + '</option>'; }).join("") + '</select></label>' +
+        '<label class="pj-f"><span>Due</span><input class="inp" type="date" data-change="pj-due" data-arg="' + ix + '" value="' + esc(it.due) + '"></label>' + dueBadge(it.due, it.status === "Done");
+    }
+    h += '</section><section><h4>Milestone</h4>' + (r.milestones.length ? msSelect("is-ms", i.milestone, ' data-change="is-ms"') + (i.milestone ? dueBadge((r.milestones.filter(function (m) { return m.title === i.milestone; })[0] || {}).due, i.state !== "open") : "") : '<span class="kv">마일스톤 없음 · </span><button type="button" class="link" data-act="ms-list">만들기</button>') + '</section>';
+    var bl = (i.branches || []).filter(function (b) { return r.branches[b]; });
+    var linked = r.prs.filter(function (p) { return closingRefs(p.body).indexOf(i.num) >= 0 || (!p.headRepo && bl.indexOf(p.head) >= 0); });
+    h += '<section><h4>Development</h4>' + bl.map(function (b) { return '<div>⎇ <button type="button" class="link mono" data-act="dev-branch" data-arg="' + esc(b) + '">' + esc(b) + '</button></div>'; }).join("") +
+      linked.map(function (p) { return '<div><button type="button" class="link" data-act="open-pr" data-arg="' + p.num + '">PR #' + p.num + " " + esc(p.title) + '</button> <span class="kv">' + p.state + (closingRefs(p.body).indexOf(i.num) >= 0 ? " · 머지 시 이슈 닫힘" : "") + '</span></div>'; }).join("");
+    if (!bl.length && !linked.length) h += '<span class="kv">연결된 브랜치·PR 없음</span>';
+    if (canWrite() && i.state === "open") {
+      if (V().sub.mkbr) h += '<form data-form="issue-branch" style="margin-top:8px"><label class="lbl" for="ib-name">Branch name</label><input class="inp mono" id="ib-name" value="' + esc(i.num + "-" + (slugify(i.title) || "issue")) + '"><div class="kv" style="margin:4px 0">Branch source: main</div><div class="row"><button class="btn go sm" type="submit">Create branch</button><button class="btn sm" type="button" data-act="mk-branch">Cancel</button></div></form>';
+      else h += '<div style="margin-top:6px"><button type="button" class="link" data-act="mk-branch">⎇ Create a branch</button> <span class="kv">for this issue</span></div>';
+    }
+    return h + '</section>';
+  }
+  /* Projects 탭 */
+  function tabProjects() {
+    var r = R(), P = r.project, s = V().sub || {};
+    if (!P) {
+      return '<div class="box"><div class="box-head"><b>Projects</b></div><div style="padding:16px">' + (canWrite() ? '<p>이슈·PR 을 칸반 보드나 표로 모아 <b>상태·우선순위·마감일</b>을 관리함. 이슈가 닫히면 자동으로 Done 으로 옮겨짐.</p><form data-form="new-project" class="row"><input class="inp" id="pj-title" value="업무 보드" style="width:auto;flex:1"><select class="inp" id="pj-view" style="width:auto"><option value="board">Board 템플릿</option><option value="table">Table 템플릿</option></select><button class="btn go" type="submit">New project</button></form>' : '<p class="kv">연결된 프로젝트가 없음</p>') + '</div></div>';
+    }
+    var h = '<div class="row" style="justify-content:space-between;margin-bottom:10px"><h2 class="pt" style="margin:0">' + esc(P.title) + '</h2><div class="row">' +
+      ["board", "table"].map(function (vw) { return '<button type="button" class="btn sm' + (P.view === vw ? " go" : "") + '" data-act="pj-view" data-arg="' + vw + '">' + (vw === "board" ? "Board" : "Table") + '</button>'; }).join("") +
+      '<button type="button" class="btn sm' + (s.wf ? " go" : "") + '" data-act="pj-wf">⚙ Workflows</button></div></div>';
+    if (s.wf) {
+      var W = [["closed", "Item closed", "이슈·PR 이 닫히면 Status → Done"], ["merged", "Pull request merged", "PR 이 머지되면 Status → Done"], ["reopened", "Item reopened", "다시 열리면 Status → Todo"], ["autoadd", "Auto-add to project", "앞으로 새로 만드는 열린 이슈를 자동으로 추가 (기존 이슈는 추가 안 됨)"]];
+      h += '<div class="box" style="margin-bottom:12px"><div class="box-head"><b>Workflows (자동화)</b><span class="kv">처음 두 개는 프로젝트를 만들면 기본으로 켜짐</span></div>' + W.map(function (w) { return '<label class="item"><input type="checkbox" data-change="pj-wf" data-arg="' + w[0] + '"' + (P.wf[w[0]] ? " checked" : "") + (canWrite() ? "" : " disabled") + '><div><b>' + w[1] + '</b><div class="sub">' + w[2] + '</div></div></label>'; }).join("") + '</div>';
+    }
+    var cand = r.issues.filter(function (i) { return !projItem(r, "issue", i.num); }).map(function (i) { return ["issue:" + i.num, "#" + i.num + " " + i.title]; })
+      .concat(r.prs.filter(function (p) { return !projItem(r, "pr", p.num); }).map(function (p) { return ["pr:" + p.num, "PR #" + p.num + " " + p.title]; }));
+    if (canWrite()) h += '<form data-form="pj-add" class="row" style="margin-bottom:12px">' + (cand.length ? '<select class="inp" id="pj-pick" style="width:auto;max-width:100%;flex:1">' + cand.map(function (c) { return '<option value="' + c[0] + '">' + esc(c[1]) + '</option>'; }).join("") + '</select><button class="btn sm" type="submit">+ Add item</button>' : '<span class="kv">추가할 이슈·PR 이 없음</span>') + '</form>';
+    var card = function (it) {
+      var o = itemObj(r, it), ix = P.items.indexOf(it); if (!o) return "";
+      var done = it.status === "Done";
+      return '<div class="pj-card"><div><span class="kv">' + (it.kind === "pr" ? "PR " : "") + '#' + o.num + '</span> <button type="button" class="link t" data-act="' + (it.kind === "pr" ? "open-pr" : "open-issue") + '" data-arg="' + o.num + '">' + esc(o.title) + '</button>' + (o.state !== "open" ? ' <span class="kv">(' + o.state + ')</span>' : "") + '</div>' +
+        '<div class="row" style="gap:4px;margin-top:4px">' + prioBadge(it.prio) + dueBadge(it.due, done) + (o.assignees && o.assignees.length ? '<span class="kv">👤 ' + o.assignees.map(esc).join(", ") + '</span>' : "") + (o.milestone ? '<span class="kv">⚑ ' + esc(o.milestone) + '</span>' : "") + '</div>' +
+        '<select class="inp sm-sel" aria-label="Status 바꾸기" data-change="pj-status" data-arg="' + ix + '"' + (canWrite() ? "" : " disabled") + '>' + ['<option value="">No Status</option>'].concat(STATUS.map(function (s0) { return '<option' + (it.status === s0 ? " selected" : "") + '>' + s0 + '</option>'; })).join("") + '</select></div>';
+    };
+    if (P.view === "board") {
+      var cols = (P.items.some(function (it) { return !it.status; }) ? [""] : []).concat(STATUS);
+      h += '<div class="pj-board">' + cols.map(function (c) {
+        var its = P.items.filter(function (it) { return (it.status || "") === c; });
+        return '<div class="pj-col"><div class="pj-ch"><b>' + (c || "No Status") + '</b> <span class="count">' + its.length + '</span></div>' + (its.map(card).join("") || '<div class="kv" style="padding:6px">비어 있음</div>') + '</div>';
+      }).join("") + '</div>';
+    } else {
+      var rows = P.items.slice().sort(function (a, b) { return (a.due || "9999") < (b.due || "9999") ? -1 : (a.due || "9999") > (b.due || "9999") ? 1 : 0; });
+      h += '<div class="tbl"><table><thead><tr><th>Title</th><th>Assignees</th><th>Status</th><th>Priority</th><th>Due ↑</th><th>Milestone</th></tr></thead><tbody>' + rows.map(function (it) {
+        var o = itemObj(r, it), ix = P.items.indexOf(it); if (!o) return "";
+        return '<tr><td><button type="button" class="link" data-act="' + (it.kind === "pr" ? "open-pr" : "open-issue") + '" data-arg="' + o.num + '">#' + o.num + " " + esc(o.title) + '</button></td><td>' + esc((o.assignees || []).join(", ")) + '</td>' +
+          '<td><select class="inp sm-sel" data-change="pj-status" data-arg="' + ix + '"><option value="">-</option>' + STATUS.map(function (s0) { return '<option' + (it.status === s0 ? " selected" : "") + '>' + s0 + '</option>'; }).join("") + '</select></td>' +
+          '<td><select class="inp sm-sel" data-change="pj-prio" data-arg="' + ix + '"><option value="">-</option>' + PRIO.map(function (p) { return '<option' + (it.prio === p ? " selected" : "") + '>' + p + '</option>'; }).join("") + '</select></td>' +
+          '<td><input class="inp sm-sel" type="date" data-change="pj-due" data-arg="' + ix + '" value="' + esc(it.due) + '">' + dueBadge(it.due, it.status === "Done") + '</td><td>' + esc(o.milestone || "") + '</td></tr>';
+      }).join("") + '</tbody></table></div>';
+    }
+    return h;
+  }
+  /* Wiki 탭 */
+  function tabWiki() {
+    var r = R(), s = V().sub || {}, names = Object.keys(r.wiki.pages);
+    var side = '<div class="side"><section><h4>Pages <span class="count">' + names.length + '</span></h4>' + (names.length ? names.map(function (n) { return '<div><button type="button" class="link" data-act="wiki-open" data-arg="' + esc(n) + '">' + esc(n) + '</button></div>'; }).join("") : '<span class="kv">없음</span>') + '</section><section><h4>Clone this wiki</h4><span class="mono kv" style="font-size:.72rem;overflow-wrap:anywhere">' + esc(repoBase(r)) + '.wiki.git</span></section></div>';
+    if (s.edit) {
+      var nm = s.edit === true ? "" : s.edit, cur = nm && r.wiki.pages[nm] ? r.wiki.pages[nm][r.wiki.pages[nm].length - 1].text : (s.draft || "");
+      var h = '<form data-form="wiki-save"><h2 class="pt">' + (nm ? "Editing " + esc(nm) : "Create new page") + '</h2>' +
+        '<div class="field"><label for="wk-title">Title</label><input class="inp" id="wk-title" value="' + esc(nm || (names.length ? "" : "Home")) + '"' + (nm ? " readonly" : "") + ' required></div>' +
+        '<div class="row" style="margin-bottom:6px">' + (ui.clip ? '<button type="button" class="btn sm" data-act="wk-paste">📋 복사한 주소 붙여넣기</button>' : '<span class="kv">코드 줄을 누르고 Copy permalink 하면 여기 붙여 넣을 수 있음</span>') + '<button type="button" class="btn sm" data-act="wk-tpl">연습용 장애 기록 양식</button></div>' +
+        '<div class="field"><label for="wk-body">Content</label><textarea class="inp mono" id="wk-body" rows="12">' + esc(cur) + '</textarea><small>제목은 # , 목록은 - , 다른 위키 페이지는 [[페이지 이름]], 이슈·커밋·코드 줄은 전체 주소(URL)를 붙이면 링크가 됨</small></div>' +
+        '<div class="field"><label for="wk-msg">Edit message</label><input class="inp" id="wk-msg" placeholder="무엇을 바꿨는지"></div><div class="row"><button class="btn go" type="submit">Save page</button><button class="btn" type="button" data-act="wiki-cancel">Cancel</button></div></form>';
+      return '<div class="two"><div>' + h + '</div>' + side + '</div>';
+    }
+    if (!names.length) return '<div class="box"><div style="padding:22px;text-align:center"><h3>Welcome to the ' + esc(r.name) + ' wiki!</h3><p class="kv">위키는 팀 문서 공간임. 업무 매뉴얼, 장애(버그) 기록, 회의 결정 사항을 남기고 이슈·커밋·코드와 링크로 연결함.</p>' + (canWrite() ? '<button type="button" class="btn go" data-act="wiki-new">Create the first page</button>' : "") + '</div></div>';
+    var pn = s.page && wikiFind(r, s.page) || (r.wiki.pages.Home ? "Home" : names[0]), revs = r.wiki.pages[pn], last = revs[revs.length - 1];
+    var body = s.hist ? '<div class="box"><div class="box-head"><b>History</b></div>' + revs.slice().reverse().map(function (v0, k) { return '<div class="item"><div><b>' + esc(v0.msg || "Updated " + pn) + '</b><div class="sub">' + esc(v0.who) + ' · revision ' + (revs.length - k) + '</div></div></div>'; }).join("") + '</div>'
+      : '<div class="box"><div class="readme wk">' + wikiHTML(last.text) + '</div></div>';
+    return '<div class="two"><div><div class="row" style="justify-content:space-between"><h2 class="pt" style="margin:0">' + esc(pn) + '</h2><div class="row">' + (canWrite() ? '<button type="button" class="btn sm" data-act="wiki-edit" data-arg="' + esc(pn) + '">Edit</button><button type="button" class="btn go sm" data-act="wiki-new">New page</button>' : "") + '</div></div>' +
+      '<p class="kv">' + esc(last.who) + ' 님이 마지막으로 수정 · <button type="button" class="link" data-act="wiki-hist" data-arg="' + esc(pn) + '">' + revs.length + ' revisions</button></p>' + body + '</div>' + side + '</div>';
+  }
+  /* 커밋 목록·커밋 상세 */
+  function commitsView() {
+    var v = V(), b = br(v.branch);
+    return '<div class="row" style="margin-bottom:10px">' + branchMenu() + '<button type="button" class="link" data-act="code-root">← Code</button></div><div class="box"><div class="box-head"><b>Commits on ' + esc(v.branch) + '</b></div>' +
+      b.commits.slice().reverse().map(function (id) { var c = S.commits[id]; return '<div class="item">' + av(c.author) + '<div style="flex:1;min-width:0"><div>' + richText(c.msg) + '</div><div class="sub">' + esc(c.author) + ' committed</div></div><button type="button" class="btn sm mono" data-act="open-commit" data-arg="' + id + '">' + id + '</button></div>'; }).join("") + '</div>';
+  }
+  function parentTree(id) {
+    var r = R(), out = null;
+    Object.keys(r.branches).some(function (n) { var cs = r.branches[n].commits, k = cs.indexOf(id); if (k >= 0) { out = k > 0 ? S.commits[cs[k - 1]].tree : {}; return true; } return false; });
+    return out || {};
+  }
+  function commitView(id) {
+    var c = S.commits[id]; if (!c) { V().sub = null; return tabCode(); }
+    return '<div class="row" style="margin-bottom:10px"><button type="button" class="link" data-act="commits">← Commits</button></div><div class="box" style="margin-bottom:12px"><div style="padding:12px 14px"><h2 class="pt" style="margin:0 0 6px">' + richText(c.msg) + '</h2><div class="row">' + av(c.author) + '<b>' + esc(c.author) + '</b><span class="kv">committed</span><span style="flex:1"></span><span class="mono kv">commit ' + id + '</span></div></div></div>' + diffHTML(parentTree(id), c.tree, null, null);
+  }
+  function fileLines(c, sel) {
+    if (!c) return '<div class="file-view"><span class="kv">(빈 파일)</span></div>';
+    return '<div class="code-lines">' + c.split("\n").map(function (ln, k) { return '<div class="cl' + (sel === k + 1 ? " sel" : "") + '"><button type="button" class="ln" data-act="line" data-arg="' + (k + 1) + '" aria-label="' + (k + 1) + '번째 줄 선택">' + (k + 1) + '</button><span>' + (esc(ln) || " ") + '</span></div>'; }).join("") + '</div>';
+  }
+
+  /* 협업 관리 동작 (클릭·제출·변경) */
+  function pmClick(a, arg, v, r, t) {
+    var s = v.sub || {};
+    if (a === "nav") navUrl(arg);
+    else if (a === "open-commit") go({ tab: "code", sub: { type: "commit", id: arg } });
+    else if (a === "commits") go({ tab: "code", sub: { type: "commits" } });
+    else if (a === "line") { s.line = s.line === +arg ? 0 : +arg; flash = null; }
+    else if (a === "copy-link" || a === "line-issue") {
+      var b = br(v.branch), link = permalink(r, s.at || b.commits[b.commits.length - 1], s.path, s.line);
+      if (a === "line-issue") { go({ tab: "issues", sub: { type: "new", tpl: "", body: link } }); return true; }
+      ui.clip = link; S.flags.permalink = true;
+      try { navigator.clipboard.writeText(link).catch(function () {}); } catch (x) {}
+      ok("Permalink 복사됨: " + link + " → 브랜치 이름 대신 커밋 SHA 가 들어가 있어 나중에 코드가 바뀌어도 이 줄을 그대로 가리킴. 이슈·위키에 붙여 넣으면 링크가 됨");
+    }
+    else if (a === "issue-q") { go({ tab: "issues", sub: { q: arg } }); if (/assignee:@me/.test(arg) && /is:open/.test(arg)) S.flags.searchMe = true; }
+    else if (a === "ms-list") go({ tab: "issues", sub: { type: "milestones" } });
+    else if (a === "new-ms") s.add = !s.add;
+    else if (a === "ms-issues") go({ tab: "issues", sub: { q: 'is:open milestone:"' + arg + '"' } });
+    else if (a === "ni-tpl") s.tpl = arg;
+    else if (a === "mk-branch") s.mkbr = !s.mkbr;
+    else if (a === "dev-branch") go({ tab: "code", branch: arg, sub: null });
+    else if (a === "pj-add-issue") { var i0 = issue(+arg); r.project.items.push({ kind: "issue", num: i0.num, status: "", prio: "", due: "", seen: i0.state }); i0.timeline.push({ k: "ev", who: ME, text: r.project.title + " 프로젝트에 추가함" }); }
+    else if (a === "pj-view") r.project.view = arg;
+    else if (a === "pj-wf") { v.sub = s; s.wf = !s.wf; }
+    else if (a === "wiki-new") go({ tab: "wiki", sub: { edit: true } });
+    else if (a === "wiki-edit") go({ tab: "wiki", sub: { edit: arg } });
+    else if (a === "wiki-open") go({ tab: "wiki", sub: { page: arg } });
+    else if (a === "wiki-hist") go({ tab: "wiki", sub: { page: arg, hist: true } });
+    else if (a === "wiki-cancel") go({ sub: s.edit === true ? null : { page: s.edit } });
+    else if (a === "wk-paste" || a === "wk-tpl") {
+      var ta = $("wk-body"), ins = a === "wk-paste" ? ui.clip : "# 장애 기록: (제목)\n## 증상\n- \n## 원인\n- \n## 해결\n- 관련 이슈: (이슈 주소)\n- 수정 커밋: (커밋 주소)\n- 문제 코드: (permalink)\n## 재발 방지\n- \n";
+      var p0 = ta.selectionStart || ta.value.length; ta.value = ta.value.slice(0, p0) + ins + ta.value.slice(p0); ta.focus();
+      pmClick.stop = true;
+    }
+    else if (a === "setup-tpl") {
+      var files = clone(br("main").files); Object.keys(TPL_FILES).forEach(function (f) { files[TPL_DIR + f] = TPL_FILES[f]; });
+      if (r.rules.main && r.rules.main.requirePR) {
+        var nb = "add-issue-templates"; if (!br(nb)) newBranch(nb, "main");
+        addCommit(nb, "Add issue templates", Object.assign(clone(br(nb).files), files)); r.recent[nb] = 1;
+        var tp = makePR({ title: "Add issue templates", body: "버그 리포트·기능 요청 이슈 템플릿 추가", base: "main", head: nb });
+        go({ tab: "pulls", sub: { type: "pr", num: tp.num } }); ok("main 이 보호돼 있어 템플릿을 " + nb + " 브랜치에 커밋하고 PR #" + tp.num + " 을 만듦. 리뷰 승인 후 머지하면 템플릿이 적용됨");
+      } else { addCommit("main", "Add issue templates", files); ok("main 에 " + TPL_DIR + " 양식 2개(버그 리포트·기능 요청)를 커밋함. 이제 New issue 를 누르면 양식을 고를 수 있음"); }
+    }
+    else return false;
+    return true;
+  }
+  function pmSubmit(k, v, r) {
+    var s = v.sub || {};
+    if (k === "issue-search") { var q = $("is-q").value.trim() || "is:open"; go({ sub: { q: q } }); if (/assignee:@me/.test(q) && /is:open/.test(q)) S.flags.searchMe = true; }
+    else if (k === "milestone") {
+      var mt = $("ms-title").value.trim(); if (!mt) return true;
+      if (r.milestones.some(function (m) { return m.title === mt; })) { err("같은 이름의 마일스톤이 이미 있음"); return true; }
+      r.milestones.push({ title: mt, due: $("ms-due").value, desc: $("ms-desc").value.trim() }); s.add = false;
+      ok("마일스톤 '" + mt + "' 만듦" + ($("ms-due").value ? " (마감 " + $("ms-due").value + ")" : " · 마감일 없음"));
+    }
+    else if (k === "issue-branch") {
+      var bn = $("ib-name").value.trim(), i = issue(s.num);
+      if (!/^[\w.\/가-힣-]+$/.test(bn)) { err("브랜치 이름에 쓸 수 없는 문자가 있음"); return true; }
+      if (r.branches[bn]) { err("이미 있는 브랜치임: " + bn); return true; }
+      newBranch(bn, "main"); r.recent[bn] = 1; (i.branches = i.branches || []).push(bn); s.mkbr = false;
+      i.timeline.push({ k: "ev", who: ME, text: "이 이슈용 브랜치 " + bn + " 를 만듦 (Development)" });
+      ok("브랜치 " + bn + " 생성·연결됨. 로컬에서 쓰려면 Fetch(가져오기) 후 이 브랜치로 Checkout 함 (git fetch origin → git checkout " + bn + ")");
+    }
+    else if (k === "new-project") { r.project = { title: $("pj-title").value.trim() || "업무 보드", view: $("pj-view").value, items: [], wf: { closed: true, merged: true, reopened: false, autoadd: false }, autoFrom: r.num }; go({ sub: null }); ok("프로젝트 '" + r.project.title + "' 를 만듦. Workflows 에서 'Item closed → Done', 'Pull request merged → Done' 이 기본으로 켜져 있음"); }
+    else if (k === "pj-add") {
+      var pv = ($("pj-pick").value || "").split(":"), kind = pv[0], num = +pv[1], o = kind === "pr" ? pr(num) : issue(num); if (!o) return true;
+      r.project.items.push({ kind: kind, num: num, status: "", prio: "", due: "", seen: o.state }); o.timeline.push({ k: "ev", who: ME, text: r.project.title + " 프로젝트에 추가함" });
+      ok((kind === "pr" ? "PR #" : "#") + num + " 를 보드에 추가함 (No Status). Status·Priority·Due 를 정해 줌");
+    }
+    else if (k === "wiki-save") {
+      var wt = $("wk-title").value.trim(), wb = $("wk-body").value, isNew = s.edit === true;
+      if (!wt) { err("페이지 제목을 입력함"); return true; }
+      if (isNew && r.wiki.pages[wt]) { err("같은 제목의 페이지가 이미 있음"); return true; }
+      (r.wiki.pages[wt] = r.wiki.pages[wt] || []).push({ text: wb, who: ME, msg: $("wk-msg").value.trim() || (isNew ? "Created " : "Updated ") + wt });
+      go({ sub: { page: wt } }); ok("위키 페이지 '" + wt + "' 저장됨 (revision " + r.wiki.pages[wt].length + ")");
+    }
+    else return false;
+    return true;
+  }
+  function pmChange(t) {
+    var r = R(), v = V(), c = t.dataset.change, P = r.project;
+    if (!canWrite()) { err(noWriteMsg()); return; }
+    if (c === "is-ms") { var i = issue(v.sub.num), nv = t.value || null; if (i.milestone !== nv) { i.milestone = nv; i.timeline.push({ k: "ev", who: ME, text: nv ? "마일스톤 지정: " + nv : "마일스톤 해제" }); } return; }
+    if (c === "pj-wf") { P.wf[t.dataset.arg] = t.checked; if (t.dataset.arg === "autoadd" && t.checked) P.autoFrom = r.num; return; }
+    var it = P && P.items[+t.dataset.arg]; if (!it) return;
+    if (c === "pj-status") { if (t.value) setStatus(r, it, t.value, ME); else it.status = ""; }
+    else if (c === "pj-prio") it.prio = t.value;
+    else if (c === "pj-due") it.due = t.value;
+  }
+
   /* ---------- 사이트 동작 ---------- */
   var site = $("site");
   site.addEventListener("click", function (e) {
     var t = e.target.closest("[data-act]"); if (!t) return;
     useRepo(viewKey());
     var a = t.dataset.act, arg = t.dataset.arg, v = V(), r = R();
-    if (["add-file", "edit-file", "delete-file", "delete-branch", "toggle-vis", "remove-collab", "delete-rule"].indexOf(a) >= 0 && r && !canWrite()) { err(noWriteMsg()); return afterChange(); }
+    if (["add-file", "edit-file", "delete-file", "delete-branch", "toggle-vis", "remove-collab", "delete-rule", "setup-tpl", "new-ms", "mk-branch", "pj-add-issue", "wiki-new", "wiki-edit"].indexOf(a) >= 0 && r && !canWrite()) { err(noWriteMsg()); return afterChange(); }
     if (a === "home") go({ page: "home" });
     else if (a === "new-repo") go({ page: "new" });
     else if (a === "open-repo") { go({ page: "repo", tab: "code", sub: null, branch: "main", repoKey: arg && S.repos[arg] ? arg : "home" }); }
     else if (a === "tab") go({ page: "repo", tab: arg, sub: null });
     else if (a === "star") r.starred = !r.starred;
-    else if (a === "fork") { var fk = createFork(viewKey()); go({ page: "repo", tab: "code", sub: null, branch: "main", repoKey: "fork" }); ok("내 계정에 fork 를 만듦: " + ownerOf(fk) + "/" + fk.name + " (forked from " + ownerOf(S.repos[fk.parent]) + "/" + S.repos[fk.parent].name + "). 이제 여기에 push 하고 원본으로 PR 을 보냄"); }
+    else if (a === "fork" && !(r && ownerOf(r) !== OWNER && S.repos[S.repoKey] === r)) err("Fork 할 다른 사람의 저장소를 먼저 엶");
+    else if (a === "fork") { var fk = createFork(S.repoKey); go({ page: "repo", tab: "code", sub: null, branch: "main", repoKey: "fork" }); ok("내 계정에 fork 를 만듦: " + ownerOf(fk) + "/" + fk.name + " (forked from " + ownerOf(S.repos[fk.parent]) + "/" + S.repos[fk.parent].name + "). 이제 여기에 push 하고 원본으로 PR 을 보냄"); }
     else if (a === "sync-fork") syncFork(viewKey());
     else if (a === "contribute") { var pk = R().parent; go({ page: "repo", tab: "pulls", sub: { type: "compare", base: "main", head: "@" + viewKey() + ":" + arg }, repoKey: pk, branch: "main" }); ok("원본 저장소(" + ownerOf(S.repos[pk]) + "/" + S.repos[pk].name + ")의 PR 작성 화면을 열었음 (compare across forks)"); }
     else if (a === "switch-branch") go({ branch: arg, sub: null });
@@ -1383,6 +1809,7 @@ origin/feature-a  ← 다른 브랜치는 '기록'만 생김 (로컬 브랜치 �
       else { i.state = "open"; i.reason = null; i.timeline.push({ k: "ev", who: ME, text: "이슈를 다시 엶" }); }
     }
     else if (a === "open-pr") go({ tab: "pulls", sub: { type: "pr", num: +arg } });
+    else if (pmClick(a, arg, v, r, t)) { if (pmClick.stop) { pmClick.stop = false; return; } }
     else if (a === "edit-head") go({ tab: "code", branch: t.dataset.br, sub: { type: "edit", path: arg }, returnPr: +t.dataset.pr });
     else if (a === "resolve-pr") { v.sub.resolve = true; v.sub.files = false; flash = null; }
     else if (a === "resolve-cancel") { v.sub.resolve = false; flash = null; }
@@ -1410,6 +1837,7 @@ origin/feature-a  ← 다른 브랜치는 '기록'만 생김 (로컬 브랜치 �
       go({ sub: { type: "compare", base: $("cmp-base").value, head: $("cmp-head").value, title: tt ? tt.value : "", body: bb ? bb.value : "" } });
       afterChange(); return;
     }
+    if (t.dataset.change && t.dataset.change !== "cmp") { pmChange(t); afterChange(); return; }
     var pk = t.dataset.pick; if (!pk) return;
     var v = V();
     if (pk === "is-as" || pk === "is-lb") {
@@ -1435,7 +1863,7 @@ origin/feature-a  ← 다른 브랜치는 '기록'만 생김 (로컬 브랜치 �
     e.preventDefault();
     useRepo(viewKey());
     var k = f.dataset.form, v = V(), r = R();
-    if (["create-branch", "commit-file", "release", "rename", "invite", "rule", "merge", "resolve"].indexOf(k) >= 0 && r && !canWrite()) { err(noWriteMsg()); return afterChange(); }
+    if (["create-branch", "commit-file", "release", "rename", "invite", "rule", "merge", "resolve", "milestone", "issue-branch", "new-project", "pj-add", "wiki-save"].indexOf(k) >= 0 && r && !canWrite()) { err(noWriteMsg()); return afterChange(); }
     if (k === "create-repo") {
       var name = $("nr-name").value.trim();
       if (!/^[\w.-]+$/.test(name)) { err("저장소 이름에는 영문·숫자·- _ . 만 쓸 수 있음"); return afterChange(); }
@@ -1468,8 +1896,11 @@ origin/feature-a  ← 다른 브랜치는 '기록'만 생김 (로컬 브랜치 �
       if (toNew) { go({ branch: target, tab: "pulls", sub: { type: "compare", base: v.branch === target ? "main" : S.v.branch, head: target } }); S.v.sub.base = "main"; ok("새 브랜치 " + target + " 에 커밋함. 이어서 PR을 작성함."); }
       else if (v.returnPr && pr(v.returnPr)) { var rpn = v.returnPr; go({ tab: "pulls", sub: { type: "pr", num: rpn, files: true }, returnPr: null }); ok(target + " 에 커밋함 (" + cid + "). 열려 있는 PR #" + rpn + " 에 자동으로 추가됨"); }
       else { go({ sub: { type: "file", path: path } }); ok(target + " 에 커밋함 (" + cid + ")"); }
+    } else if (pmSubmit(k, v, r)) {
     } else if (k === "create-issue") {
       var ni = makeIssue({ title: $("ni-title").value.trim(), body: $("ni-body").value.trim(), assignees: picked("ni-as"), labels: picked("ni-lb") });
+      if ($("ni-ms") && $("ni-ms").value) ni.milestone = $("ni-ms").value;
+      if ($("ni-pj") && $("ni-pj").checked && r.project) { r.project.items.push({ kind: "issue", num: ni.num, status: "", prio: "", due: "", seen: "open" }); ni.timeline.push({ k: "ev", who: ME, text: r.project.title + " 프로젝트에 추가함" }); }
       go({ sub: { type: "issue", num: ni.num } }); ok("이슈 #" + ni.num + " 등록됨");
     } else if (k === "issue-comment") {
       var tx = $("ic-text").value.trim(); if (!tx) return;
@@ -1888,7 +2319,9 @@ origin/feature-a  ← 다른 브랜치는 '기록'만 생김 (로컬 브랜치 �
     { t: "Q. fork 에서 원본으로 PR", from: "질문", quiz: { id: "q14", opts: ["불가능함. 같은 저장소 안에서만 PR 가능", "가능함. 원본 저장소에서 base = 원본:main, compare = 내fork:브랜치 로 PR 을 만듦", "fork 를 지우고 다시 만들어야 함"], ans: 1, exp: "저장소가 다른 PR(compare across forks)이 Fork 의 핵심임. 내 fork 에 push → 원본에 PR → 원본 관리자가 머지. 원본이 바뀌면 Sync fork 로 따라감." },
       r: function () { return "fork 한 곳에서 다른 곳(원본)으로 PR 을 보낼 수 있나요?"; }, w: "[Fork 실습] 트랙에서 처음부터 끝까지 연습 가능.", s: ["보기 중 하나를 고름"], ok: qz("q14") },
     { t: "Q. 데스크톱 앱에 남의 저장소가 안 보임", from: "질문", quiz: { id: "q15", opts: ["앱 오류라 재설치해야 함", "Clone 목록은 내 소유·Collaborator·조직 저장소만 보여 줌. 남의 공개 저장소는 [URL] 탭에 주소를 넣고, 비공개면 초대를 먼저 수락함", "Fork 하지 않으면 절대 클론할 수 없음"], ans: 1, exp: "GitHub Desktop 의 GitHub.com 탭은 내 계정과 관련된 저장소 목록임. 공개 저장소는 누구나 URL 로 클론 가능. 비공개는 초대 수락(메일·github.com/notifications) 전엔 Repository not found. push 까지 하려면 Collaborator 권한 또는 Fork 필요." },
-      r: function () { return "github.com/jye-1123/KJG-SW-AI-W09 가 GitHub Desktop 클론 목록에 안 보이는 이유와 해결 방법은?"; }, w: "[데스크톱 앱] 실전 요청에서 '김주무관 저장소 URL 로 클론' 상황으로 연습 가능.", s: ["보기 중 하나를 고름"], ok: qz("q15") }
+      r: function () { return "github.com/jye-1123/KJG-SW-AI-W09 가 GitHub Desktop 클론 목록에 안 보이는 이유와 해결 방법은?"; }, w: "[데스크톱 앱] 실전 요청에서 '김주무관 저장소 URL 로 클론' 상황으로 연습 가능.", s: ["보기 중 하나를 고름"], ok: qz("q15") },
+    { t: "Q. 이슈 할당·마감·우선순위와 커밋·위키 연결", from: "질문", quiz: { id: "q16", opts: ["담당자는 Assignees, 마감일은 Milestone(또는 보드 Due), 우선순위는 Projects 의 Priority 칸, 커밋은 메시지에 #번호·Fixes #번호, 위키에는 이슈·커밋·코드 permalink 주소를 붙임", "GitHub 에는 담당자·마감일 기능이 없어 엑셀로 따로 관리함", "커밋과 이슈는 연결할 수 없음"], ans: 0, exp: "코치님 설명 그대로 GitHub 안에서 다 됨. 이슈(누가·무엇) → 마일스톤(언제까지) → 프로젝트 보드(상태·우선순위) → 커밋·PR 의 #번호(자동 연결·자동 닫힘) → 위키(지식 기록, 코드 줄 permalink)." },
+      r: function () { return "현업에서 이슈 담당자·마감일·우선순위를 정하고, 커밋·위키와 연결하려면 각각 어디서 하나요?"; }, w: "[협업 관리 실습] 트랙에서 12단계로 처음부터 연습 가능.", s: ["보기 중 하나를 고름"], ok: qz("q16") }
   ];
   function keepDone(list, key) { list.forEach(function (m, i) { var raw = m.ok; m.ok = function () { return latch(key + i, raw); }; }); }
   keepDone(M, "M"); keepDone(MV, "MV"); keepDone(MD, "MD");
@@ -1896,7 +2329,7 @@ origin/feature-a  ← 다른 브랜치는 '기록'만 생김 (로컬 브랜치 �
   setLoc(M, M.map(function () { return ["원격"]; }));
   setLoc(MV, [["원격"], ["원격→로컬"], ["로컬"], ["로컬"], ["로컬"], ["로컬"], ["로컬→원격"], ["원격→로컬"], ["로컬"], ["원격"]]);
   setLoc(MD, [["원격"], ["원격→로컬"], ["로컬"], ["로컬"], ["로컬"], ["로컬→원격"], ["원격"], ["원격→로컬"], ["로컬"], ["원격"]]);
-  setLoc(MQ, [null, ["로컬", "로컬→원격"], null, ["원격"], ["원격", "로컬→원격"], null, null, null, null, null, ["로컬→원격"], ["원격→로컬"], ["로컬"], ["로컬", "로컬→원격"], null, null, null, ["원격→로컬"]]);
+  setLoc(MQ, [null, ["로컬", "로컬→원격"], null, ["원격"], ["원격", "로컬→원격"], null, null, null, null, null, ["로컬→원격"], ["원격→로컬"], ["로컬"], ["로컬", "로컬→원격"], null, null, null, ["원격→로컬"], null]);
   var LOC_TIP = { "로컬": "내 컴퓨터에서만 일어남 (원격엔 변화 없음)", "원격": "GitHub(웹)에서 일어남", "로컬→원격": "내 컴퓨터 → GitHub 로 올림 (push·Publish)", "원격→로컬": "GitHub → 내 컴퓨터로 받음 (clone·pull)" };
   function locBadges(loc) { return loc ? '<div class="locs-badges">' + loc.map(function (l) { return '<span class="loc loc-' + (l === "로컬" ? "l" : l === "원격" ? "r" : l === "로컬→원격" ? "up" : "down") + '" title="' + LOC_TIP[l] + '">' + l + '</span>'; }).join("") + '</div>' : ""; }
   function renderLocTable() { var cur = S.repoKey; useRepo(localKey()); try { renderLocTable0(); } finally { useRepo(cur); } }
@@ -2096,6 +2529,81 @@ origin/feature-a  ← 다른 브랜치는 '기록'만 생김 (로컬 브랜치 �
   }
   function forkLocal() { return !!S.local && S.local.repoKey === "fork"; }
   function vsdk(vs, dk) { return function () { return S.mode === "desktop" ? dk : vs; }; }
+  /* ---------- 협업 관리 실습 (이슈·마일스톤·프로젝트·커밋 연결·위키) ---------- */
+  function makeProject(r, title, view) { r.project = { title: title || "업무 보드", view: view || "board", items: [], wf: { closed: true, merged: true, reopened: false, autoadd: false }, autoFrom: r.num }; return r.project; }
+  function pmIssue() { return R() && R().issues.filter(function (i) { return /결재 알림/.test(i.title); }).slice(-1)[0]; }
+  function pmPrep(lv) {
+    ensureBase(false); var r = R(); extRepo(r); var i = pmIssue();
+    if (lv >= 1 && !templates().length) { var f = clone(br("main").files); Object.keys(TPL_FILES).forEach(function (k) { f[TPL_DIR + k] = TPL_FILES[k]; }); addCommit("main", "Add issue templates", f); }
+    if (lv >= 2 && !r.milestones.some(function (m) { return m.due; })) r.milestones.push({ title: "11월 정기 배포", due: addDays(20), desc: "" });
+    if (lv >= 3 && !i) { i = makeIssue({ title: "[버그] 결재 알림 메일 미발송", body: parseTpl(TPL_FILES["bug_report.md"]).body.replace("1. \n", "1. 결재 상신\n"), labels: ["bug"], assignees: [ME] }); i.milestone = r.milestones.filter(function (m) { return m.due; })[0].title; }
+    if (lv >= 4) { if (!r.project) makeProject(r); var it = projItem(r, "issue", i.num); if (!it) { it = { kind: "issue", num: i.num, status: "", prio: "", due: "", seen: i.state }; r.project.items.push(it); } it.status = "In Progress"; it.prio = it.prio || "높음"; it.due = it.due || addDays(14); }
+    if (lv >= 5 && !(i.branches || []).some(function (b) { return r.branches[b]; })) { var bn = i.num + "-결재-알림-메일-미발송"; if (!r.branches[bn]) newBranch(bn, "main"); (i.branches = i.branches || []).push(bn); }
+    if (lv >= 6 && !i.timeline.some(function (t) { return t.k === "ref"; })) { var b0 = i.branches.filter(function (b) { return r.branches[b]; })[0]; addCommit(b0, "결재 알림 발송 로직 점검 #" + i.num, withFile(br(b0).files, "notify.py", "def send_alarm(doc):\n    # 결재 알림 메일 발송\n    return mail.send(doc.approver)")); refScan(r); }
+    if (lv >= 6 && i.state !== "open") { i.state = "open"; i.reason = null; i.timeline.push({ k: "ev", who: ME, text: "이슈를 다시 엶 (연습용 상황 만들기)" }); }
+    S.mode = "web"; return i;
+  }
+  function pmWikiOk(r, after) {
+    return Object.keys(r.wiki.pages).some(function (n) { var rv = r.wiki.pages[n], t = rv[rv.length - 1].text; return (!after || rv.length > (after[n] || 0)) && /장애|버그|오류/.test(n) && /\/issues\/\d+/.test(t) && /\/blob\/[0-9a-f]{7}\/\S+#L\d+/.test(t); });
+  }
+  var MP = [
+    { t: "Q. 이슈·마일스톤·프로젝트·위키", from: "질문", quiz: { id: "p1", opts: ["Issue = 할 일·버그 1건 / Milestone = 마감일 있는 묶음(배포 단위) / Project = 상태·우선순위를 보는 보드 / Wiki = 팀 문서", "넷 다 같은 기능의 다른 이름", "Issue 는 코드, Wiki 는 버그 목록"], ans: 0, exp: "이슈 1건마다 담당자·라벨을 붙이고, 마일스톤으로 '언제까지' 를, 프로젝트 보드로 '지금 어디까지·얼마나 급한지' 를 봄. 처리 결과와 노하우는 위키에 남겨 이슈·커밋·코드 줄 링크로 연결함." },
+      r: function () { return "이슈, 마일스톤, 프로젝트, 위키는 각각 어떤 용도인가요?"; }, w: "코치 설명 요약: 할당·마감·우선순위 → 커밋 연결 → 위키 기록이 현업의 한 바퀴임.", s: ["보기 중 하나를 고름"], ok: qz("p1") },
+    { t: "이슈 템플릿 준비", key: "p2", mode: "web", from: "코치", r: function () { return "버그 신고 양식이 제각각이라 처리하기 힘들어요. 저장소에 이슈 템플릿(버그 리포트·기능 요청)을 만들어 두세요."; },
+      w: "템플릿은 main 의 .github/ISSUE_TEMPLATE/ 폴더에 들어가는 파일임. 만들어 두면 New issue 때 양식을 고르게 되고 라벨도 자동으로 붙음. main 이 보호돼 있으면 PR 로 들어감.",
+      setup: function () { pmPrep(0); go({ page: "repo", repoKey: "home", tab: "settings", sub: null }); return "Settings 화면을 열었음"; },
+      s: ["[웹 사이트] → 저장소 Settings → General", "Features 의 Issues 옆 [Set up templates]", "(main 이 보호돼 있으면) 생긴 PR 을 승인받아 머지", "Code 탭에서 .github/ISSUE_TEMPLATE/ 파일 확인"],
+      ok: function () { return !!R() && templates().length > 0; } },
+    { t: "마일스톤·마감일", key: "p3", mode: "web", from: "코치", r: function () { return "11월 정기 배포 일정이 잡혔어요. '11월 정기 배포' 마일스톤을 만들고 마감일(Due date)을 정해 주세요."; },
+      w: "마일스톤 = 마감일이 있는 이슈 묶음. 진행률(닫힌 이슈 비율)과 '기한 지남' 이 자동으로 보임.",
+      setup: function () { pmPrep(1); go({ page: "repo", repoKey: "home", tab: "issues", sub: { type: "milestones" } }); return "Milestones 화면을 열었음"; },
+      s: ["Issues 탭 → [⚑ Milestones]", "[New milestone] → 제목 '11월 정기 배포'", "Due date 에 날짜 선택 → [Create milestone]"],
+      ok: function () { return !!R() && R().milestones.some(function (m) { return m.due; }); } },
+    { t: "버그 이슈 등록·할당", key: "p4", mode: "web", from: "코치", r: function () { return "'결재 알림 메일 미발송' 버그가 들어왔어요. 버그 리포트 양식으로 이슈를 올리고, 담당자는 나, 마일스톤은 11월 정기 배포로 지정해 주세요."; },
+      w: "담당자(Assignees)는 '누가', 마일스톤은 '언제까지' 를 정함. 양식의 재현 방법을 채우면 담당자가 다시 묻지 않아도 됨.",
+      setup: function () { pmPrep(2); go({ page: "repo", repoKey: "home", tab: "issues", sub: { type: "new" } }); return "New issue 화면(양식 고르기)을 열었음"; },
+      s: ["Issues → [New issue] → 버그 리포트 [Get started]", "제목: [버그] 결재 알림 메일 미발송, 재현 방법 등 채우기", "오른쪽 Assignees: 나 / Labels: bug(자동) / Milestone: 11월 정기 배포", "[Submit new issue]"],
+      ok: function () { var i = pmIssue(); return !!i && i.assignees.indexOf(ME) >= 0 && i.labels.indexOf("bug") >= 0 && !!i.milestone && /재현 방법/.test(i.body); } },
+    { t: "내 할 일 찾기", key: "p5", mode: "web", from: "코치", r: function () { return "이슈가 많아지면 내 것만 골라 봐야 해요. Issues 검색창으로 '나에게 할당된 열린 이슈' 만 걸러 보세요."; },
+      w: "검색 문법: is:open(열림) assignee:@me(내 담당) label:bug milestone:\"이름\" no:assignee(담당자 없음). 실제 GitHub 도 같은 문법임.",
+      setup: function () { pmPrep(3); delete S.flags.searchMe; go({ page: "repo", repoKey: "home", tab: "issues", sub: null }); return "Issues 목록을 열었음"; },
+      s: ["Issues 탭 검색창에 is:open assignee:@me 입력 → [검색]", "(또는 빠른 필터 '내 담당')"],
+      ok: function () { return !!S.flags.searchMe; } },
+    { t: "프로젝트 보드: 상태·우선순위·마감", key: "p6", mode: "web", from: "코치", r: function () { return "팀 업무 보드를 만들어 결재 알림 이슈를 올려 주세요. 지금 작업 중이니 Status 는 In Progress, Priority 는 높음, Due 는 마감일로 잡아 주세요."; },
+      w: "Projects 는 이슈·PR 을 칸반 보드(Todo → In Progress → Done)와 표로 봄. Priority·Due 같은 칸(field)을 붙여 급한 일과 기한을 한눈에 봄.",
+      setup: function () { pmPrep(3); go({ page: "repo", repoKey: "home", tab: "projects", sub: null }); return "Projects 탭을 열었음"; },
+      s: ["Projects 탭 → [New project] (업무 보드)", "[+ Add item] 으로 결재 알림 이슈 추가", "카드의 Status 를 In Progress 로", "이슈 화면 오른쪽 Projects 에서 Priority 높음, Due 날짜 지정 (또는 Table 보기에서)"],
+      ok: function () { var i = pmIssue(), it = i && projItem(R(), "issue", i.num); return !!it && it.status === "In Progress" && (it.prio === "높음" || it.prio === "긴급") && !!it.due; } },
+    { t: "이슈에서 브랜치 만들기", key: "p7", mode: "web", from: "코치", r: function () { return "이 이슈 작업용 브랜치를 이슈 화면에서 바로 만들어 주세요. 그러면 이슈와 브랜치가 자동으로 연결돼요."; },
+      w: "이슈 오른쪽 Development → Create a branch. 이름이 '이슈번호-제목' 으로 잡혀 어떤 이슈 작업인지 바로 보임. 로컬에선 Fetch 후 이 브랜치로 Checkout 함.",
+      setup: function () { var i = pmPrep(4); go({ page: "repo", repoKey: "home", tab: "issues", sub: { type: "issue", num: i.num } }); return "이슈 #" + i.num + " 을 열었음"; },
+      s: ["결재 알림 이슈 열기", "오른쪽 Development → [⎇ Create a branch]", "이름 확인 → [Create branch]", "Development 에 브랜치가 연결된 것 확인"],
+      ok: function () { var i = pmIssue(); return !!i && (i.branches || []).length > 0; } },
+    { t: "커밋으로 이슈 참조", key: "p8", mode: "web", from: "코치", r: function () { var i = pmIssue(); return "연결된 브랜치에서 코드를 고치고, 커밋 메시지 끝에 #" + (i ? i.num : "이슈번호") + " 를 붙여 커밋해 주세요. 이슈 화면에 그 커밋이 자동으로 나타나는지 보세요."; },
+      w: "커밋 메시지에 #번호 만 쓰면 '참조' 만 됨(이슈는 안 닫힘). 이슈 타임라인에 어떤 커밋이 관련됐는지 기록이 남아 나중에 추적이 쉬움.",
+      setup: function () { var i = pmPrep(5); go({ page: "repo", repoKey: "home", tab: "code", branch: i.branches[i.branches.length - 1], sub: null }); return "이슈 브랜치의 Code 화면을 열었음"; },
+      s: ["Code 탭 브랜치를 이슈 브랜치로 (Development 링크로 이동 가능)", "[+ Add file] 또는 ✎ 편집으로 수정", "커밋 메시지 예: 결재 알림 수신자 누락 수정 #번호 → 현재 브랜치에 커밋", "이슈 화면에 ⎇ '커밋에서 이 이슈를 참조함' 확인"],
+      ok: function () { var i = pmIssue(); return !!i && i.timeline.some(function (t) { return t.k === "ref"; }); } },
+    { t: "Fixes #번호로 자동 닫기", key: "p9", mode: "web", from: "코치", r: function () { var i = pmIssue(); return "수정이 끝났으면 PR 을 올리세요. 본문에 Fixes #" + (i ? i.num : "번호") + " 를 쓰고 main 에 머지하면 이슈가 저절로 닫히고, 보드 카드도 Done 으로 옮겨져야 합니다. 손으로 닫지 마세요."; },
+      w: "Fixes·Closes·Resolves #번호 가 PR 본문이나 커밋 메시지에 있고 그게 기본 브랜치(main)에 들어가면 이슈가 자동으로 닫힘. 보드는 'Item closed → Done' 자동화로 따라옴.",
+      setup: function () { var i = pmPrep(6); go({ page: "repo", repoKey: "home", tab: "pulls", sub: null }); return "이슈 #" + i.num + " 브랜치에 커밋이 있는 상태로 Pull requests 를 열었음"; },
+      s: ["Pull requests → [New pull request] → compare: 이슈 브랜치", "본문에 Fixes #번호 입력 → [Create pull request]", "(main 보호 시) Reviewers 에 김주무관 → 승인 대기", "[Confirm merge] → 이슈가 Closed, 보드 카드가 Done 인지 확인"],
+      ok: function () { var i = pmIssue(), it = i && projItem(R(), "issue", i.num); return !!i && i.state === "closed" && i.reason === "completed" && i.timeline.some(function (t) { return t.k === "ev" && /자동으로/.test(t.text); }) && (!it || it.status === "Done"); } },
+    { t: "코드 줄 고정 링크(permalink)", key: "p10", mode: "web", from: "코치", r: function () { return "버그 원인이 된 코드 줄을 위키에 남기려고 해요. 문제의 파일을 열어 해당 줄의 permalink 를 복사해 두세요."; },
+      w: "permalink = 브랜치 이름 대신 커밋 SHA 가 들어간 주소. 나중에 코드가 바뀌어도 그 시점의 그 줄을 가리킴. 이슈·위키·메신저에 붙여 쓰기 좋음.",
+      setup: function () { pmPrep(0); delete S.flags.permalink; go({ page: "repo", repoKey: "home", tab: "code", branch: "main", sub: null }); return "Code 탭을 열었음"; },
+      s: ["Code 탭에서 파일 열기 (예: notify.py 또는 README.md)", "왼쪽 줄 번호 클릭", "[🔗 Copy permalink] → 주소의 /blob/커밋SHA/ 부분 확인"],
+      ok: function () { return !!S.flags.permalink; } },
+    { t: "위키에 장애 기록", key: "p11", mode: "web", from: "코치", r: function () { return "이번 결재 알림 장애를 위키에 정리해 주세요. 제목에 '장애 기록', 본문에 관련 이슈 주소와 문제 코드 permalink 를 넣어서요. 다음에 비슷한 버그가 나면 이걸 먼저 봅니다."; },
+      w: "위키는 이슈가 닫힌 뒤에도 남는 팀 지식임. 증상·원인·해결·재발 방지를 적고 이슈·커밋·코드 줄 주소를 붙이면 바로 따라가 볼 수 있음. 다른 위키 페이지는 [[페이지 이름]] 으로 연결함.",
+      setup: function () { pmPrep(3); go({ page: "repo", repoKey: "home", tab: "wiki", sub: null }); return "Wiki 탭을 열었음"; },
+      s: ["Wiki 탭 → [Create the first page] 또는 [New page]", "제목: 장애 기록 - 결재 알림", "[연습용 장애 기록 양식] → 내용 채우기", "이슈 주소(…/issues/번호)와 [📋 복사한 주소 붙여넣기]로 permalink 넣기 → [Save page]"],
+      ok: function () { return !!R() && pmWikiOk(R()); } },
+    { t: "Q. Fixes #번호 가 닫히는 시점", from: "질문", quiz: { id: "p12", opts: ["커밋하는 순간 어느 브랜치든 바로 닫힘", "기본 브랜치(main)에 들어갈 때 닫힘. 작업 브랜치에 있는 동안은 참조만 표시됨", "위키에 쓰면 닫힘"], ans: 1, exp: "Fixes·Closes·Resolves #번호 는 PR 이 기본 브랜치로 머지되거나 그 커밋이 기본 브랜치에 들어갈 때 이슈를 닫음. #번호 만 쓰면 닫지 않고 연결(참조)만 함." },
+      r: function () { return "커밋 메시지에 'Fixes #3' 을 썼는데 이슈가 안 닫혔어요. 언제 닫히나요?"; }, w: "작업 브랜치 커밋은 이슈 타임라인에 참조로만 남음.", s: ["보기 중 하나를 고름"], ok: qz("p12") }
+  ];
+  MP.forEach(function (m) { if (m.key) { var raw = m.ok; m.ok = function () { return latch(m.key, raw); }; } });
+  setLoc(MP, [null, ["원격"], ["원격"], ["원격"], ["원격"], ["원격"], ["원격"], ["원격"], ["원격"], ["원격"], ["원격"], null]);
   var MF = [
     { t: "Q. Fork·Clone·Branch", from: "질문", quiz: { id: "f1", opts: ["Fork = 다른 사람 저장소를 내 GitHub 계정으로 복사 / Clone = 저장소를 내 컴퓨터로 복사 / Branch = 한 저장소 안의 갈래", "셋 다 같은 말", "Fork = 내 컴퓨터로 복사, Clone = GitHub 에 복사"], ans: 0, exp: "Fork 는 GitHub(원격)끼리의 복사라 내 계정에 원본과 연결된 새 저장소가 생김. Clone 은 원격 → 내 컴퓨터(로컬). Branch 는 같은 저장소 안의 작업 갈래. 원본에 쓰기 권한이 없을 때 Fork → Clone → Branch → PR 순서로 기여함." },
       r: function () { return "Fork, Clone, Branch 는 각각 무엇인가요?"; }, w: "권한 없는 저장소에 기여하는 표준 방법이 Fork + PR 임.", s: ["보기 중 하나를 고름"], ok: function () { return !!S.flags["quiz:f1"]; } },
@@ -2635,7 +3143,7 @@ origin/feature-a  ← 다른 브랜치는 '기록'만 생김 (로컬 브랜치 �
     var k = f.dataset.lform, v = vsState(), d = dkState();
     flash = null;
     if (k === "clone") lClone($("vs-url").value);
-    else if (k === "dk-clone") { var uu = $("dk-url"), ck = (f.querySelector('input[name="dk-repo"]:checked') || {}).value || "home"; if (uu) { var u0 = uu.value.trim(); if (/^[\w.-]+\/[\w.-]+$/.test(u0)) u0 = "https://practicehub.local/" + u0 + ".git"; lClone(u0); if (flash && flash.t === "ok") d.clone = false; } else { lClone(repoUrlOf(S.repos[ck])); d.clone = false; } }
+    else if (k === "dk-clone") { var uu = $("dk-url"), ck = (f.querySelector('input[name="dk-repo"]:checked') || {}).value || "home"; if (!uu && !S.repos[ck]) err("클론할 저장소를 목록에서 고르거나 [URL] 탭에 주소를 넣음"); else if (uu) { var u0 = uu.value.trim(); if (/^[\w.-]+\/[\w.-]+$/.test(u0)) u0 = "https://practicehub.local/" + u0 + ".git"; lClone(u0); if (flash && flash.t === "ok") d.clone = false; } else { lClone(repoUrlOf(S.repos[ck])); d.clone = false; } }
     else if (k === "vs-newfile") { var nm = $("vs-fname").value.trim(); if (lNewFile(nm)) { v.file = nm; v.buf = null; v.newFile = false; ok(nm + " 만듦. 내용 입력 후 저장함"); } }
     else if (k === "vs-newbr") { vsSaveBuf(); if (lNewBranch($("vs-brname").value)) v.pick = false; }
     else if (k === "vs-commit") {
@@ -2685,6 +3193,7 @@ origin/feature-a  ← 다른 브랜치는 '기록'만 생김 (로컬 브랜치 �
 
   function afterChange(preserve) {
     useRepo("home");
+    pmSyncAll();
     if (S.track === "fork" && !S.repos.up) { ensureUpstream(); if (S.repos.home) useRepo("home"); else { S.repo = null; S.repoKey = "home"; } }
     if (R()) { prepare(); prepareLocal(); }
     var keep = {}, focusId = null, sel = null;
