@@ -100,6 +100,8 @@ button, input, select, textarea { font: inherit; color: inherit; }
 .window { border: 1px solid var(--line); border-radius: 12px; overflow: hidden; background: var(--surface); min-width: 0; }
 .chrome { background: var(--chrome); padding: 8px 12px; display: flex; gap: 10px; align-items: center; }
 .dots { display: flex; gap: 6px; } .dots i { width: 10px; height: 10px; border-radius: 50%; background: var(--line); display: block; }
+.url-copy { border: 1px solid var(--line); background: var(--surface); color: var(--ink); border-radius: 6px; padding: 3px 8px; font-size: .74rem; cursor: pointer; white-space: nowrap; font-family: inherit; }
+.url-copy:hover { background: var(--accent-soft); }
 .urlbar { flex: 1; min-width: 0; background: var(--surface); border-radius: 6px; padding: 3px 10px; font-family: var(--f-mono); font-size: 0.78rem; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .hub-top { display: flex; align-items: center; gap: 12px; padding: 10px 16px; border-bottom: 1px solid var(--line); background: var(--sunk); flex-wrap: wrap; }
 .logo { font-weight: 700; display: flex; gap: 6px; align-items: center; cursor: pointer; background: none; border: 0; padding: 0; }
@@ -417,7 +419,7 @@ body.msgr-min .wrap { padding-bottom: 90px; }
       <div class="feed" id="feed"></div>
     </aside>
     <div class="window">
-      <div class="chrome"><div class="dots"><i></i><i></i><i></i></div><div class="urlbar" id="url"></div></div>
+      <div class="chrome"><div class="dots"><i></i><i></i><i></i></div><div class="urlbar" id="url"></div><button type="button" class="url-copy" id="url-copy" title="지금 보는 주소를 복사 (이슈·위키에 붙여 넣기용)">📋 주소 복사</button></div>
       <div id="site"></div>
     </div>
   </div>
@@ -989,9 +991,9 @@ Rebase and merge      : main 에 A', B', C' (머지 커밋 없이 한 줄로, ID
         var iw = makeIssue({ title: pi[0], body: "운영 중 발생한 장애", labels: ["bug"], assignees: [ME], author: "김주무관" });
         var fx = addCommit("main", pi[0] + " 수정 (fixes #" + iw.num + ")", withFile(br("main").files, "fix_" + iw.num + ".py", "# " + pi[0] + "\ndef fixed():\n    return True"), "김주무관"); refScan(r0);
         q.num = iw.num; q.after = {}; Object.keys(r0.wiki.pages).forEach(function (n) { q.after[n] = r0.wiki.pages[n].length; }); q.from = "팀장";
-        q.r = "#" + iw.num + " 장애(" + pi[0] + ")는 커밋 " + fx + " 로 해결됐어요. 위키에 '장애 기록' 페이지를 만들고(또는 기존 장애 기록에 추가) 이슈 주소와 고친 코드 줄 permalink 를 붙여 주세요.";
+        q.r = "#" + iw.num + " 장애(" + pi[0] + ")는 커밋 " + fx + " 로 해결됐어요 (고친 파일: main 의 fix_" + iw.num + ".py). 위키에 '장애 기록' 페이지를 만들고(또는 기존 장애 기록에 추가) 이슈 주소 " + repoBase(r0) + "/issues/" + iw.num + " 와 고친 코드 줄 permalink 를 붙여 주세요.";
         q.w = "이슈는 닫히면 목록에서 사라지지만 위키는 팀 지식으로 남음. 링크를 붙여 두면 다음 담당자가 원인 코드까지 바로 감.";
-        q.s = ["Code 탭(브랜치 main) → fix_" + iw.num + ".py 열기 → 줄 번호 클릭 → [🔗 Copy permalink]", "Wiki → [New page] (제목에 '장애 기록') 또는 기존 페이지 [Edit]", "이슈 주소 …/issues/" + iw.num + " 와 [📋 복사한 주소 붙여넣기] → [Save page]"];
+        q.s = ["메신저의 #" + iw.num + " 을 눌러 이슈 열기 → 주소창 옆 [📋 주소 복사] → Wiki 편집 화면에 붙여넣기", "메신저의 커밋 " + fx + " 을 눌러 커밋 화면 → fix_" + iw.num + ".py [파일 보기] → 줄 번호 클릭 → [🔗 Copy permalink]", "Wiki → [New page] (제목에 '장애 기록') 또는 기존 페이지 [Edit] → [📋 복사한 주소 붙여넣기] 로 두 주소 넣기 → [Save page]"];
       }
     } else if (type === "squash") {
       var fq = freeFeat(), rq = R(); q.br = "feature/" + fq[0] + "-sq"; q.file = fq[0] + ".py";
@@ -1058,6 +1060,18 @@ Rebase and merge      : main 에 A', B', C' (머지 커밋 없이 한 줄로, ID
   var CH_COLOR = { web: "#245f8f", vscode: "#2f8a55", desktop: "#a8423a", qa: "#7a6a20", conflict: "#a35a1f", fork: "#3d6aa8", pm: "#6b4fa0", rv: "#1f7a80" };
   function chatAv(who) { var c = { "팀장": "#245f8f", "김주무관": "#a35a1f", "이주무관": "#7247a8", "박주무관": "#2f8a55", "질문": "#7a6a20", "코치": "#6b4fa0", "리드": "#1f7a80", "안내": "#5d6862" }[who] || "#5d6862"; return '<span class="c-av" style="background:' + c + '" aria-hidden="true">' + esc((who || "?").slice(0, 1)) + '</span>'; }
   function trackAv(k) { return '<span class="c-av lg" style="background:' + CH_COLOR[k] + '" aria-hidden="true">' + esc(CH[k][0].slice(0, 1)) + '<i class="on"></i></span>'; }
+  /* 메신저 요청 문장의 주소·커밋·#번호를 눌러 바로 이동 */
+  function addClip(u) { ui.clip = u; ui.clips = [u].concat((ui.clips || []).filter(function (x) { return x !== u; })).slice(0, 4); }
+  function msgrLinks(t) {
+    var r = S.repos.home;
+    return esc(t).replace(/(https:\/\/practicehub\.local\/[^\s<"]+)|커밋 ([0-9a-f]{7})\b|(^|[^\w&])#(\d+)\b/g, function (all, u, sh, pre, n) {
+      if (u) return '<button type="button" class="link wrap" data-msgr="nav" data-arg="' + u + '">' + u + '</button>';
+      if (sh) return S.commits[sh] && r ? '커밋 <button type="button" class="link mono" data-msgr="nav" data-arg="' + repoBase(r) + '/commit/' + sh + '">' + sh + '</button>' : all;
+      if (!r) return all;
+      var num = +n, isI = r.issues.some(function (i) { return i.num === num; }), isP = r.prs.some(function (p) { return p.num === num; });
+      return isI || isP ? pre + '<button type="button" class="link" data-msgr="nav" data-arg="' + repoBase(r) + (isI ? "/issues/" : "/pull/") + num + '">#' + num + '</button>' : all;
+    });
+  }
   /* 메신저 용어 설명: 요청 문장에 나온 GitHub 용어를 칩으로 보여 주고 누르면 뜻을 설명함 */
   var GLOSS = [
     ["Squash and merge", /squash/i, "PR 의 커밋 여러 개를 하나로 합쳐(Squash) main 에 커밋 1개로 넣는 머지 방식. '오타 수정', '다시 수정' 같은 자잘한 커밋이 main 기록에 남지 않아 깔끔함. 대신 브랜치의 개별 커밋 기록은 main 에 안 남고, 합친 뒤엔 브랜치를 지우는 게 안전함."],
@@ -1181,6 +1195,7 @@ Rebase and merge      : main 에 A', B', C' (머지 커밋 없이 한 줄로, ID
     if (a === "open") ui.msgrMin = false;
     else if (a === "min") ui.msgrMin = true;
     else if (a === "home") setMsgrPos(null);
+    else if (a === "nav") { S.mode = "web"; if (!isStudyTrack() && S.track !== "web") S.track = "web"; navUrl(b.dataset.arg); afterChange(); return true; }
     else if (a === "list") ui.msgrList = !ui.msgrList;
     else if (a === "track") { var t = b.dataset.arg; if (t === "pm" || t === "rv") { S.track = t; S.mode = "web"; } else if (isStudyKey(t)) S.track = t; else S.mode = S.track = t; ui.msgrList = false; ui.view = null; flash = null; }
     afterChange(); return true;
@@ -1207,7 +1222,7 @@ Rebase and merge      : main 에 A', B', C' (머지 커밋 없이 한 줄로, ID
       var m = list[show]; item = { from: m.from || "팀장", r: m.r(), w: m.w, s: typeof m.s === "function" ? m.s() : m.s, loc: m.key === "c6" && S.flags.c6q ? S.flags.c6q.loc : m.loc }; eyebrow = TRACK_NAME[S.track] + " · 기본 " + (show + 1) + " · " + m.t; isDone = m.ok(); key = S.track + "m" + show;
     }
     if (key !== ui.key) { ui.hint = ui.steps = false; ui.gloss = null; ui.key = key; }
-    var h = '<div class="msgr-sys">' + esc(eyebrow) + '</div>' + locBadges(item.loc) + '<div class="b-row">' + chatAv(item.from) + '<div class="b-col"><small>' + esc(item.from) + '</small><div class="bubble cur">' + esc(item.r) + '</div></div></div>' + glossHTML(item);
+    var h = '<div class="msgr-sys">' + esc(eyebrow) + '</div>' + locBadges(item.loc) + '<div class="b-row">' + chatAv(item.from) + '<div class="b-col"><small>' + esc(item.from) + '</small><div class="bubble cur">' + msgrLinks(item.r) + '</div></div></div>' + glossHTML(item);
     var mq = show < list.length ? list[show] : null;
     if (mq && mq.quiz) {
       if (isDone) h += '<p class="hint">정답: ' + esc(mq.quiz.opts[mq.quiz.ans]) + '</p><p class="hint">' + esc(mq.quiz.exp) + '</p>';
@@ -1259,6 +1274,11 @@ Rebase and merge      : main 에 A', B', C' (머지 커밋 없이 한 줄로, ID
     afterChange();
   }
   document.querySelector(".rail").addEventListener("click", railClick);
+  $("url-copy").addEventListener("click", function () {
+    var u = "https://" + url().replace(/#.*$/, ""); addClip(u); S.flags.urlCopied = true;
+    try { navigator.clipboard.writeText(u).catch(function () {}); } catch (x) {}
+    flash = { t: "ok", m: "주소 복사됨: " + u + " → 위키 편집 화면의 [📋 복사한 주소 붙여넣기] 또는 Ctrl+V 로 붙여 넣음" }; afterChange();
+  });
   $("msgr").addEventListener("click", railClick);
 
   /* ---------- 사이트 렌더 ---------- */
@@ -1289,6 +1309,7 @@ Rebase and merge      : main 에 A', B', C' (머지 커밋 없이 한 줄로, ID
     return u;
   }
   function renderSite() {
+    if (S.mode !== "web") $("url-copy").hidden = true;
     if (S.mode === "vscode") { $("site").innerHTML = renderVS(); $("url").textContent = (vsState().file ? vsState().file + " — " : "") + (S.local ? R().name : "시작") + " — 연습용 코드 편집기 (VS Code 방식)"; return; }
     if (S.mode === "desktop") { $("site").innerHTML = renderDesk(); $("url").textContent = "데스크톱 앱 (연습용)" + (S.local ? " — " + R().name : ""); return; }
     var h = '<div class="hub-top"><button type="button" class="logo" data-act="home"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="11" fill="var(--accent)"/><path d="M8 7v10M8 12h8M16 7v10" stroke="#fff" stroke-width="2.2" fill="none" stroke-linecap="round"/></svg>연습허브</button>' +
@@ -1300,7 +1321,7 @@ Rebase and merge      : main 에 A', B', C' (머지 커밋 없이 한 줄로, ID
     else h += pageRepo();
     h += '</div>';
     $("site").innerHTML = h;
-    $("url").textContent = "https://" + url();
+    $("url").textContent = "https://" + url(); $("url-copy").hidden = false;
   }
 
   function pageHome() {
@@ -1828,7 +1849,7 @@ Rebase and merge      : main 에 A', B', C' (머지 커밋 없이 한 줄로, ID
       var nm = s.edit === true ? "" : s.edit, cur = nm && r.wiki.pages[nm] ? r.wiki.pages[nm][r.wiki.pages[nm].length - 1].text : (s.draft || "");
       var h = '<form data-form="wiki-save"><h2 class="pt">' + (nm ? "Editing " + esc(nm) : "Create new page") + '</h2>' +
         '<div class="field"><label for="wk-title">Title</label><input class="inp" id="wk-title" value="' + esc(nm || (names.length ? "" : "Home")) + '"' + (nm ? " readonly" : "") + ' required></div>' +
-        '<div class="row" style="margin-bottom:6px">' + (ui.clip ? '<button type="button" class="btn sm" data-act="wk-paste">📋 복사한 주소 붙여넣기</button>' : '<span class="kv">코드 줄을 누르고 Copy permalink 하면 여기 붙여 넣을 수 있음</span>') + '<button type="button" class="btn sm" data-act="wk-tpl">연습용 장애 기록 양식</button></div>' +
+        '<div class="row" style="margin-bottom:6px">' + ((ui.clips || []).length ? ui.clips.map(function (c, i) { return '<button type="button" class="btn sm" data-act="wk-paste" data-arg="' + i + '" title="' + esc(c) + '">📋 붙여넣기: ' + esc(c.replace(/^https:\/\/practicehub\.local\/[^\/]+\/[^\/]+/, "…")) + '</button>'; }).join("") : '<span class="kv">이슈 화면의 [📋 주소 복사] 나 코드 줄 Copy permalink 로 복사한 주소를 여기서 붙여 넣을 수 있음</span>') + '<button type="button" class="btn sm" data-act="wk-tpl">연습용 장애 기록 양식</button></div>' +
         '<div class="field"><label for="wk-body">Content</label><textarea class="inp mono" id="wk-body" rows="12">' + esc(cur) + '</textarea><small>제목은 # , 목록은 - , 다른 위키 페이지는 [[페이지 이름]], 이슈·커밋·코드 줄은 전체 주소(URL)를 붙이면 링크가 됨</small></div>' +
         '<div class="field"><label for="wk-msg">Edit message</label><input class="inp" id="wk-msg" placeholder="무엇을 바꿨는지"></div><div class="row"><button class="btn go" type="submit">Save page</button><button class="btn" type="button" data-act="wiki-cancel">Cancel</button></div></form>';
       return '<div class="two"><div>' + h + '</div>' + side + '</div>';
@@ -1853,7 +1874,11 @@ Rebase and merge      : main 에 A', B', C' (머지 커밋 없이 한 줄로, ID
   }
   function commitView(id) {
     var c = S.commits[id]; if (!c) { V().sub = null; return tabCode(); }
-    return '<div class="row" style="margin-bottom:10px"><button type="button" class="link" data-act="commits">← Commits</button></div><div class="box" style="margin-bottom:12px"><div style="padding:12px 14px"><h2 class="pt" style="margin:0 0 6px">' + richText(c.msg) + '</h2><div class="row">' + av(c.author) + '<b>' + esc(c.author) + '</b><span class="kv">committed</span><span style="flex:1"></span><span class="mono kv">commit ' + id + '</span></div></div></div>' + diffHTML(parentTree(id), c.tree, null, null);
+    return '<div class="row" style="margin-bottom:10px"><button type="button" class="link" data-act="commits">← Commits</button></div><div class="box" style="margin-bottom:12px"><div style="padding:12px 14px"><h2 class="pt" style="margin:0 0 6px">' + richText(c.msg) + '</h2><div class="row">' + av(c.author) + '<b>' + esc(c.author) + '</b><span class="kv">committed</span><span style="flex:1"></span><span class="mono kv">commit ' + id + '</span></div></div></div>' + commitFiles(id) + diffHTML(parentTree(id), c.tree, null, null);
+  }
+  function commitFiles(id) {
+    var pt = parentTree(id), t = S.commits[id].tree, ks = Object.keys(Object.assign({}, pt, t)).filter(function (k) { return pt[k] !== t[k] && t[k] !== undefined; }).sort();
+    return ks.length ? '<div class="row" style="margin-bottom:10px;gap:6px"><span class="kv">이 커밋 시점의 파일 보기 (줄 번호 → permalink):</span>' + ks.map(function (k) { return '<button type="button" class="btn sm" data-act="nav" data-arg="' + esc(repoBase(R()) + "/blob/" + id + "/" + k) + '">📄 ' + esc(k) + ' 파일 보기</button>'; }).join("") + '</div>' : "";
   }
   function fileLines(c, sel) {
     if (!c) return '<div class="file-view"><span class="kv">(빈 파일)</span></div>';
@@ -1988,7 +2013,7 @@ Rebase and merge      : main 에 A', B', C' (머지 커밋 없이 한 줄로, ID
     else if (a === "copy-link" || a === "line-issue") {
       var b = br(v.branch), link = permalink(r, s.at || b.commits[b.commits.length - 1], s.path, s.line);
       if (a === "line-issue") { go({ tab: "issues", sub: { type: "new", tpl: "", body: link } }); return true; }
-      ui.clip = link; S.flags.permalink = true;
+      addClip(link); S.flags.permalink = true;
       try { navigator.clipboard.writeText(link).catch(function () {}); } catch (x) {}
       ok("Permalink 복사됨: " + link + " → 브랜치 이름 대신 커밋 SHA 가 들어가 있어 나중에 코드가 바뀌어도 이 줄을 그대로 가리킴. 이슈·위키에 붙여 넣으면 링크가 됨");
     }
@@ -2008,7 +2033,7 @@ Rebase and merge      : main 에 A', B', C' (머지 커밋 없이 한 줄로, ID
     else if (a === "wiki-hist") go({ tab: "wiki", sub: { page: arg, hist: true } });
     else if (a === "wiki-cancel") go({ sub: s.edit === true ? null : { page: s.edit } });
     else if (a === "wk-paste" || a === "wk-tpl") {
-      var ta = $("wk-body"), ins = a === "wk-paste" ? ui.clip : "# 장애 기록: (제목)\n## 증상\n- \n## 원인\n- \n## 해결\n- 관련 이슈: (이슈 주소)\n- 수정 커밋: (커밋 주소)\n- 문제 코드: (permalink)\n## 재발 방지\n- \n";
+      var ta = $("wk-body"), ins = a === "wk-paste" ? (ui.clips || [])[+arg || 0] + "\n" : "# 장애 기록: (제목)\n## 증상\n- \n## 원인\n- \n## 해결\n- 관련 이슈: (이슈 주소)\n- 수정 커밋: (커밋 주소)\n- 문제 코드: (permalink)\n## 재발 방지\n- \n";
       var p0 = ta.selectionStart || ta.value.length; ta.value = ta.value.slice(0, p0) + ins + ta.value.slice(p0); ta.focus();
       pmClick.stop = true;
     }
