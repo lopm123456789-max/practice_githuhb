@@ -284,6 +284,8 @@ h2.pt span { color: var(--muted); }
 .gl-chip { border: 1px solid var(--line); background: var(--surface); color: var(--accent); border-radius: 999px; padding: 1px 9px; font-size: .74rem; cursor: pointer; font-family: inherit; }
 .gl-chip:hover, .gl-chip.on { background: var(--accent-soft); border-color: var(--accent); }
 .bubble.gl-b { background: var(--sunk); border-style: dashed; }
+.bubble.done-b { background: var(--add); color: var(--add-ink); border-color: transparent; }
+.done-toast { position: fixed; left: 50%; top: 18px; transform: translateX(-50%); background: var(--go); color: var(--go-ink); padding: 10px 16px; border-radius: 10px; box-shadow: 0 8px 24px rgba(0,0,0,.2); z-index: 60; font-size: .9rem; max-width: calc(100vw - 32px); }
 .msgr-foot { display: flex; gap: 6px; align-items: center; padding: 8px 12px; border-top: 1px solid var(--line); }
 .wrap { padding-bottom: min(62vh, 560px); }
 body.msgr-min .wrap { padding-bottom: 90px; }
@@ -840,7 +842,7 @@ Rebase and merge      : main 에 A', B', C' (머지 커밋 없이 한 줄로, ID
     botPRs().forEach(function (pair) {
       var p = pair[0], r = pair[1], last = latestReviews(p)[r];
       if (!last && p.wantSuggest && !p.suggested) {
-        var sf = changedFiles(p).filter(function (f) { return /\.py$/.test(f) && hb(p).files[f]; })[0] || changedFiles(p).filter(function (f) { return hb(p).files[f]; })[0];
+        var sf = changedFiles(p).filter(function (f) { return /\.py$/.test(f) && hb(p).files[f]; })[0] || changedFiles(p).filter(function (f) { return hb(p).files[f]; })[0] || Object.keys(hb(p).files).filter(function (f) { return /\.py$/.test(f); })[0];
         if (sf) {
           var line0 = hb(p).files[sf].split("\n")[0];
           p.suggested = true; p.reviews.push({ who: r, state: "COMMENTED", text: "제안 하나 남겼어요." });
@@ -937,7 +939,7 @@ Rebase and merge      : main 에 A', B', C' (머지 커밋 없이 한 줄로, ID
   var FEATS = [["search", "민원 검색"], ["notice", "공지 알림"], ["report", "월간 보고서"], ["budget", "예산 집계"], ["survey", "만족도 조사"], ["calendar", "일정 연동"], ["upload", "첨부 업로드"], ["sms", "문자 발송"]];
   var ISSUES = [["로그인 후 화면이 하얗게 나옴", "bug"], ["부서별 통계 그래프 추가 건의", "enhancement"], ["사용 설명서에 설치 방법 보완", "documentation"], ["엑셀 파일명 한글 깨짐", "bug"], ["다크 모드 지원 문의", "question"]];
   function pick(a) { return a[Math.floor(Math.random() * a.length)]; }
-  function freeFeat() { var c = FEATS.filter(function (f) { return !br("feature/" + f[0]) && !R().prs.some(function (p) { return p.head === "feature/" + f[0]; }); }); return c.length ? pick(c) : [pick(FEATS)[0] + R().num, "추가 기능"]; }
+  function freeFeat() { var used = function (n) { return Object.keys(R().branches).some(function (b) { return b.indexOf("feature/" + n) === 0; }) || R().prs.some(function (p) { return p.head.indexOf("feature/" + n) === 0; }) || (n + ".py") in br("main").files; }; var c = FEATS.filter(function (f) { return !used(f[0]); }); if (c.length) return pick(c); var g = pick(FEATS), n = g[0] + (R().num + 1); while (used(n)) n += "x"; return [n, g[1] + " 추가"]; }
   function newQuest() {
     var pool = ["issue", "flow", "review", "triage", "release", "pmplan", "pmfix", "pmwiki", "cifix", "suggest", "squash"];
     if (collaborators().indexOf("이주무관") < 0) pool.push("invite");
@@ -1160,12 +1162,15 @@ Rebase and merge      : main 에 A', B', C' (머지 커밋 없이 한 줄로, ID
   function renderMsgr(item, eyebrow, isDone, body, list, show) {
     var box = $("msgr"); if (!box) return;
     var k = S.track, key = ui.key;
+    ui.doneSeen = ui.doneSeen || {};
+    if (isDone && show >= list.length && !ui.doneSeen[key]) { ui.doneSeen[key] = true; if (ui.doneKnown) { ui.msgrUnread = true; ui.msgrSeen = null; setTimeout(function () { var t = document.createElement("div"); t.className = "done-toast"; t.setAttribute("role", "status"); t.textContent = "✓ 요청 완료! 메시지 창에서 [다음 요청 받기] 를 누르면 다음 건이 옴"; document.body.appendChild(t); setTimeout(function () { t.remove(); }, 4200); }, 0); } }
+    if (!isDone) ui.doneKnown = true;
     if (ui.msgrSeen !== key && ui.msgrMin) ui.msgrUnread = true;
     if (!ui.msgrMin) { ui.msgrSeen = key; ui.msgrUnread = false; }
     box.className = "msgr" + (ui.msgrMin ? " min" : "") + (msgrPos ? " moved" : ""); document.body.classList.toggle("msgr-min", !!ui.msgrMin);
     requestAnimationFrame(placeMsgr);
     if (ui.msgrMin) {
-      box.innerHTML = '<button type="button" class="msgr-pill" data-msgr="open" aria-label="메시지 창 열기">' + trackAv(k) + '<span><b>' + esc(CH[k][0]) + '</b><small>' + esc(item.from + ": " + item.r).slice(0, 38) + '…</small></span>' + (ui.msgrUnread ? '<i class="dot" aria-label="새 메시지"></i>' : "") + '</button>';
+      box.innerHTML = '<button type="button" class="msgr-pill" data-msgr="open" aria-label="메시지 창 열기">' + trackAv(k) + '<span><b>' + esc(CH[k][0]) + '</b><small>' + (isDone && show >= list.length && S.track !== "qa" ? '✓ 완료 · 눌러서 [다음 요청 받기]' : esc(item.from + ": " + item.r).slice(0, 38) + '…') + '</small></span>' + (ui.msgrUnread ? '<i class="dot" aria-label="새 메시지"></i>' : "") + '</button>';
       return;
     }
     var done = list.filter(function (m) { return m.ok(); }).length;
@@ -1181,7 +1186,7 @@ Rebase and merge      : main 에 A', B', C' (머지 커밋 없이 한 줄로, ID
       for (var i = from0; i < Math.min(show, list.length); i++) {
         var pm = list[i];
         if (!pm.ok()) continue;
-        var txt = pm.r(); h += '<div class="b-row past">' + chatAv(pm.from || "팀장") + '<div class="b-col"><small>' + esc(pm.from || "팀장") + '</small><div class="bubble">' + esc(txt.length > 70 ? txt.slice(0, 70) + "…" : txt) + '</div></div></div><div class="b-me"><span class="bubble me">처리 완료했습니다 ✓</span></div>';
+        var txt = pm.r(); h += '<div class="b-row past">' + chatAv(pm.from || "팀장") + '<div class="b-col"><small>' + esc(pm.from || "팀장") + '</small><div class="bubble">' + esc(txt.length > 70 ? txt.slice(0, 70) + "…" : txt) + '</div></div></div><div class="b-me"><span class="bubble me">' + (pm.quiz ? "정답: " + esc(pm.quiz.opts[pm.quiz.ans]) + " ✓" : "처리 완료했습니다 ✓") + '</span></div>';
       }
       h += body;
     }
@@ -1235,7 +1240,7 @@ Rebase and merge      : main 에 A', B', C' (머지 커밋 없이 한 줄로, ID
     if (ui.hint) h += '<div class="b-row">' + chatAv(item.from) + '<div class="b-col"><small>' + esc(item.from) + ' · 힌트</small><div class="bubble hint-b">' + esc(item.w) + '</div></div></div>';
     if (isStudyTrack()) h += '<p class="hint" style="font-size:.76rem;opacity:.75">화면 전환은 위 [웹 사이트]·[VS Code]·[데스크톱 앱] 버튼으로 함 (이 트랙은 유지됨. 같은 버튼을 한 번 더 누르면 그 모드의 기본 트랙으로 이동)</p>';
     if (ui.steps) h += '<div class="b-row">' + chatAv(item.from) + '<div class="b-col"><small>' + esc(item.from) + ' · 진행 순서</small><div class="bubble"><ol>' + item.s.map(function (s) { return "<li>" + esc(s) + "</li>"; }).join("") + '</ol></div></div></div>';
-    if (show >= list.length && S.track !== "qa") h += '<div class="row">' + (isDone ? '<span class="done-tag">처리 완료</span><button type="button" class="btn go sm" data-rail="next">다음 요청 받기</button>' : '<button type="button" class="btn sm" data-rail="skip">다른 요청으로 바꾸기</button>') + '</div>';
+    if (show >= list.length && S.track !== "qa") h += isDone ? '<div class="b-me"><span class="bubble me">처리 완료했습니다 ✓</span></div><div class="b-row">' + chatAv(item.from) + '<div class="b-col"><small>' + esc(item.from) + '</small><div class="bubble done-b">확인했어요, 고마워요! 다음 건은 아래 버튼을 누르면 드릴게요. (자동으로 넘어가지 않음)</div></div></div><div class="row"><button type="button" class="btn go" data-rail="next">다음 요청 받기 →</button></div>' : '<div class="row"><button type="button" class="btn sm" data-rail="skip">다른 요청으로 바꾸기</button></div>';
     else if (isDone) h += '<span class="done-tag">처리 완료</span>';
     if (S.mode !== S.track && !isStudyTrack()) h += '<p class="hint">지금 오른쪽 화면은 ' + TRACK_NAME[S.mode] + ' 모드임. 요청은 ' + TRACK_NAME[S.track] + ' 기준이며, 위 버튼으로 돌아갈 수 있음.</p>';
     renderMsgr(item, eyebrow, isDone, h, list, show);
@@ -2231,7 +2236,7 @@ Rebase and merge      : main 에 A', B', C' (머지 커밋 없이 한 줄로, ID
     } else if (k === "create-pr") {
       var hs0 = parseSpec($("cmp-head").value), s = v.sub, np = makePR({ title: $("pr-title").value.trim(), body: $("pr-body").value, base: $("cmp-base").value, head: hs0.name, headRepo: hs0.repo, reviewers: picked("pr-rv"), wantChanges: $("cmp-head").value === "fix/travel-expense" });
       np.reviewers.forEach(function (x) { np.timeline.push({ k: "ev", who: ME, text: x + " 님에게 리뷰를 요청함" }); });
-      if (/^feature\/report/.test(np.head)) np.wantSuggest = true;
+      if (S.track === "rv" && /^feature\/report/.test(np.head)) np.wantSuggest = true;
       if (e.submitter && e.submitter.value === "draft") { np.draft = np.wasDraft = true; np.timeline.push({ k: "ev", who: ME, text: "Draft 로 PR 을 엶 (작업 중)" }); } else requestOwners(np);
       go({ sub: { type: "pr", num: np.num } }); ok("PR #" + np.num + " 생성됨"); void s;
     } else if (k === "resolve") {
@@ -2711,7 +2716,7 @@ Rebase and merge      : main 에 A', B', C' (머지 커밋 없이 한 줄로, ID
   function clearFlags(keys) { keys.forEach(function (k) { delete S.flags[k]; }); }
   function vsOrDk(vs, dk) { return function () { return S.mode === "desktop" ? dk : vs; }; }
   var MC = [
-    { t: "Q. 충돌은 언제 나나", from: "질문", quiz: { id: "c1", opts: ["두 브랜치가 서로 다른 파일을 고쳤을 때", "두 브랜치가 같은 파일의 같은 줄을 서로 다르게 고쳤을 때", "한쪽 브랜치만 파일을 고쳤을 때"], ans: 1, exp: "Git은 줄 단위로 합침. 다른 파일이거나 같은 파일의 다른 줄이면 자동으로 합쳐지고, 같은 줄을 양쪽이 다르게 고치면 어느 쪽이 맞는지 몰라 충돌(conflict)로 사람에게 묻게 됨. 한쪽은 수정, 한쪽은 삭제한 경우에도 충돌이 남." },
+    { t: "Q. 충돌은 언제 나나", from: "질문", quiz: { id: "c1", opts: ["두 브랜치가 서로 다른 파일을 고쳤을 때", "두 브랜치가 같은 파일의 같은 줄을 서로 다르게 고쳤을 때", "한쪽 브랜치만 파일을 고쳤을 때"], ans: 1, exp: "Git은 줄 단위로 합침. 다른 파일이거나 같은 파일의 다른 줄이면 자동으로 합쳐지고, 같은 줄을 양쪽이 다르게 고치면 어느 쪽이 맞는지 몰라 충돌(conflict)로 사람에게 묻게 됨. 한쪽은 수정, 한쪽은 삭제한 경우에도 충돌이 남. (참고: 실제 Git 에선 서로 바로 붙어 있는 줄을 각각 고쳐도 같은 덩어리로 보고 충돌이 날 수 있음)" },
       r: function () { return "컨플릭트(충돌)는 정확히 언제 날까요?"; }, w: "충돌 = Git이 자동으로 고를 수 없는 상황. 오류가 아니라 '사람이 정해 달라'는 신호임.", s: ["보기 중 하나를 고름"], ok: function () { return !!S.flags["quiz:c1"]; } },
     { t: "같은 파일·다른 줄 = 자동 병합", key: "c0", mode: "local", r: function () { return "로컬 feature/c-auto 와 로컬 main 이 같은 파일(안내.txt)의 서로 다른 줄을 고쳐 두었습니다. 로컬 main 에 merge 해서 충돌 없이 자동으로 합쳐지는 것을 확인하세요."; },
       w: "줄이 겹치지 않으면 Git이 알아서 합침. 충돌이 나는 건 '같은 줄'을 양쪽이 다르게 고쳤을 때뿐임.",
@@ -3615,11 +3620,17 @@ Rebase and merge      : main 에 A', B', C' (머지 커밋 없이 한 줄로, ID
     var keep = {}, focusId = null, sel = null;
     if (preserve) {
       Array.prototype.forEach.call($("site").querySelectorAll("input[id],textarea[id],select[id]"), function (el) { keep[el.id] = el.type === "checkbox" || el.type === "radio" ? el.checked : el.value; });
+      /* id 없는 선택값(리뷰 종류 라디오, 새 이슈·PR 의 담당자·라벨·리뷰어 체크)도 자동 갱신 때 유지 */
+      Array.prototype.forEach.call($("site").querySelectorAll("input[type=radio][name]:checked"), function (el) { keep["@r:" + el.name] = el.value; });
+      Array.prototype.forEach.call($("site").querySelectorAll('input[type=checkbox][data-pick^="ni-"], input[type=checkbox][data-pick="pr-rv"]'), function (el) { keep["@c:" + el.dataset.pick + ":" + el.value] = el.checked; });
       var ae = document.activeElement; if (ae && ae.id && $("site").contains(ae)) { focusId = ae.id; try { sel = [ae.selectionStart, ae.selectionEnd]; } catch (x) {} }
     }
     renderRail(); useRepo(S.mode === "web" ? viewKey() : localKey()); renderSite(); useRepo("home"); save();
     if (preserve) {
-      Object.keys(keep).forEach(function (id) { var el = $(id); if (!el) return; if (el.type === "checkbox" || el.type === "radio") el.checked = keep[id]; else el.value = keep[id]; });
+      Object.keys(keep).forEach(function (id) {
+        if (id.indexOf("@r:") === 0) { var rd = $("site").querySelector('input[type=radio][name="' + id.slice(3) + '"][value="' + keep[id] + '"]'); if (rd && !rd.disabled) rd.checked = true; return; }
+        if (id.indexOf("@c:") === 0) { var ps = id.slice(3).split(":"), cb = $("site").querySelector('input[type=checkbox][data-pick="' + ps[0] + '"][value="' + ps.slice(1).join(":") + '"]'); if (cb) cb.checked = keep[id]; return; }
+        var el = $(id); if (!el) return; if (el.type === "checkbox" || el.type === "radio") el.checked = keep[id]; else el.value = keep[id]; });
       if (focusId && $(focusId)) { $(focusId).focus(); try { if (sel) $(focusId).setSelectionRange(sel[0], sel[1]); } catch (x) {} }
     }
     if (Object.keys(S.repos).length) scheduleBots();
