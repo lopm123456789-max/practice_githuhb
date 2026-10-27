@@ -23,6 +23,7 @@
 - **내 질문 실습**: 실제로 물어본 내용을 퀴즈와 직접 해보기로 정리
 - **Fork 실습**: 팀원 원본 저장소 Fork → 내 fork 클론 → push → 원본으로 PR(compare across forks) → Sync fork → 원본의 특정 브랜치만 가져오기. 원본엔 쓰기 권한이 없어 직접 push 하면 403
 - **협업 관리 실습**: 이슈 템플릿 → 마일스톤(마감일) → 이슈 할당 → 검색(assignee:@me) → 프로젝트 보드(Status·Priority·Due, 자동 Done) → 이슈에서 브랜치 만들기 → 커밋 #번호 참조 → PR Fixes #번호 자동 닫기 → 코드 permalink → 위키 장애 기록
+- **PR 협업 실습**: PR 템플릿 → CODEOWNERS → Actions CI → 보호 규칙(코드 소유자·필수 체크) → Draft PR → Ready for review → Auto-merge → CI 빨간불 고치기 → 리뷰 제안(Suggested changes) 반영 → 자동 머지 확인
 - **컨플릭트 실습**: 로컬 merge 충돌, push 거절 후 pull 충돌, 병합 중단, PR 충돌(웹 해결·로컬 해결), 자동 병합. 각 요청의 [상황 만들기]로 충돌 상태를 자동 준비 VS Code에서 Push한 브랜치는 웹 모드에서 PR로 올릴 수 있음.
 각 모드는 기본 요청을 마치면 무작위 실전 요청이 계속 나옴.
 
