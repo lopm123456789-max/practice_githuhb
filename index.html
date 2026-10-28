@@ -200,6 +200,10 @@ textarea.inp { min-height: 110px; resize: vertical; font-family: var(--f-mono); 
 .osx-hid { display: flex; gap: 4px; align-items: center; cursor: pointer; }
 .osx-list { padding: 4px 0; } .osx-row { display: flex; gap: 10px; align-items: center; padding: 4px 12px; font-size: .85rem; } .osx-row > span:first-child { flex: 1; font-family: var(--f-mono); }
 .osx-row.lock { background: var(--err-soft); }
+.dk-dlg { margin: 10px 12px 0; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); box-shadow: 0 8px 24px rgba(0,0,0,.15); }
+.dk-dlg-h { display: flex; justify-content: space-between; align-items: center; padding: 8px 12px; border-bottom: 1px solid var(--line); }
+.dk-dlg-b { display: flex; gap: 12px; padding: 12px 14px; font-size: .88rem; } .dk-dlg-b p { margin: 0 0 6px; } .dk-dlg-b pre { margin: 6px 0; font-size: .8rem; white-space: pre-wrap; }
+.dk-dlg-f { display: flex; justify-content: flex-end; gap: 8px; padding: 8px 12px; border-top: 1px solid var(--line); }
 .file-view { padding: 12px 14px; white-space: pre-wrap; font-family: var(--f-mono); font-size: 0.82rem; overflow-x: auto; }
 .readme { padding: 14px 18px; white-space: pre-wrap; overflow-wrap: anywhere; }
 .diff { font-family: var(--f-mono); font-size: 0.8rem; overflow-x: auto; }
@@ -659,6 +663,15 @@ Rebase and merge      : main 에 A', B', C' (머지 커밋 없이 한 줄로, ID
           <tr><td>5</td><td>다시 커밋</td></tr>
         </tbody></table></div>
         <ul><li><b>.git 폴더 전체는 절대 지우지 않음</b> (모든 커밋 기록이 사라짐)</li><li>OneDrive·백신이 저장소 폴더를 잡고 있어도 생길 수 있음 → 저장소는 동기화 폴더 밖에 두는 게 안전함</li></ul>
+      </section>
+      <section><h3>Q21. Unable to merge when changes are present on your branch</h3>
+        <p>merge 하면 바뀔 파일(예: vm.c, syscall.c)에 <b>커밋 안 한 내 수정</b>이 있어 덮어쓸 수 있으니 Git 이 막은 것임. Q14 의 Unable to pull 과 같은 원리임.</p>
+        <div class="tbl"><table><thead><tr><th>상황</th><th>GitHub Desktop</th><th>VS Code</th></tr></thead><tbody>
+          <tr><td>내 수정 완성됨</td><td>Commit → 다시 Merge into current branch</td><td>커밋 → 분기 병합</td></tr>
+          <tr><td>아직 커밋하기 이름</td><td><b>[Stash changes and continue]</b> → merge 완료 → Changes 아래 Stashed Changes → <b>Restore</b></td><td>··· → 변경 내용 임시 저장 → 분기 병합 → 임시 저장 꺼내기(Pop)</td></tr>
+          <tr><td>내 수정 필요 없음</td><td>Discard changes → Merge</td><td>변경 내용 취소 → 분기 병합</td></tr>
+        </tbody></table></div>
+        <ul><li>Restore 할 때 merge 로 들어온 내용과 <b>같은 줄</b>을 고쳤다면 충돌 표시가 생김 → 정리 후 저장</li><li>[Close] 를 누르면 아무것도 안 바뀜 (그대로 다시 고를 수 있음)</li></ul>
       </section>
     </div>
   </details>
@@ -2433,7 +2446,7 @@ Rebase and merge      : main 에 A', B', C' (머지 커밋 없이 한 줄로, ID
     if (!s.behind) { ok("이미 최신 상태임 (받을 커밋 없음)"); return true; }
     if (dirty.length) {
       var over = dirty.map(function (d) { return d[0]; }).filter(function (k) { return l.files[k] !== r.files[k]; });
-      if (over.length) { err("Unable to pull when changes are present on your branch. The following files would be overwritten: " + over.join(", ") + " → 커밋 안 한 내 변경이 원격 변경에 덮일 수 있어 막힘. ① 커밋 ② Stash(임시 저장) ③ Discard(버리기) 중 하나를 한 뒤 다시 Pull"); return false; }
+      if (over.length) { if (S.mode === "desktop") ui.dkDlg = { k: "pull", files: over }; err("Unable to pull when changes are present on your branch. The following files would be overwritten: " + over.join(", ") + " → 커밋 안 한 내 변경이 원격 변경에 덮일 수 있어 막힘. ① 커밋 ② Stash(임시 저장) ③ Discard(버리기) 중 하나를 한 뒤 다시 Pull"); return false; }
       if (s.ahead) { err("내 커밋과 원격 커밋을 합쳐야 해서, 커밋 안 한 변경(" + dirty.map(function (d) { return d[0]; }).join(", ") + ")을 먼저 커밋하거나 Stash 해야 함"); return false; }
     }
     var rs = setOf(r.commits), ls = setOf(l.commits), remoteOnly = r.commits.filter(function (c) { return !ls[c]; });
@@ -2499,7 +2512,13 @@ Rebase and merge      : main 에 A', B', C' (머지 커밋 없이 한 줄로, ID
     if (inMerge()) return;
     if (!f) return err("브랜치가 없음: " + from);
     if (from === n) return err("자기 자신에게는 merge 할 수 없음");
-    if (lDirty()) return err("커밋하지 않은 변경이 있어 merge 할 수 없음. 먼저 커밋함.");
+    if (lockBlock("Merge")) return;
+    if (lDirty()) {
+      var dk0 = lAll().map(function (d) { return d[0]; }), mo = dk0.filter(function (k) { return h.files[k] !== f.files[k]; }), list0 = (mo.length ? mo : dk0);
+      if (S.mode === "desktop") ui.dkDlg = { k: "merge", from: from, files: list0 };
+      return err(S.mode === "desktop" ? "Unable to merge when changes are present on your branch. The following files would be overwritten: " + list0.join(", ") + " → ① 커밋 ② Stash changes and continue(임시 저장 후 merge) ③ Discard 중 하나를 고름"
+        : "error: Your local changes to the following files would be overwritten by merge: " + list0.join(", ") + " — Please commit your changes or stash them before you merge. (커밋하거나 ··· → 변경 내용 임시 저장 후 merge)");
+    }
     var hs = setOf(h.commits), fs = setOf(f.commits), fromOnly = f.commits.filter(function (c) { return !hs[c]; });
     if (!fromOnly.length) return ok("이미 최신임: 로컬 " + from + " 의 커밋이 로컬 " + n + " 에 모두 들어 있음");
     if (h.commits.every(function (c) { return fs[c]; })) { h.commits = f.commits.slice(); h.files = clone(f.files); ok("Fast-forward: 로컬 " + from + " → 로컬 " + n + " 로 merge 함 (원격은 그대로)"); }
@@ -2708,7 +2727,9 @@ Rebase and merge      : main 에 A', B', C' (머지 커밋 없이 한 줄로, ID
     { t: "Q. Squash and merge 는 무슨 기능?", from: "질문", quiz: { id: "q18", opts: ["PR 의 커밋 여러 개를 하나로 합쳐 main 에 커밋 1개로 넣는 머지 방식", "PR 을 삭제하는 기능", "충돌을 자동으로 해결하는 기능"], ans: 0, exp: "자잘한 커밋(오타 수정 등)이 main 기록에 남지 않아 깔끔함. 대신 개별 커밋 기록은 main 에 안 남고, 합친 뒤 그 브랜치에서 계속 작업하면 꼬이기 쉬워 브랜치를 지우는 게 안전함. Merge commit 은 기록을 다 남기고, Rebase and merge 는 커밋을 하나씩 다시 붙임." },
       r: function () { return "PR 머지 방식 중 Squash and merge 는 무슨 기능인가요?"; }, w: "메신저의 '용어 설명' 칩을 누르면 요청에 나온 용어 뜻을 바로 볼 수 있음.", s: ["보기 중 하나를 고름"], ok: qz("q18") },
     { t: "Q. A lock file already exists 오류", from: "질문", quiz: { id: "q19", opts: ["다른 Git 작업이 없는지 확인한 뒤 .git 폴더 안의 index.lock 파일만 삭제하고 다시 시도", ".git 폴더를 통째로 삭제", "저장소를 새로 만들어 처음부터 다시"], ans: 0, exp: "Git 은 작업하는 동안 .git/index.lock 을 만들어 동시 작업을 막고, 끝나면 지움. 프로그램이 강제 종료되면 이 파일이 남아 커밋·Pull 이 막힘. 진짜로 다른 Git 작업이 돌고 있으면 끝날 때까지 기다림. .git 폴더를 지우면 모든 기록이 사라짐." },
-      r: function () { return "GitHub Desktop 에서 'Commit failed — A lock file already exists in the repository' 가 뜨면?"; }, w: "[데스크톱 앱]·[VS Code] 실전 요청에서 잠금 파일 정리 상황으로 연습 가능.", s: ["보기 중 하나를 고름"], ok: qz("q19") }
+      r: function () { return "GitHub Desktop 에서 'Commit failed — A lock file already exists in the repository' 가 뜨면?"; }, w: "[데스크톱 앱]·[VS Code] 실전 요청에서 잠금 파일 정리 상황으로 연습 가능.", s: ["보기 중 하나를 고름"], ok: qz("q19") },
+    { t: "Q. Unable to merge when changes are present", from: "질문", quiz: { id: "q20", opts: ["merge 로 바뀔 파일에 커밋 안 한 내 수정이 있어 덮일까 봐 막은 것. 커밋 후 merge, 또는 Stash changes and continue 후 Restore", "merge 기능이 고장 난 것이라 재설치", "브랜치를 삭제해야 함"], ans: 0, exp: "Unable to pull 과 같은 원리임. Stash changes and continue 를 누르면 내 수정을 임시 저장하고 merge 를 마친 뒤, Changes 아래 Stashed Changes → Restore 로 다시 꺼냄. 같은 줄을 고쳤으면 꺼낼 때 충돌이 날 수 있음." },
+      r: function () { return "GitHub Desktop 에서 merge 하려니 'Unable to merge when changes are present on your branch … vm.c' 와 [Stash changes and continue] 가 떠요."; }, w: "[데스크톱 앱]·[VS Code] 실전 요청에서 연습 가능.", s: ["보기 중 하나를 고름"], ok: qz("q20") }
   ];
   function keepDone(list, key) { list.forEach(function (m, i) { var raw = m.ok; m.ok = function () { return latch(key + i, raw); }; }); }
   keepDone(M, "M"); keepDone(MV, "MV"); keepDone(MD, "MD");
@@ -2716,7 +2737,7 @@ Rebase and merge      : main 에 A', B', C' (머지 커밋 없이 한 줄로, ID
   setLoc(M, M.map(function () { return ["원격"]; }));
   setLoc(MV, [["원격"], ["원격→로컬"], ["로컬"], ["로컬"], ["로컬"], ["로컬"], ["로컬→원격"], ["원격→로컬"], ["로컬"], ["원격"]]);
   setLoc(MD, [["원격"], ["원격→로컬"], ["로컬"], ["로컬"], ["로컬"], ["로컬→원격"], ["원격"], ["원격→로컬"], ["로컬"], ["원격"]]);
-  setLoc(MQ, [null, ["로컬", "로컬→원격"], null, ["원격"], ["원격", "로컬→원격"], null, null, null, null, null, ["로컬→원격"], ["원격→로컬"], ["로컬"], ["로컬", "로컬→원격"], null, null, null, ["원격→로컬"], null, null, null, ["로컬"]]);
+  setLoc(MQ, [null, ["로컬", "로컬→원격"], null, ["원격"], ["원격", "로컬→원격"], null, null, null, null, null, ["로컬→원격"], ["원격→로컬"], ["로컬"], ["로컬", "로컬→원격"], null, null, null, ["원격→로컬"], null, null, null, ["로컬"], ["로컬"]]);
   var LOC_TIP = { "로컬": "내 컴퓨터에서만 일어남 (원격엔 변화 없음)", "원격": "GitHub(웹)에서 일어남", "로컬→원격": "내 컴퓨터 → GitHub 로 올림 (push·Publish)", "원격→로컬": "GitHub → 내 컴퓨터로 받음 (clone·pull)" };
   function locBadges(loc) { return loc ? '<div class="locs-badges">' + loc.map(function (l) { return '<span class="loc loc-' + (l === "로컬" ? "l" : l === "원격" ? "r" : l === "로컬→원격" ? "up" : "down") + '" title="' + LOC_TIP[l] + '">' + l + '</span>'; }).join("") + '</div>' : ""; }
   function renderLocTable() { var cur = S.repoKey; useRepo(localKey()); try { renderLocTable0(); } finally { useRepo(cur); } }
@@ -3128,10 +3149,10 @@ Rebase and merge      : main 에 A', B', C' (머지 커밋 없이 한 줄로, ID
     if (current(MD) === 7 && !S.flags.dTeam) S.flags.dTeam = teamPushMain("김주무관");
   }
   function newLocalQuest() {
-    var types = ["feat", "pull", "pr", "lmerge", "rpr", "pushok", "pushhold", "prupdate", "pushhide", "switchrepo", "crlf", "selcommit", "gitignore", "whichside", "pulldirty", "cloneurl", "lockfile"], last = S.lq && S.lq.type;
-    ensureBase(true); if (S.local) S.local.lock = false; ui.osx = null;
+    var types = ["feat", "pull", "pr", "lmerge", "rpr", "pushok", "pushhold", "prupdate", "pushhide", "switchrepo", "crlf", "selcommit", "gitignore", "whichside", "pulldirty", "cloneurl", "lockfile", "mergedirty"], last = S.lq && S.lq.type;
+    ensureBase(true); if (S.local) S.local.lock = false; ui.osx = null; ui.dkDlg = null;
     var type = pick(types.filter(function (t) { return t !== last; })), q = { type: type, n: S.lqDone + 1, from: "팀장" };
-    if (type === "pushok" || type === "pushhold" || type === "prupdate" || type === "pushhide" || type === "switchrepo" || type === "crlf" || type === "selcommit" || type === "gitignore" || type === "whichside" || type === "pulldirty" || type === "cloneurl" || type === "lockfile") { genAskQuest(q); S.lq = q; return; }
+    if (type === "pushok" || type === "pushhold" || type === "prupdate" || type === "pushhide" || type === "switchrepo" || type === "crlf" || type === "selcommit" || type === "gitignore" || type === "whichside" || type === "pulldirty" || type === "cloneurl" || type === "lockfile" || type === "mergedirty") { genAskQuest(q); S.lq = q; return; }
     if (type === "lmerge" || type === "rpr") {
       var cands = FEATS.filter(function (f) { var b = "feature/" + f[0] + (type === "lmerge" ? "-draft" : "-pr"); return !lbr(b) && !br(b); }), g = cands.length ? pick(cands) : [pick(FEATS)[0] + (S.seqL = (S.seqL || 0) + 1), "추가"];
       q.br = "feature/" + g[0] + (type === "lmerge" ? "-draft" : "-pr"); q.file = g[0] + "-" + type + ".md";
@@ -3254,6 +3275,18 @@ Rebase and merge      : main 에 A', B', C' (머지 커밋 없이 한 줄로, ID
       q.r = "윈도우 PC에서 config.ini 의 timeout 한 줄만 60 으로 고쳤는데, 변경이 파일 전체로 잡힙니다(줄바꿈이 LF → CRLF 로 바뀜). 줄바꿈을 LF 로 되돌리거나 .gitattributes 에 '* text=auto' 를 넣어서, 실제로 바뀐 한 줄만 로컬 " + q.br + " 에 커밋하고 원격에 Publish 해 주세요.";
       q.w = "CRLF(\\r\\n) = 윈도우 줄바꿈, LF(\\n) = 맥·리눅스 줄바꿈. 눈에는 같아 보여도 Git 은 모든 줄이 바뀐 것으로 봄. 개인 해결: 편집기에서 LF 로 저장. 팀 해결: .gitattributes 에 * text=auto (저장소에 올라가 모두에게 적용됨). 윈도우에선 git config --global core.autocrlf true 도 많이 씀.";
       q.loc = ["로컬", "로컬→원격"];
+    } else if (q.type === "mergedirty") {
+      g = uniqFeat("team/", "-vm"); q.src = "team/" + g[0] + "-vm"; q.br = "feature/" + g[0] + "-mine"; q.file = "pintos/vm/vm.c";
+      var vb = "#include \"vm/vm.h\"\nvoid vm_init (void) {\n  /* 초기화 */\n}\n/* TODO: 페이지 폴트 처리 */";
+      syncLocalMain(); localCommit("main", q.file, vb, "vm 뼈대");
+      localFrom(q.br, lbr("main"), false); localFrom(q.src, lbr("main"), false);
+      q.theirTxt = "  /* 초기화: 프레임 테이블 준비 */"; q.mineTxt = "/* 내 작업: 페이지 폴트 처리 중 */";
+      setHead(q.src); q.team = localCommit(q.src, q.file, vb.replace("  /* 초기화 */", q.theirTxt), "vm 초기화 보강 (김주무관)");
+      setHead(q.br); S.local.work[q.file] = vb.replace("/* TODO: 페이지 폴트 처리 */", q.mineTxt);
+      q.how = pick(["stash", "commit"]); S.flags.stashed = false; q.from = "김주무관";
+      q.r = "제 브랜치 " + q.src + " 를 로컬 " + q.br + " 에 merge 하려니 'Unable to merge when changes are present on your branch … " + q.file + "' 오류가 날 거예요. " + (q.how === "stash" ? "내 수정은 아직 커밋하기 이르니 Stash changes and continue(임시 저장 후 merge) → 임시 저장 꺼내기(Restore/Pop) 로 내 수정이 커밋 안 된 채 남게 해 주세요." : "내 수정은 완성됐으니 먼저 커밋하고 merge 해 주세요.");
+      q.w = "merge 로 바뀔 파일에 커밋 안 한 내 수정이 있으면, 덮어쓸 수 있어 Git 이 막음 (pull 때와 같은 이유). 살릴 거면 커밋 후 merge, 아직 이르면 Stash 후 merge → 다시 꺼내기. 잘 모르겠으면 Stash 가 안전함.";
+      q.loc = ["로컬"];
     } else if (q.type === "lockfile") {
       g = uniqFeat("feature/", "-lock"); q.br = "feature/" + g[0] + "-lock"; q.file = g[0] + ".py";
       syncLocalMain(); localFrom(q.br, lbr("main"), false); setHead(q.br);
@@ -3322,6 +3355,11 @@ Rebase and merge      : main 에 A', B', C' (머지 커밋 없이 한 줄로, ID
     if (q.type === "cloneurl") return latch("lq" + q.n + "cu", function () { return !!S.local && S.local.repoKey === "up"; });
     if (q.type === "whichside") return latch("lq" + q.n + "ws", function () { return whichOk(q); });
     if (q.type === "crlf") { var rc = br(q.br), fc = rc && rc.files["config.ini"]; return !!fc && fc.indexOf("\r") < 0 && fc === q.want; }
+    if (q.type === "mergedirty") return latch("lq" + q.n + "md", function () {
+      var lb = lbr(q.br); if (!lb || lb.commits.indexOf(q.team) < 0 || S.local.head !== q.br) return false;
+      if (q.how === "commit") { var hf2 = lb.files[q.file] || ""; return hf2.indexOf(q.mineTxt) >= 0 && hf2.indexOf(q.theirTxt) >= 0; }
+      var wf2 = S.local.work[q.file] || ""; return !!S.flags.stashed && !S.local.stash && wf2.indexOf(q.mineTxt) >= 0 && wf2.indexOf(q.theirTxt) >= 0 && !hasMarkers(wf2);
+    });
     if (q.type === "lockfile") return latch("lq" + q.n + "lk", function () { var lb = lbr(q.br); return !!lb && !S.local.lock && !!S.flags.lockDeleted && lb.commits.length > q.n0 && (lb.files[q.file] || "").indexOf("작업 완료") >= 0; });
     if (q.type === "selcommit") { var rs2 = br(q.br); return !!rs2 && rs2.files[q.file] === q.code && !("debug.log" in rs2.files) && !("메모_개인.txt" in rs2.files); }
     if (q.type === "gitignore") { var rg = br(q.br), gi = rg && rg.files[".gitignore"]; return !!gi && ignoredBy(gi, ".env") && ignoredBy(gi, "app.log") && !(".env" in rg.files) && !Object.keys(rg.files).some(function (k) { return /\.log$/.test(k); }); }
@@ -3349,6 +3387,8 @@ Rebase and merge      : main 에 A', B', C' (머지 커밋 없이 한 줄로, ID
     if (q.type === "cloneurl") return vs ? ["소스 제어 ··· → Git 저장소 복제 (새 폴더)…", "주소칸에 " + q.url + " 입력 → [Git 저장소 복제]", "탐색기에 tool.py 가 보이는지 확인 (상태 표시줄 저장소 이름 team-tool)"] : ["메뉴 [파일] → Clone repository...", "(확인) GitHub.com 탭 목록엔 kim-team/team-tool 이 없음 = 내 저장소가 아니라서", "[URL] 탭 → " + q.url + " (또는 kim-team/team-tool) 입력 → [Clone]", "Current repository 가 team-tool 로 바뀌었는지 확인"];
     if (q.type === "whichside") return whichSteps(q);
     if (q.type === "crlf") return vs ? ["탐색기에서 config.ini 열기 → 맨 아래 상태바의 [CRLF] 확인", "(방법 1) 상태바 [CRLF] 클릭 → LF 로 바뀜", "(방법 2) [+ 새 파일] .gitattributes → '* text=auto' 입력 → 저장", "소스 제어에서 바뀐 내용 확인 → + 스테이징 → ✓ 커밋", "[☁ Publish Branch]"] : ["Changes 에서 config.ini 클릭 → '줄바꿈 변경' 경고와 모든 줄이 바뀐 diff 확인", "[Open in editor] → (새 파일) .gitattributes → '* text=auto' → 저장", "config.ini diff 가 timeout 한 줄로 줄었는지 확인", "Summary 입력 → Commit (.gitattributes 도 함께 체크)", "[Publish branch]"];
+    if (q.type === "mergedirty") return q.how === "commit" ? (vs ? ["소스 제어에서 " + q.file + " 스테이징 → 메시지 입력 → ✓ 커밋", "··· → 분기 병합 (merge)... → " + q.src, "내 수정과 받은 수정이 둘 다 들어갔는지 확인"] : ["Summary 입력 → Commit to " + q.br, "메뉴 [브랜치] → Merge into current branch... → " + q.src, "History 에서 merge 확인"])
+      : (vs ? ["··· → 분기 병합 → " + q.src + " → 'would be overwritten by merge' 오류 확인", "··· → 변경 내용 임시 저장 (Stash)", "··· → 분기 병합 → " + q.src + " 다시", "··· → 임시 저장 꺼내기 (Pop Stash) → 파일에 두 수정이 다 있는지 확인"] : ["메뉴 [브랜치] → Merge into current branch... → " + q.src, "오류 창에서 [Stash changes and continue]", "Changes 탭 아래 [Stashed Changes] → Restore", "파일에 두 수정이 다 있는지 확인 (아직 커밋 안 함)"]);
     if (q.type === "lockfile") return vs ? ["(확인) 소스 제어에서 커밋 → 'Unable to create …/.git/index.lock: File exists' 오류 확인", "다른 Git 작업(다른 창·터미널)이 없는지 확인", "소스 제어 ··· → 파일 탐색기에서 열기 → 보기의 [숨긴 항목 표시] → .git 폴더 → index.lock [삭제]", "다시 " + q.file + " 스테이징 → 커밋"] : ["(확인) Commit 버튼 → 'A lock file already exists' 오류 확인", "다른 Git 작업(VS Code·터미널)이 없는지 확인", "메뉴 [저장소] → Show in Explorer → 보기의 [숨긴 항목 표시] → .git 폴더 → index.lock [삭제]", "다시 Summary 입력 → Commit to " + q.br];
     if (q.type === "selcommit") return vs ? ["소스 제어에서 변경 사항 3개 확인", q.file + " 옆 + 만 눌러 스테이징 (나머지는 그대로 둠)", "메시지 입력 → ✓ 커밋 (스테이징된 것만 커밋됨)", "상태바의 [☁ 게시 필요] 또는 ··· → 밀어넣기(Push) 로 Publish (남은 변경이 있으면 큰 버튼은 '커밋'으로 보임) → 커밋 안 한 파일은 로컬에만 남음"] : ["Changes 에서 debug.log, 메모_개인.txt 체크 해제", q.file + " 만 체크된 상태로 Summary 입력 → Commit", "[Publish branch] → 체크 안 한 파일은 로컬에만 남음"];
     if (q.type === "gitignore") return vs ? ["탐색기 [+ 새 파일] → .gitignore", "내용: 첫 줄 .env, 둘째 줄 *.log → 저장", "소스 제어에서 .env·로그가 목록에서 사라진 것 확인", ".gitignore 만 + 스테이징 → ✓ 커밋", "[☁ Publish Branch]"] : ["[Open in editor] → (새 파일) .gitignore", "내용: .env 와 *.log 를 한 줄씩 → 저장", "Changes 에 .gitignore 만 남은 것 확인 → Commit", "[Publish branch]"];
@@ -3483,7 +3523,8 @@ Rebase and merge      : main 에 A', B', C' (머지 커밋 없이 한 줄로, ID
       h += '<button type="button" class="dk-seg" data-l="' + act[0] + '"><small>' + act[2] + '</small><b>' + act[1] + '</b></button>';
     } else h += '<div class="dk-seg"><small>Current branch</small><b>-</b></div>';
     h += '</div>';
-    if (flash) h += '<div class="flash ' + flash.t + '" role="status" style="margin:10px 12px 0">' + esc(flash.m) + '</div>';
+    if (ui.dkDlg && L) h += '<div class="dk-dlg" role="alertdialog" aria-label="Error"><div class="dk-dlg-h"><b>Error</b><button type="button" class="msgr-ic" data-l="dlg-close" aria-label="닫기">✕</button></div><div class="dk-dlg-b"><span class="no" style="font-size:1.2rem">⊘</span><div><p>Unable to ' + ui.dkDlg.k + ' when changes are present on your branch. The following files would be overwritten:</p><pre class="mono">' + ui.dkDlg.files.map(esc).join("\n") + '</pre><p>You can stash your changes now and recover them afterwards.</p></div></div><div class="dk-dlg-f"><button type="button" class="btn go" data-l="dlg-stash">Stash changes and continue</button><button type="button" class="btn" data-l="dlg-close">Close</button></div></div>';
+    else if (flash) h += '<div class="flash ' + flash.t + '" role="status" style="margin:10px 12px 0">' + esc(flash.m) + '</div>';
     if (L && lStale() && !d.clone) h += '<div class="banner" style="margin:10px 12px 0"><span>이 폴더는 예전 저장소 <b class="mono">' + esc(L.url) + '</b> 에 연결돼 있음. 저장소가 바뀌었으니 새로 클론해야 함</span><button type="button" class="btn go sm" data-l="dk-clone">Clone repository...</button></div>';
     if (noL || d.clone) {
       h += '<div class="dk-empty">' + (d.clone || noL ? dkCloneBox() : "") + '</div>';
@@ -3602,6 +3643,8 @@ Rebase and merge      : main 에 A', B', C' (머지 커밋 없이 한 줄로, ID
     else if (a === "open-pr-web") openPRWeb();
     else if (a === "dk-clone") d.clone = !d.clone;
     else if (osxClick(a)) { }
+    else if (a === "dlg-close") ui.dkDlg = null;
+    else if (a === "dlg-stash") { var dl = ui.dkDlg; ui.dkDlg = null; lStash(); if (!L.stash) { } else { var okm = dl.k === "merge" ? (lMerge(dl.from), flash) : (lPull(), flash); if (okm && okm.t === "ok") ok("변경을 임시 저장(Stash)하고 " + dl.k + " 를 이어서 함 → " + okm.m + " · 임시 저장한 내 수정은 Changes 아래 [Stashed Changes] → Restore 로 다시 꺼냄"); } }
     else if (a === "dk-tab") d.tab = arg;
     else if (a === "dk-ctab") d.cloneTab = arg;
     else if (a === "dk-sel") { d.sel = arg; d.editor = d.newbr = false; }
