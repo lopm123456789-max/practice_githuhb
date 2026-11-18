@@ -188,12 +188,10 @@ textarea.inp { min-height: 110px; resize: vertical; font-family: var(--f-mono); 
 .perma { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-bottom: 8px; padding: 8px 10px; border: 1px solid var(--line); border-radius: 6px; background: var(--accent-soft); } .perma .inp { flex: 1; min-width: 200px; font-size: .75rem; }
 .link.wrap { display: inline; max-width: 100%; white-space: normal; overflow-wrap: anywhere; text-align: left; padding: 0; }
 .wk .wk-h { margin: 12px 0 6px; } .wk .wk-p { margin: 4px 0; } .wk .wk-li { margin: 2px 0 2px 8px; } .readme.wk { white-space: normal; }
-.modes .pm-btn { grid-column: span 6; } .modes .pm-btn.on { background: #6b4fa0; border-color: #6b4fa0; }
 .state.draft, .st-draft { color: var(--muted); } .state.draft { background: var(--muted); color: #fff; }
 .draft-box, .am-box { border: 1px dashed var(--line); border-radius: 6px; padding: 8px 10px; margin: 6px 0; display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
 .ci-dot { color: var(--warn); } .ci-log { background: #11161a; color: #d6e2da; padding: 8px 10px; border-radius: 6px; font-size: .75rem; white-space: pre-wrap; margin: 4px 0 8px; }
 .sg-diff { margin: 0 12px; border: 1px solid var(--line); border-radius: 6px; overflow-x: auto; font-size: .8rem; } .sg-diff .dl { padding: 1px 8px; white-space: pre; } .sg-diff .del { background: var(--del); color: var(--del-ink); } .sg-diff .add { background: var(--add); color: var(--add-ink); }
-.modes .rv-btn { grid-column: span 3; } .modes .rv-btn.on { background: #1f7a80; border-color: #1f7a80; } .modes .pm-btn { grid-column: span 3 !important; }
 .osx { border: 2px solid var(--accent); border-radius: 8px; margin: 0 0 10px; background: var(--surface); }
 .osx-head { display: flex; gap: 8px; align-items: center; padding: 8px 10px; border-bottom: 1px solid var(--line); flex-wrap: wrap; }
 .osx-bar { display: flex; gap: 10px; align-items: center; padding: 6px 10px; border-bottom: 1px solid var(--line); flex-wrap: wrap; font-size: .82rem; }
@@ -225,14 +223,15 @@ textarea.inp { min-height: 110px; resize: vertical; font-family: var(--f-mono); 
 h2.pt { font-size: 1.35rem; font-weight: 500; margin: 0 0 6px; overflow-wrap: anywhere; }
 h2.pt span { color: var(--muted); }
 .kv { color: var(--muted); font-size: 0.85rem; }
-.modes { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 4px; background: rgba(255,255,255,0.06); padding: 4px; border-radius: 8px; }
+.cur-track { all: unset; box-sizing: border-box; cursor: pointer; display: flex; align-items: center; gap: 10px; width: 100%; margin-top: 6px; padding: 8px 10px; border-radius: 8px; background: rgba(255,255,255,0.06); color: var(--rail-ink); }
+.cur-track:hover, .cur-track:focus-visible { background: rgba(255,255,255,0.12); }
+.cur-track small { color: #9fb3a8; font-size: .72rem; } .cur-track b { font-size: .86rem; }
+.cur-track .ct-go { font-size: .72rem; color: #9fb3a8; text-align: right; line-height: 1.3; }
+.ct-grp { font-size: .72rem; color: var(--muted); font-weight: 700; padding: 6px 8px 0; }
+.ct-sub { font-weight: 400; color: var(--muted); font-size: .76rem; }
+.modes { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 4px; background: rgba(255,255,255,0.06); padding: 4px; border-radius: 8px; }
 .modes button { background: none; border: 0; color: var(--rail-ink); padding: 7px 4px; border-radius: 6px; cursor: pointer; font-size: 0.82rem; }
 .modes button.on { background: #2f9a66; font-weight: 700; }
-.modes button { grid-column: span 2; }
-.modes .qa-btn { grid-column: span 2; border: 1px dashed rgba(255,255,255,0.25); font-size: 0.78rem; }
-.modes .fk-btn.on { background: #3d6aa8; border-color: #3d6aa8; }
-.modes .cf-btn.on { background: #a8423a; border-color: #a8423a; }
-.modes .qa-btn.on { background: #b9862a; border-color: #b9862a; }
 .cr { color: var(--closed); font-weight: 700; }
 .conf-box { border: 1px solid var(--closed); background: var(--err-soft); border-radius: 8px; padding: 10px 12px; display: flex; flex-direction: column; gap: 6px; font-size: 0.86rem; }
 .vs-merge { margin: 6px 12px; padding: 8px 10px; border-radius: 4px; background: #3a2a1a; border-left: 3px solid var(--g-M); font-size: 12.5px; line-height: 1.6; }
@@ -420,9 +419,9 @@ body.msgr-min .wrap { padding-bottom: 90px; }
   </div>
   <div class="grid">
     <aside class="rail" aria-label="업무 요청">
-      <div class="modes" role="group" aria-label="연습 도구"><button type="button" data-mode="web">웹 사이트</button><button type="button" data-mode="vscode">VS Code</button><button type="button" data-mode="desktop">데스크톱 앱</button><button type="button" data-mode="qa" class="qa-btn">내 질문 실습</button><button type="button" data-mode="conflict" class="qa-btn cf-btn">컨플릭트 실습</button><button type="button" data-mode="fork" class="qa-btn fk-btn">Fork 실습</button><button type="button" data-mode="pm" class="qa-btn pm-btn">협업 관리 실습</button><button type="button" data-mode="rv" class="qa-btn rv-btn">PR 협업 실습</button></div>
+      <div class="modes" role="group" aria-label="연습 화면"><button type="button" data-mode="web">웹 사이트</button><button type="button" data-mode="vscode">VS Code</button><button type="button" data-mode="desktop">데스크톱 앱</button></div>
+      <button type="button" class="cur-track" id="cur-track" data-msgr="openlist" aria-label="실습 바꾸기 (메시지 창 담당자 목록 열기)"></button>
       <div class="prog"><span id="prog-t"></span><div class="bar"><i id="prog-b"></i></div></div>
-      <button type="button" class="msg msg-mini" id="req" data-msgr="open">요청은 오른쪽 아래 <b>메시지 창</b>에서 받음 · 열기</button>
       <h3>로컬 ↔ 원격 현황</h3>
       <div class="locs" id="locs"></div>
       <h3>요청 목록</h3>
@@ -1101,7 +1100,8 @@ Rebase and merge      : main 에 A', B', C' (머지 커밋 없이 한 줄로, ID
   function trackList(t) { t = t || S.track; return t === "vscode" ? MV : t === "desktop" ? MD : t === "qa" ? MQ : t === "conflict" ? MC : t === "fork" ? MF : t === "pm" ? MP : t === "rv" ? MR : M; }
   function isLocalTrack() { return S.track === "vscode" || S.track === "desktop"; }
   /* ---------- 메신저 창 ---------- */
-  var CH = { web: ["이 팀장", "웹 사이트 · 기본 미션"], vscode: ["박 매니저", "VS Code · 로컬 미션"], desktop: ["최 매니저", "데스크톱 앱 · 로컬 미션"], qa: ["질문 노트", "내가 물어본 것"], conflict: ["김주무관", "컨플릭트 미션"], fork: ["kim-team", "Fork 미션"], pm: ["코치", "이슈·프로젝트·위키 미션"], rv: ["한 리드", "PR 협업 미션 (CODEOWNERS·CI·자동 머지)"] };
+  var CH = { web: ["이 팀장", "웹 사이트 · 기본 미션"], vscode: ["박 매니저", "VS Code · 로컬 미션"], desktop: ["최 매니저", "데스크톱 앱 · 로컬 미션"], qa: ["질문 노트", "내가 물어본 것"], conflict: ["김주무관", "컨플릭트 미션"], fork: ["kim-team", "Fork 미션"], pm: ["코치", "이슈·프로젝트·위키 미션"], rv: ["한 리드", "PR 협업 미션"] };
+  var CH_DESC = { web: "저장소·이슈·브랜치·PR·리뷰·머지·릴리즈를 웹에서", vscode: "클론·커밋·Push/Pull·로컬 merge 를 VS Code 로", desktop: "같은 흐름을 GitHub Desktop 으로", qa: "내가 물어본 질문을 퀴즈로 복습", conflict: "충돌이 나는 경우, Current/Incoming 고르기", fork: "남의 저장소 Fork → 원본으로 PR → Sync fork", pm: "이슈 할당·마일스톤·프로젝트 보드·위키", rv: "PR 템플릿·CODEOWNERS·CI·Draft·자동 머지" };
   var CH_COLOR = { web: "#245f8f", vscode: "#2f8a55", desktop: "#a8423a", qa: "#7a6a20", conflict: "#a35a1f", fork: "#3d6aa8", pm: "#6b4fa0", rv: "#1f7a80" };
   function chatAv(who) { var c = { "팀장": "#245f8f", "김주무관": "#a35a1f", "이주무관": "#7247a8", "박주무관": "#2f8a55", "질문": "#7a6a20", "코치": "#6b4fa0", "리드": "#1f7a80", "안내": "#5d6862" }[who] || "#5d6862"; return '<span class="c-av" style="background:' + c + '" aria-hidden="true">' + esc((who || "?").slice(0, 1)) + '</span>'; }
   function trackAv(k) { return '<span class="c-av lg" style="background:' + CH_COLOR[k] + '" aria-hidden="true">' + esc(CH[k][0].slice(0, 1)) + '<i class="on"></i></span>'; }
@@ -1221,10 +1221,12 @@ Rebase and merge      : main 에 A', B', C' (머지 커밋 없이 한 줄로, ID
     var h = '<div class="msgr-head">' + trackAv(k) + '<div class="msgr-tt"><b>' + esc(CH[k][0]) + '</b><small>' + esc(CH[k][1]) + '</small></div><span style="flex:1"></span>' + (msgrPos ? '<button type="button" class="msgr-ic" data-msgr="home" title="원래 위치(오른쪽 아래)로" aria-label="메시지 창 원래 위치로">↘</button>' : "") + '<button type="button" class="msgr-ic" data-msgr="list" title="담당자 목록" aria-label="담당자 목록">☰</button><button type="button" class="msgr-ic" data-msgr="min" title="최소화" aria-label="최소화">–</button></div>';
     h += '<div class="msgr-body" id="msgr-body">';
     if (ui.msgrList) {
-      h += '<div class="msgr-sys">담당자</div>' + ["web", "vscode", "desktop", "qa", "conflict", "fork", "pm", "rv"].map(function (t) {
+      var ct = function (t) {
         var L = trackList(t), d = L.filter(function (m) { return m.ok(); }).length;
-        return '<button type="button" class="msgr-ct' + (t === k ? " on" : "") + '" data-msgr="track" data-arg="' + t + '">' + trackAv(t) + '<span class="ct-tx"><b>' + esc(CH[t][0]) + '</b><small>' + esc(CH[t][1]) + '</small></span><span class="ct-st">' + (t === k ? '<em>대화 중</em>' : "") + d + "/" + L.length + ' 완료</span></button>';
-      }).join("");
+        return '<button type="button" class="msgr-ct' + (t === k ? " on" : "") + '" data-msgr="track" data-arg="' + t + '">' + trackAv(t) + '<span class="ct-tx"><b>' + esc(CH[t][0]) + ' <span class="ct-sub">' + esc(CH[t][1]) + '</span></b><small>' + esc(CH_DESC[t]) + '</small></span><span class="ct-st">' + (t === k ? '<em>대화 중</em>' : "") + d + "/" + L.length + '</span></button>';
+      };
+      h += '<div class="msgr-sys">누구와 연습할지 고름</div><div class="ct-grp">기본 미션 · 화면별</div>' + ["web", "vscode", "desktop"].map(ct).join("") +
+        '<div class="ct-grp">주제별 실습</div>' + ["conflict", "fork", "pm", "rv", "qa"].map(ct).join("");
     } else {
       var from0 = Math.max(0, Math.min(show, list.length) - 2);
       for (var i = from0; i < Math.min(show, list.length); i++) {
@@ -1246,11 +1248,13 @@ Rebase and merge      : main 에 A', B', C' (머지 커밋 없이 한 줄로, ID
     else if (a === "home") setMsgrPos(null);
     else if (a === "nav") { S.mode = "web"; if (!isStudyTrack() && S.track !== "web") S.track = "web"; navUrl(b.dataset.arg); afterChange(); return true; }
     else if (a === "list") ui.msgrList = !ui.msgrList;
+    else if (a === "openlist") { ui.msgrMin = false; ui.msgrList = true; }
     else if (a === "track") { var t = b.dataset.arg; if (t === "pm" || t === "rv") { S.track = t; S.mode = "web"; } else if (isStudyKey(t)) S.track = t; else S.mode = S.track = t; ui.msgrList = false; ui.view = null; flash = null; }
     afterChange(); return true;
   }
   function renderRail() {
-    Array.prototype.forEach.call(document.querySelectorAll("[data-mode]"), function (b) { var on = isStudyKey(b.dataset.mode) ? S.track === b.dataset.mode : b.dataset.mode === S.mode; b.classList.toggle("on", on); b.setAttribute("aria-pressed", on ? "true" : "false"); });
+    renderTracks();
+    Array.prototype.forEach.call(document.querySelectorAll(".modes [data-mode]"), function (b) { var on = b.dataset.mode === S.mode; b.classList.toggle("on", on); b.setAttribute("aria-pressed", on ? "true" : "false"); });
     var list = trackList(), cur = current(list), done = list.filter(function (m) { return m.ok(); }).length;
     var extra = isLocalTrack() ? S.lqDone : S.questDone;
     $("prog-t").textContent = TRACK_NAME[S.track] + (isStudyTrack() ? " " : " 기본 ") + done + "/" + list.length + (extra ? " · 실전 " + extra + "건" : "");
@@ -1282,7 +1286,7 @@ Rebase and merge      : main 에 A', B', C' (머지 커밋 없이 한 줄로, ID
     }
     if (mq && mq.setup) h += '<div class="row"><button type="button" class="btn go sm" data-rail="setup">' + (isDone ? "다시 해보기" : "상황 만들기") + '</button><span class="hint" style="font-size:.78rem">' + (mq.mode === "web" ? "웹 화면에서 진행" : "VS Code 또는 데스크톱 앱 화면에서 진행") + '</span></div>';
     if (ui.hint) h += '<div class="b-row">' + chatAv(item.from) + '<div class="b-col"><small>' + esc(item.from) + ' · 힌트</small><div class="bubble hint-b">' + esc(item.w) + '</div></div></div>';
-    if (isStudyTrack()) h += '<p class="hint" style="font-size:.76rem;opacity:.75">화면 전환은 위 [웹 사이트]·[VS Code]·[데스크톱 앱] 버튼으로 함 (이 트랙은 유지됨. 같은 버튼을 한 번 더 누르면 그 모드의 기본 트랙으로 이동)</p>';
+    if (isStudyTrack()) h += '<p class="hint" style="font-size:.76rem;opacity:.75">화면 전환은 위 [웹 사이트]·[VS Code]·[데스크톱 앱] 버튼으로 함 (이 트랙은 유지됨. 기본 미션으로 돌아가려면 왼쪽 [실습] 메뉴에서 기본 미션 선택)</p>';
     if (ui.steps) h += '<div class="b-row">' + chatAv(item.from) + '<div class="b-col"><small>' + esc(item.from) + ' · 진행 순서</small><div class="bubble"><ol>' + item.s.map(function (s) { return "<li>" + esc(s) + "</li>"; }).join("") + '</ol></div></div></div>';
     if (show >= list.length && S.track !== "qa") h += isDone ? '<div class="b-me"><span class="bubble me">처리 완료했습니다 ✓</span></div><div class="b-row">' + chatAv(item.from) + '<div class="b-col"><small>' + esc(item.from) + '</small><div class="bubble done-b">확인했어요, 고마워요! 다음 건은 아래 버튼을 누르면 드릴게요. (자동으로 넘어가지 않음)</div></div></div><div class="row"><button type="button" class="btn go" data-rail="next">다음 요청 받기 →</button></div>' : '<div class="row"><button type="button" class="btn sm" data-rail="skip">다른 요청으로 바꾸기</button></div>';
     else if (isDone) h += '<span class="done-tag">처리 완료</span>';
@@ -1295,10 +1299,15 @@ Rebase and merge      : main 에 A', B', C' (머지 커밋 없이 한 줄로, ID
     renderLocTable();
     $("feed").innerHTML = S.feed.length ? S.feed.map(function (f) { return "<div><b>" + esc(f.who) + "</b> " + esc(f.text) + "</div>"; }).join("") : "<div>아직 알림 없음</div>";
   }
+  function renderTracks() {
+    var t = S.track, L = trackList(t), d = L.filter(function (m) { return m.ok(); }).length;
+    $("cur-track").innerHTML = trackAv(t) + '<span class="ct-tx"><small>지금 실습 · ' + esc(CH[t][0]) + '</small><b>' + esc(CH[t][1]) + '</b></span><span class="ct-go">' + d + "/" + L.length + '<br>바꾸기 ▸</span>';
+  }
   function railClick(e) {
     useRepo("home");
     if (msgrClick(e)) return;
     var md = e.target.closest("[data-mode]");
+    if (md && !isStudyKey(md.dataset.mode) && isStudyTrack()) { S.mode = md.dataset.mode; ui.view = null; flash = null; return afterChange(); }
     if (md) { if (md.dataset.mode === "pm" || md.dataset.mode === "rv") { S.track = md.dataset.mode; S.mode = "web"; } else if (isStudyKey(md.dataset.mode)) S.track = md.dataset.mode; else if (isStudyTrack() && md.dataset.mode !== S.mode) S.mode = md.dataset.mode; else S.mode = S.track = md.dataset.mode; ui.view = null; flash = null; return afterChange(); }
     var b = e.target.closest("[data-rail]"); if (!b) return;
     var a = b.dataset.rail, loc = isLocalTrack();
